@@ -60,11 +60,36 @@
         quiet: true
 
     - name: Validate build input (either Go path or prebuilt binary)
+      ansible.builtin.stat:
+        path: "{{ ja4proxy_build_machine_go_path | default('') }}"
+      delegate_to: localhost
+      run_once: true
+      become: false
+      register: build_path_check
+      when: >
+        ja4proxy_build_machine_go_path is defined and ja4proxy_build_machine_go_path | length > 0
+        and (ja4proxy_prebuilt_binary_path is not defined or ja4proxy_prebuilt_binary_path | length == 0)
+
+    - name: Validate prebuilt binary path
+      ansible.builtin.stat:
+        path: "{{ ja4proxy_prebuilt_binary_path | default('') }}"
+      delegate_to: localhost
+      run_once: true
+      become: false
+      register: prebuilt_path_check
+      when: >
+        ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0
+
+    - name: Assert build input is valid
       ansible.builtin.assert:
         that:
-          - ja4proxy_build_machine_go_path is defined and ja4proxy_build_machine_go_path | length > 0
-            or ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0
-        fail_msg: "You must provide either a local Go repo path (ja4proxy_build_machine_go_path) or a prebuilt binary path (ja4proxy_prebuilt_binary_path)."
+          - >
+            (ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0)
+            or
+            (ja4proxy_build_machine_go_path is defined and ja4proxy_build_machine_go_path | length > 0 and build_path_check.stat.exists | default(false))
+            or
+            (ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0 and prebuilt_path_check.stat.exists | default(false))
+        fail_msg: "You must provide either a valid local Go repo path (ja4proxy_build_machine_go_path) or a valid prebuilt binary path (ja4proxy_prebuilt_binary_path)."
         quiet: true
       delegate_to: localhost
       run_once: true
@@ -108,30 +133,46 @@
           ║   Dial: {{ ja4proxy_dial }} (monitor-only)
           ╚══════════════════════════════════════════════════════╝
 
+    - name: Ensure community.general collection is installed
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection install community.general community.docker
+      delegate_to: localhost
+      run_once: true
+      become: false
+      changed_when: false
+
   roles:
     # Phase 1: VM Provisioning & Hardening
     - role: 01-vm-provisioning
+      tags: [provisioning, phase1]
 
     # Phase 2: Artifact Build & Config Deployment
     - role: 02-artifact-build
+      tags: [artifacts, phase2]
 
     # Phase 3: JA4proxy systemd Deployment
     - role: 03-ja4proxy-deploy
+      tags: [deploy, phase3]
 
     # Phase 4: Supporting Services (Docker Compose)
     - role: 04-supporting-services
+      tags: [docker, phase4]
 
     # Phase 5: Data Collection (Grafana, journald)
     - role: 05-data-collection
+      tags: [data-collection, phase5]
 
     # Phase 6: Operational Security
     - role: 06-operational-security
+      tags: [opsec, phase6]
 
     # Phase 7: Validation & Smoke Tests
     - role: 07-validation
+      tags: [validation, phase7]
 
     # Phase 8: Security Hardening
     - role: 08-hardening
+      tags: [hardening, phase8]
 
   post_tasks:
     - name: Deployment summary

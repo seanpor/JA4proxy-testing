@@ -7,11 +7,20 @@
       - apt-transport-https
     state: present
 
-- name: Add Docker GPG key
-  ansible.builtin.apt_key:
+- name: Create Docker keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download Docker GPG key
+  ansible.builtin.get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
-    keyring: /etc/apt/keyrings/docker.gpg
-    state: present
+    dest: /etc/apt/keyrings/docker.gpg
+    mode: "0644"
+    force: false
 
 - name: Add Docker apt repository
   ansible.builtin.apt_repository:

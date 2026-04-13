@@ -1,6 +1,5 @@
 # Secrets — NEVER committed
-.vault/
+deploy/.vault/
 
 # Ansible artifacts
 *.retry
-ansible.cfg

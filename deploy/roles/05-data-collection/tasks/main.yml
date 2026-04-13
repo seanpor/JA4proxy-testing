@@ -23,9 +23,6 @@
     - performance.json
     - honeypot.json
     - trends.json
-  ignore_errors: true
-  # Dashboards will be created in a follow-up task.
-  # This is safe to skip on first run.
 
 - name: Configure journald retention
   ansible.builtin.lineinfile:
