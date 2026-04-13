@@ -62,7 +62,7 @@
         multi_strategy_policy: "any"
         rate_limit_strategies:
           by_ip:
-            enabled: {{ ja4proxy_dial > 0 | lower }}
+            enabled: {{ (ja4proxy_dial > 0) | string | lower }}
             thresholds:
               suspicious: 20
               block: 50
@@ -70,7 +70,7 @@
             action: "block"
             ban_duration: 300
           by_ja4:
-            enabled: {{ ja4proxy_dial > 0 | lower }}
+            enabled: {{ (ja4proxy_dial > 0) | string | lower }}
             thresholds:
               suspicious: 20
               block: 50
@@ -78,7 +78,7 @@
             action: "block"
             ban_duration: 300
           by_ip_ja4_pair:
-            enabled: {{ ja4proxy_dial > 0 | lower }}
+            enabled: {{ (ja4proxy_dial > 0) | string | lower }}
             thresholds:
               suspicious: 20
               block: 50
@@ -108,7 +108,7 @@
 
       monitor_mode:
         dial: {{ ja4proxy_dial }}
-        blocking_acknowledged: {{ ja4proxy_dial > 0 | lower }}
+        blocking_acknowledged: {{ (ja4proxy_dial > 0) | string | lower }}
         counterfactuals: true
 
       security_policy:

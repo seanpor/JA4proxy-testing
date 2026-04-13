@@ -1,13 +1,6 @@
 ---
 # Deploy all configuration files from Jinja2 templates
-
-- name: Deploy proxy.yml
-  ansible.builtin.template:
-    src: templates/proxy.yml.j2
-    dest: "{{ ja4proxy_config_dir }}/proxy.yml"
-    owner: "{{ ja4proxy_system_user }}"
-    group: "{{ ja4proxy_system_group }}"
-    mode: "0640"
+# Note: proxy.yml is deployed by Role 03 (research-specific config)
 
 - name: Deploy .env file
   ansible.builtin.template:

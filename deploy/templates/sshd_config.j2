@@ -16,12 +16,11 @@ ClientAliveInterval 300
 ClientAliveCountMax 2
 X11Forwarding no
 
-# Protocol
-Protocol 2
-AcceptEnv LANG LC_*
+# Logging
+LogLevel VERBOSE
 
 # Subsystem
 Subsystem sftp /usr/lib/openssh/sftp-server
 
-# Logging
-LogLevel VERBOSE
+# Accept environment variables
+AcceptEnv LANG LC_*

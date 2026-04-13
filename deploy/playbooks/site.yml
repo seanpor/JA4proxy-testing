@@ -142,9 +142,9 @@
         ansible_python_interpreter: /usr/bin/python3
       changed_when: false
 
-    - name: Ensure community.general collection is installed
+    - name: Ensure required Ansible collections are installed
       ansible.builtin.command:
-        cmd: ansible-galaxy collection install community.general community.docker
+        cmd: ansible-galaxy collection install community.general community.docker ansible.posix
       delegate_to: localhost
       run_once: true
       become: false

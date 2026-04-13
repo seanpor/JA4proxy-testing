@@ -119,3 +119,15 @@ ja4proxy_loki_memory_limit: "256M"
 ja4proxy_loki_cpu_limit: "0.25"
 ja4proxy_promtail_memory_limit: "128M"
 ja4proxy_promtail_cpu_limit: "0.25"
+
+# ── Secret-Managed Variables (auto-generated, not set here) ─
+# These are loaded from deploy/.vault/secrets.yml at playbook start:
+#   redis_password
+#   grafana_admin_password
+#   grafana_password
+#   redis_signing_key
+#   haproxy_stats_password
+#   haproxy_stats_user
+#
+# To regenerate: bash deploy/scripts/generate-secrets.sh
+# File is gitignored — DO NOT commit secrets.

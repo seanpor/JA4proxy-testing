@@ -17,13 +17,3 @@
     mode: "0644"
     backup: true
   notify: Restart sshd
-
-- name: Verify sshd_config syntax
-  ansible.builtin.command:
-    cmd: sshd -t
-  changed_when: false
-
-- name: Reload SSH if config is valid
-  ansible.builtin.systemd:
-    name: ssh
-    state: reloaded

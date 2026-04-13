@@ -40,24 +40,20 @@
     state: present
 
 - name: Deploy conntrack sysctl
-  ansible.builtin.copy:
-    content: |
-      net.netfilter.nf_conntrack_max={{ ja4proxy_conntrack_max }}
-    dest: /etc/sysctl.d/99-conntrack.conf
-    owner: root
-    group: root
-    mode: "0644"
+  ansible.posix.sysctl:
+    name: net.netfilter.nf_conntrack_max
+    value: "{{ ja4proxy_conntrack_max }}"
+    sysctl_file: /etc/sysctl.d/99-conntrack.conf
+    reload: true
+    state: present
 
 - name: Enable IP forwarding sysctl
-  ansible.builtin.lineinfile:
-    path: /etc/sysctl.conf
-    regexp: "^#?net.ipv4.ip_forward"
-    line: "net.ipv4.ip_forward=1"
-
-- name: Apply all sysctl
-  ansible.builtin.command:
-    cmd: sysctl -p
-  changed_when: false
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    sysctl_file: /etc/sysctl.conf
+    reload: true
+    state: present
 
 - name: Load nf_conntrack module (may already be loaded by UFW)
   ansible.builtin.modprobe:
