@@ -2,12 +2,14 @@
 # Docker installation
 
 - name: Install Docker prerequisites
+  tags: [provisioning, phase1]
   ansible.builtin.apt:
     name:
       - apt-transport-https
     state: present
 
 - name: Create Docker keyring directory
+  tags: [provisioning, phase1]
   ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
@@ -16,6 +18,7 @@
     mode: "0755"
 
 - name: Download Docker GPG key
+  tags: [provisioning, phase1]
   ansible.builtin.get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
     dest: /etc/apt/keyrings/docker.gpg
@@ -23,6 +26,7 @@
     force: false
 
 - name: Add Docker apt repository
+  tags: [provisioning, phase1]
   ansible.builtin.apt_repository:
     repo: >-
       deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg]
@@ -31,10 +35,12 @@
     filename: docker
 
 - name: Update apt cache after adding Docker repo
+  tags: [provisioning, phase1]
   ansible.builtin.apt:
     update_cache: true
 
 - name: Install Docker packages
+  tags: [provisioning, phase1]
   ansible.builtin.apt:
     name:
       - docker-ce
@@ -44,6 +50,7 @@
     state: present
 
 - name: Deploy Docker daemon.json
+  tags: [provisioning, phase1]
   ansible.builtin.template:
     src: templates/docker-daemon.json.j2
     dest: /etc/docker/daemon.json
@@ -53,6 +60,7 @@
   notify: Restart docker
 
 - name: Set up dockremap user for userns-remap
+  tags: [provisioning, phase1]
   ansible.builtin.user:
     name: dockremap
     system: true
@@ -61,23 +69,27 @@
     state: present
 
 - name: Add admin user to docker group
+  tags: [provisioning, phase1]
   ansible.builtin.user:
     name: "{{ ja4proxy_ssh_user }}"
     groups: docker
     append: true
 
 - name: Enable and start Docker
+  tags: [provisioning, phase1]
   ansible.builtin.systemd:
     name: docker
     state: started
     enabled: true
 
 - name: Verify Docker is working
+  tags: [provisioning, phase1]
   ansible.builtin.command:
     cmd: docker --version
   changed_when: false
   register: docker_version
 
 - name: Display Docker version
+  tags: [provisioning, phase1]
   ansible.builtin.debug:
     msg: "Docker installed: {{ docker_version.stdout }}"

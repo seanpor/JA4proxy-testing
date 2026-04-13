@@ -2,6 +2,7 @@
 # Fail2ban
 
 - name: Deploy fail2ban jail.local
+  tags: [provisioning, phase1]
   ansible.builtin.template:
     src: templates/fail2ban-jail.local.j2
     dest: /etc/fail2ban/jail.local
@@ -11,6 +12,7 @@
   notify: Restart fail2ban
 
 - name: Enable fail2ban service
+  tags: [provisioning, phase1]
   ansible.builtin.systemd:
     name: fail2ban
     state: started

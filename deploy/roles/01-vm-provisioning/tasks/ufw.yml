@@ -2,20 +2,24 @@
 # UFW firewall rules
 
 - name: Reset UFW
+  tags: [provisioning, phase1]
   community.general.ufw:
     state: reset
 
 - name: Set UFW default policy — deny incoming
+  tags: [provisioning, phase1]
   community.general.ufw:
     direction: incoming
     default: deny
 
 - name: Set UFW default policy — allow outgoing
+  tags: [provisioning, phase1]
   community.general.ufw:
     direction: outgoing
     default: allow
 
 - name: Allow SSH from admin IP only
+  tags: [provisioning, phase1]
   community.general.ufw:
     rule: allow
     port: "22"
@@ -24,6 +28,7 @@
     comment: "SSH from admin IP only"
 
 - name: Allow HTTP from anywhere (Caddy ACME)
+  tags: [provisioning, phase1]
   community.general.ufw:
     rule: allow
     port: "{{ ja4proxy_haproxy_http_port }}"
@@ -31,6 +36,7 @@
     comment: "Caddy ACME HTTP"
 
 - name: Allow HTTPS from anywhere (HAProxy TLS)
+  tags: [provisioning, phase1]
   community.general.ufw:
     rule: allow
     port: "{{ ja4proxy_haproxy_tls_port }}"
@@ -38,6 +44,7 @@
     comment: "HAProxy TLS passthrough"
 
 - name: Allow Grafana from admin IP only
+  tags: [provisioning, phase1]
   community.general.ufw:
     rule: allow
     port: "{{ ja4proxy_grafana_port }}"
@@ -46,6 +53,7 @@
     comment: "Grafana dashboard"
 
 - name: Allow Prometheus from admin IP only
+  tags: [provisioning, phase1]
   community.general.ufw:
     rule: allow
     port: "{{ ja4proxy_prometheus_port }}"
@@ -54,9 +62,11 @@
     comment: "Prometheus UI"
 
 - name: Enable UFW logging
+  tags: [provisioning, phase1]
   community.general.ufw:
     logging: "on"
 
 - name: Enable UFW
+  tags: [provisioning, phase1]
   community.general.ufw:
     state: enabled

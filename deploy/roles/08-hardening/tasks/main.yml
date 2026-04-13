@@ -11,6 +11,7 @@
 # ─────────────────────────────────────────────────────────────
 
 - name: Deploy network sysctl hardening
+  tags: [hardening, phase8]
   ansible.builtin.template:
     src: templates/sysctl-network-hardening.conf.j2
     dest: /etc/sysctl.d/99-ja4proxy-network-hardening.conf
@@ -20,6 +21,7 @@
   notify: Reload sysctl
 
 - name: Deploy process sysctl hardening
+  tags: [hardening, phase8]
   ansible.builtin.template:
     src: templates/sysctl-process-hardening.conf.j2
     dest: /etc/sysctl.d/99-ja4proxy-process-hardening.conf
@@ -29,6 +31,7 @@
   notify: Reload sysctl
 
 - name: Deploy AppArmor profile for JA4proxy
+  tags: [hardening, phase8]
   ansible.builtin.template:
     src: templates/apparmor-ja4proxy.j2
     dest: /etc/apparmor.d/opt.ja4proxy.bin.ja4proxy
@@ -38,6 +41,7 @@
   notify: Reload AppArmor
 
 - name: Verify AppArmor profile is loaded
+  tags: [hardening, phase8]
   ansible.builtin.command:
     cmd: aa-status
   register: aa_status_result
@@ -45,6 +49,7 @@
   failed_when: false
 
 - name: Add AppArmor profile to systemd service
+  tags: [hardening, phase8]
   ansible.builtin.lineinfile:
     path: /etc/systemd/system/ja4proxy.service
     regexp: "^AppArmorProfile="
@@ -52,6 +57,7 @@
   notify: Daemon reload systemd
 
 - name: Deploy kernel module lockdown
+  tags: [hardening, phase8]
   ansible.builtin.copy:
     content: |
       # Lock down unnecessary kernel modules
@@ -75,12 +81,14 @@
     mode: "0600"
 
 - name: Initialize AIDE database (first run only)
+  tags: [hardening, phase8]
   ansible.builtin.command:
     cmd: aideinit
     creates: /var/lib/aide/aide.db.new
   changed_when: true
 
 - name: AIDE hardening summary
+  tags: [hardening, phase8]
   ansible.builtin.debug:
     msg: |
       ✅ Security hardening applied.

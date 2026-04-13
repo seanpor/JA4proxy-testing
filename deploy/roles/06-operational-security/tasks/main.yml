@@ -11,6 +11,7 @@
 # ─────────────────────────────────────────────────────────────
 
 - name: Create scripts directory
+  tags: [opsec, phase6]
   ansible.builtin.file:
     path: "{{ ja4proxy_base_dir }}/scripts"
     state: directory
@@ -19,6 +20,7 @@
     mode: "0755"
 
 - name: Deploy health check script
+  tags: [opsec, phase6]
   ansible.builtin.copy:
     src: files/scripts/health-check.sh
     dest: "{{ ja4proxy_base_dir }}/scripts/health-check.sh"
@@ -27,6 +29,7 @@
     mode: "0755"
 
 - name: Deploy notify failure script
+  tags: [opsec, phase6]
   ansible.builtin.copy:
     content: |
       #!/bin/bash
@@ -40,6 +43,7 @@
     mode: "0755"
 
 - name: Deploy backup configs script
+  tags: [opsec, phase6]
   ansible.builtin.copy:
     content: |
       #!/bin/bash
@@ -58,6 +62,7 @@
     mode: "0755"
 
 - name: Deploy verify artifacts script
+  tags: [opsec, phase6]
   ansible.builtin.copy:
     content: |
       #!/bin/bash
@@ -81,6 +86,7 @@
     mode: "0755"
 
 - name: Add OnFailure alert to ja4proxy service
+  tags: [opsec, phase6]
   ansible.builtin.lineinfile:
     path: /etc/systemd/system/ja4proxy.service
     regexp: "^OnFailure="
@@ -89,6 +95,7 @@
   notify: Daemon reload systemd
 
 - name: Deploy alert service template
+  tags: [opsec, phase6]
   ansible.builtin.copy:
     content: |
       [Unit]
@@ -104,6 +111,7 @@
   notify: Daemon reload systemd
 
 - name: Set up daily health check cron
+  tags: [opsec, phase6]
   ansible.builtin.cron:
     name: "JA4proxy daily health check"
     minute: "0"

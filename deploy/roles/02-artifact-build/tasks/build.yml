@@ -2,6 +2,7 @@
 # Build JA4proxy binary on the control machine, or use a pre-built binary
 
 - name: Check if prebuilt binary path is provided
+  tags: [artifacts, phase2]
   ansible.builtin.stat:
     path: "{{ ja4proxy_prebuilt_binary_path }}"
   delegate_to: localhost

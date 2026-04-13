@@ -11,6 +11,7 @@
 # ─────────────────────────────────────────────────────────────
 
 - name: Pull all images to resolve digests
+  tags: [digests, phase9]
   ansible.builtin.command:
     cmd: "docker pull {{ item }}"
   loop:
@@ -28,6 +29,7 @@
   until: pull_results is not failed
 
 - name: Resolve image digests
+  tags: [digests, phase9]
   ansible.builtin.command:
     cmd: "docker inspect --format='{{ '{{' }}index .RepoDigests 0{{ '}}' }}' {{ item }}"
   loop:
@@ -42,6 +44,7 @@
   changed_when: false
 
 - name: Record resolved digests
+  tags: [digests, phase9]
   ansible.builtin.set_fact:
     resolved_digests: >-
       {{ dict(
@@ -50,6 +53,7 @@
       ) }}
 
 - name: Save digests to file for future reference
+  tags: [digests, phase9]
   ansible.builtin.copy:
     content: |
       # Image Digests — Resolved on {{ ansible_date_time.iso8601 | default('unknown') }}
@@ -62,6 +66,7 @@
     mode: "0644"
 
 - name: Update docker-compose.yml with pinned digests
+  tags: [digests, phase9]
   ansible.builtin.lineinfile:
     path: "{{ ja4proxy_docker_base_dir }}/docker-compose.yml"
     regexp: "^    image: {{ item.value.split(':')[0] }}:"
@@ -70,6 +75,7 @@
   when: item.value != ""
 
 - name: Display pinned digests
+  tags: [digests, phase9]
   ansible.builtin.debug:
     msg: |
       ✅ Image digests resolved and pinned:

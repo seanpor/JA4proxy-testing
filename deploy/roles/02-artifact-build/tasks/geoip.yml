@@ -2,6 +2,7 @@
 # GeoIP database setup
 
 - name: Copy GeoIP from local file
+  tags: [artifacts, phase2]
   ansible.builtin.copy:
     src: "{{ ja4proxy_geoip_file_path }}"
     dest: "{{ ja4proxy_geoip_dir }}/{{ ja4proxy_geoip_filename }}"
@@ -12,6 +13,7 @@
     ja4proxy_geoip_file_path is defined and ja4proxy_geoip_file_path | length > 0
 
 - name: Download GeoIP from URL
+  tags: [artifacts, phase2]
   ansible.builtin.get_url:
     url: "{{ ja4proxy_geoip_download_url }}"
     dest: "{{ ja4proxy_geoip_dir }}/{{ ja4proxy_geoip_filename }}"
@@ -24,6 +26,7 @@
   register: geoip_download
 
 - name: Warn if GeoIP not provided
+  tags: [artifacts, phase2]
   ansible.builtin.debug:
     msg: |
       ⚠️  GeoIP database not provided. JA4proxy will start without GeoIP lookups.

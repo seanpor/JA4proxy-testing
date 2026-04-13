@@ -17,6 +17,7 @@
 # ─────────────────────────────────────────────────────────────
 
 - name: Deploy JA4proxy using upstream Ansible role
+  tags: [deploy, phase3]
   ansible.builtin.debug:
     msg: |
       ⚠️  This role delegates to JA4proxy4's Ansible role for binary deployment.
@@ -32,6 +33,7 @@
       For now, falling back to basic systemd deployment.
 
 - name: Deploy proxy.yml config (research honeypot)
+  tags: [deploy, phase3]
   ansible.builtin.copy:
     content: |
       # JA4proxy Configuration — Research Honeypot
@@ -166,6 +168,7 @@
     mode: "0640"
 
 - name: Deploy systemd unit for JA4proxy
+  tags: [deploy, phase3]
   ansible.builtin.template:
     src: templates/ja4proxy.service.j2
     dest: /etc/systemd/system/ja4proxy.service
@@ -175,6 +178,7 @@
   notify: Daemon reload systemd
 
 - name: Deploy Redis wrapper service (Docker dependency bridge)
+  tags: [deploy, phase3]
   ansible.builtin.template:
     src: templates/ja4proxy-redis.service.j2
     dest: /etc/systemd/system/ja4proxy-redis.service
@@ -184,6 +188,7 @@
   notify: Daemon reload systemd
 
 - name: Enable and start JA4proxy Redis wrapper
+  tags: [deploy, phase3]
   ansible.builtin.systemd:
     name: ja4proxy-redis
     state: started
@@ -191,6 +196,7 @@
     daemon_reload: true
 
 - name: Wait for Redis container to be ready
+  tags: [deploy, phase3]
   ansible.builtin.command:
     cmd: "docker exec ja4proxy-redis redis-cli -a {{ redis_password }} ping"
   register: redis_ping
@@ -201,6 +207,7 @@
   no_log: true
 
 - name: Enable and start JA4proxy service
+  tags: [deploy, phase3]
   ansible.builtin.systemd:
     name: ja4proxy
     state: started
@@ -208,6 +215,7 @@
     daemon_reload: true
 
 - name: Wait for /health endpoint
+  tags: [deploy, phase3]
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ ja4proxy_proxy_metrics_port }}/health"
     return_content: true
@@ -218,6 +226,7 @@
   changed_when: false
 
 - name: Verify /health/deep endpoint
+  tags: [deploy, phase3]
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ ja4proxy_proxy_metrics_port }}/health/deep"
     return_content: true
@@ -228,6 +237,7 @@
   changed_when: false
 
 - name: Verify /metrics endpoint
+  tags: [deploy, phase3]
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ ja4proxy_proxy_metrics_port }}/metrics"
     return_content: true
@@ -238,6 +248,7 @@
   changed_when: false
 
 - name: JA4proxy health summary
+  tags: [deploy, phase3]
   ansible.builtin.debug:
     msg: |
       ✅ JA4proxy is healthy and accepting connections.

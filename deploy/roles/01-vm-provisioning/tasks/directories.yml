@@ -2,6 +2,7 @@
 # Directory structure and system limits
 
 - name: Create JA4proxy directories
+  tags: [provisioning, phase1]
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -15,6 +16,7 @@
     - "{{ ja4proxy_geoip_dir }}"
 
 - name: Create Docker base directories
+  tags: [provisioning, phase1]
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -33,6 +35,7 @@
     - "{{ ja4proxy_docker_config_dir }}/promtail"
 
 - name: Append FD limits to limits.conf (idempotent)
+  tags: [provisioning, phase1]
   ansible.builtin.blockinfile:
     path: /etc/security/limits.conf
     block: "{{ lookup('template', 'templates/limits.conf.j2') }}"
@@ -40,6 +43,7 @@
     state: present
 
 - name: Deploy conntrack sysctl
+  tags: [provisioning, phase1]
   ansible.posix.sysctl:
     name: net.netfilter.nf_conntrack_max
     value: "{{ ja4proxy_conntrack_max }}"
@@ -48,6 +52,7 @@
     state: present
 
 - name: Enable IP forwarding sysctl
+  tags: [provisioning, phase1]
   ansible.posix.sysctl:
     name: net.ipv4.ip_forward
     value: "1"
@@ -56,6 +61,7 @@
     state: present
 
 - name: Load nf_conntrack module (may already be loaded by UFW)
+  tags: [provisioning, phase1]
   ansible.builtin.modprobe:
     name: nf_conntrack
     state: present

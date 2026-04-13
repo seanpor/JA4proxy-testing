@@ -9,6 +9,7 @@
 # ─────────────────────────────────────────────────────────────
 
 - name: Deploy Grafana dashboards
+  tags: [data-collection, phase5]
   ansible.builtin.copy:
     src: "grafana-dashboards/{{ item }}"
     dest: "{{ ja4proxy_docker_config_dir }}/grafana/dashboards/{{ item }}"
@@ -25,6 +26,7 @@
     - trends.json
 
 - name: Configure journald retention
+  tags: [data-collection, phase5]
   ansible.builtin.lineinfile:
     path: /etc/systemd/journald.conf
     regexp: "^#?{{ item.key }}"
