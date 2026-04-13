@@ -133,6 +133,15 @@
           ║   Dial: {{ ja4proxy_dial }} (monitor-only)
           ╚══════════════════════════════════════════════════════╝
 
+    - name: Add target host to inventory dynamically
+      ansible.builtin.add_host:
+        name: "{{ ja4proxy_vm_host }}"
+        groups: ja4proxy_vm
+        ansible_user: "{{ ja4proxy_ssh_user }}"
+        ansible_ssh_private_key_file: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519"
+        ansible_python_interpreter: /usr/bin/python3
+      changed_when: false
+
     - name: Ensure community.general collection is installed
       ansible.builtin.command:
         cmd: ansible-galaxy collection install community.general community.docker
@@ -143,35 +152,35 @@
 
   roles:
     # Phase 1: VM Provisioning & Hardening
-    - role: 01-vm-provisioning
+    - role: ../roles/01-vm-provisioning
       tags: [provisioning, phase1]
 
     # Phase 2: Artifact Build & Config Deployment
-    - role: 02-artifact-build
+    - role: ../roles/02-artifact-build
       tags: [artifacts, phase2]
 
     # Phase 3: JA4proxy systemd Deployment
-    - role: 03-ja4proxy-deploy
+    - role: ../roles/03-ja4proxy-deploy
       tags: [deploy, phase3]
 
     # Phase 4: Supporting Services (Docker Compose)
-    - role: 04-supporting-services
+    - role: ../roles/04-supporting-services
       tags: [docker, phase4]
 
     # Phase 5: Data Collection (Grafana, journald)
-    - role: 05-data-collection
+    - role: ../roles/05-data-collection
       tags: [data-collection, phase5]
 
     # Phase 6: Operational Security
-    - role: 06-operational-security
+    - role: ../roles/06-operational-security
       tags: [opsec, phase6]
 
     # Phase 7: Validation & Smoke Tests
-    - role: 07-validation
+    - role: ../roles/07-validation
       tags: [validation, phase7]
 
     # Phase 8: Security Hardening
-    - role: 08-hardening
+    - role: ../roles/08-hardening
       tags: [hardening, phase8]
 
   post_tasks:
