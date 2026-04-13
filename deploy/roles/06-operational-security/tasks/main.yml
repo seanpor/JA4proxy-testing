@@ -25,7 +25,6 @@
     owner: root
     group: root
     mode: "0755"
-  ignore_errors: true
 
 - name: Deploy notify failure script
   ansible.builtin.copy:
