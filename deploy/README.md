@@ -26,8 +26,14 @@ make cloud ALIYUN_ARGS="--region eu-central-1 --instance-type ecs.g7.large --ssh
 # 2. Generate secrets (run once)
 make secrets
 
-# 3. Deploy everything
+# 3. Deploy everything (LOCKED DOWN — no public ports)
 make deploy
+
+# 4. Verify all services locally via SSH tunnel
+make verify VM_IP=<ip>
+
+# 5. Open to public internet (go-live)
+make go-live VM_IP=<ip>
 ```
 
 ### Option B: Existing VM
@@ -51,12 +57,61 @@ The playbook will prompt for 5 required inputs:
 | SSH public key | Full public key string | `ssh-ed25519 AAAA...` |
 | Go repo path OR binary path | Build from source or use prebuilt | `/home/user/JA4proxy` |
 
+## Security: Staged Deployment
+
+This deployment uses a **three-stage model** to ensure the system is verified internally before any ports are exposed to the public internet:
+
+| Stage | Port Bindings | TLS | UFW 80/443 | Access Method |
+|-------|--------------|-----|------------|---------------|
+| **locked** (default) | 127.0.0.1 only | Self-signed | Closed | SSH tunnel |
+| **verified** | 127.0.0.1 only | Self-signed | Closed | SSH tunnel (admin confirmed) |
+| **live** | 0.0.0.0 (public) | Let's Encrypt | Open | Direct HTTPS |
+
+### How It Works
+
+1. **`make deploy`** deploys in `locked` mode:
+   - All Docker ports bound to `127.0.0.1` (not public)
+   - Caddy uses self-signed TLS certificates
+   - UFW blocks ports 80/443 from the public
+   - Only SSH (port 22) and admin-IP-only ports (Grafana, Prometheus) are open
+
+2. **`make verify VM_IP=<ip>`** runs 25+ checks via SSH:
+   - All systemd services healthy
+   - All Docker containers running
+   - Full pipeline works: `curl https://127.0.0.1:443/` → honeypot HTML
+   - Network isolation verified (Redis/Loki can't reach internet)
+   - Dial=0 (monitor-only) confirmed
+
+3. **`make go-live VM_IP=<ip>`** opens the system:
+   - Re-deploys docker-compose.yml with public port bindings
+   - Updates Caddyfile for production Let's Encrypt ACME
+   - Opens UFW ports 80/443
+   - Verifies public HTTPS works
+
+### SSH Tunnel Access (locked mode)
+
+```bash
+# Tunnel Grafana to your local machine
+ssh -L 3000:127.0.0.1:3000 root@<VM_IP>
+# Then open: http://localhost:3000
+
+# Tunnel Prometheus
+ssh -L 9091:127.0.0.1:9091 root@<VM_IP>
+# Then open: http://localhost:9091
+
+# View logs directly
+ssh root@<VM_IP> "journalctl -u ja4proxy -f"
+ssh root@<VM_IP> "docker compose -f /opt/ja4proxy-docker/docker-compose.yml logs -f"
+```
+
 ## Partial Deployments
 
 ```bash
 make check          # Dry run — see what would change
 make cloud          # Provision Alibaba Cloud VM (aliyun CLI required)
 make digests        # Pin Docker image SHA-256 digests (supply chain security)
+make verify         # Run 25+ local health checks via SSH
+make go-live        # Open ports to public (requires VM_IP)
 make docker         # Docker Compose only (Phase 4)
 make validate       # Smoke tests only (Phase 7)
 make harden         # Security hardening only (Phase 8)

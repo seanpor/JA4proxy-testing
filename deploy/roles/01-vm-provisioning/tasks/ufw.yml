@@ -1,5 +1,9 @@
 ---
 # UFW firewall rules
+#
+# Deployment stage controls port exposure:
+#   locked/verified — only SSH (22) from admin IP, Grafana/Prometheus from admin IP
+#   live            — additionally opens 80/443 to public
 
 - name: Reset UFW
   tags: [provisioning, phase1]
@@ -27,21 +31,23 @@
     from_ip: "{{ ja4proxy_admin_ip }}"
     comment: "SSH from admin IP only"
 
-- name: Allow HTTP from anywhere (Caddy ACME)
+- name: Allow HTTP from anywhere (Caddy ACME) — LIVE ONLY
   tags: [provisioning, phase1]
   community.general.ufw:
     rule: allow
     port: "{{ ja4proxy_haproxy_http_port }}"
     proto: tcp
-    comment: "Caddy ACME HTTP"
+    comment: "Caddy ACME HTTP (public)"
+  when: ja4proxy_deployment_stage == "live"
 
-- name: Allow HTTPS from anywhere (HAProxy TLS)
+- name: Allow HTTPS from anywhere (HAProxy TLS) — LIVE ONLY
   tags: [provisioning, phase1]
   community.general.ufw:
     rule: allow
     port: "{{ ja4proxy_haproxy_tls_port }}"
     proto: tcp
-    comment: "HAProxy TLS passthrough"
+    comment: "HAProxy TLS passthrough (public)"
+  when: ja4proxy_deployment_stage == "live"
 
 - name: Allow Grafana from admin IP only
   tags: [provisioning, phase1]

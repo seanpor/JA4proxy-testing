@@ -244,6 +244,10 @@
     - role: ../roles/09-image-digests
       tags: [digests, phase9]
 
+    # Phase 10: Go Live (open ports to public)
+    - role: ../roles/10-go-live
+      tags: [go-live, phase10]
+
   post_tasks:
     - name: Deployment summary
       ansible.builtin.debug:

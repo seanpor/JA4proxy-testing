@@ -10,13 +10,17 @@
 # Variables without defaults are REQUIRED and must be supplied.
 # ─────────────────────────────────────────────────────────────
 
-# ── Required Inputs (set via vars_prompt or -e) ──────────────
-
-# Research domain name for the honeypot (e.g. test-honeypot.example.com)
-# ja4proxy_domain: ""
-
-# Public IP of the administrator (for SSH + Grafana + Prometheus allowlists)
-# ja4proxy_admin_ip: ""
+# ── Deployment Stage (staged rollout for security) ───────────
+#
+# "locked"   — all ports bound to 127.0.0.1, self-signed TLS,
+#               UFW blocks 80/443 from public. Verify via SSH tunnel.
+# "verified" — admin has confirmed services work via localhost curl.
+#               Same as "locked" — manual gate before going live.
+# "live"     — ports bound to 0.0.0.0, production Let's Encrypt certs,
+#               UFW opens 80/443 to public.
+#
+# Workflow: deploy (locked) → verify → go-live → live
+ja4proxy_deployment_stage: "locked"
 
 # SSH user to connect to the target VM on first run (typically 'root')
 ja4proxy_ssh_user: "root"

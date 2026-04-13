@@ -1,11 +1,21 @@
 {
     admin off
+{% if ja4proxy_deployment_stage == "live" %}
+    # Production ACME (Let's Encrypt) — go-live approved
+{% else %}
+    # Staging ACME / self-signed — DO NOT use in production
+    auto_https ignore_loaded_certificates
+{% endif %}
 }
 
 {{ ja4proxy_domain }} {
+{% if ja4proxy_deployment_stage == "live" %}
     tls {
-        # ACME (Let's Encrypt) — auto-provisioned via port 80
+        # Production Let's Encrypt certificates
     }
+{% else %}
+    tls internal
+{% endif %}
 
     log {
         output stdout

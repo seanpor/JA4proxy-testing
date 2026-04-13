@@ -65,6 +65,24 @@ harden:
 secrets:
 	@bash deploy/scripts/generate-secrets.sh
 
+# Verify all services locally via SSH (no public ports needed)
+verify:
+ifndef VM_IP
+	$(error VM_IP is required. Usage: make verify VM_IP=47.254.123.45)
+endif
+	@echo "Running local verification on $(VM_IP)..."
+	@ssh root@$(VM_IP) 'bash -s' < deploy/scripts/verify-local.sh
+
+# Go-live: open ports to public and switch to production ACME
+go-live:
+ifndef VM_IP
+	$(error VM_IP is required. Usage: make go-live VM_IP=47.254.123.45)
+endif
+	@echo "╔══════════════════════════════════════════════════════╗"
+	@echo "║   JA4proxy — Going Live (opening to public)          ║"
+	@echo "╚══════════════════════════════════════════════════════╝"
+	$(ANSIBLE) --tags "go-live,phase10" -e ja4proxy_go_live_confirm=true $(EXTRA_VARS)
+
 status:
 ifndef VM_IP
 	$(error VM_IP is required. Usage: make status VM_IP=47.254.123.45)

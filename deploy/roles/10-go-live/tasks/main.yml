@@ -1,0 +1,116 @@
+---
+# Role 10: Go Live — Open ports to public internet
+# ─────────────────────────────────────────────────────────────
+#
+# This role transitions the deployment from "locked" or "verified"
+# to "live":
+#   1. Re-deploy docker-compose.yml with public port bindings
+#   2. Update Caddyfile for production ACME (Let's Encrypt)
+#   3. Open UFW rules for 80/443
+#   4. Verify public access works
+#
+# Prerequisites:
+#   - All services verified healthy via 'make verify'
+#   - DNS A record pointing to VM IP
+#   - Admin confirms via --extra-vars or env var
+# ─────────────────────────────────────────────────────────────
+
+- name: Confirm go-live authorization
+  ansible.builtin.assert:
+    that:
+      - ja4proxy_deployment_stage == "live"
+        or ja4proxy_go_live_confirm | default(false) | bool
+    fail_msg: |
+      ⚠️  Go-live requires confirmation. Set one of:
+           -e ja4proxy_deployment_stage=live
+           -e ja4proxy_go_live_confirm=true
+    quiet: true
+  tags: [go-live, phase10]
+
+- name: Record go-live timestamp
+  ansible.builtin.copy:
+    content: "Go-live: {{ ansible_date_time.iso8601 | default('unknown') }}\n"
+    dest: "{{ ja4proxy_base_dir }}/go-live.timestamp"
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [go-live, phase10]
+
+- name: Update deployment stage in group_vars
+  ansible.builtin.lineinfile:
+    path: "{{ playbook_dir }}/../inventory/group_vars/all.yml"
+    regexp: "^ja4proxy_deployment_stage:"
+    line: "ja4proxy_deployment_stage: \"live\""
+  delegate_to: localhost
+  run_once: true
+  become: false
+  tags: [go-live, phase10]
+
+- name: Re-deploy docker-compose.yml with public port bindings
+  ansible.builtin.template:
+    src: templates/docker-compose.yml.j2
+    dest: "{{ ja4proxy_docker_base_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart docker compose
+  tags: [go-live, phase10]
+
+- name: Update Caddyfile for production ACME
+  ansible.builtin.template:
+    src: templates/caddyfile.j2
+    dest: "{{ ja4proxy_docker_config_dir }}/caddy/Caddyfile"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Caddy
+  tags: [go-live, phase10]
+
+- name: Open UFW port 80 (Caddy ACME HTTP)
+  community.general.ufw:
+    rule: allow
+    port: "{{ ja4proxy_haproxy_http_port }}"
+    proto: tcp
+    comment: "Caddy ACME HTTP (public)"
+  tags: [go-live, phase10]
+
+- name: Open UFW port 443 (HAProxy TLS)
+  community.general.ufw:
+    rule: allow
+    port: "{{ ja4proxy_haproxy_tls_port }}"
+    proto: tcp
+    comment: "HAProxy TLS passthrough (public)"
+  tags: [go-live, phase10]
+
+- name: Wait for Caddy to obtain production certificate
+  ansible.builtin.pause:
+    seconds: 30
+    prompt: "⏳ Waiting for Caddy to obtain Let's Encrypt certificate..."
+  tags: [go-live, phase10]
+
+- name: Verify public HTTPS access
+  ansible.builtin.uri:
+    url: "https://127.0.0.1:{{ ja4proxy_haproxy_tls_port }}/"
+    return_content: true
+    validate_certs: false
+  register: public_https_result
+  until: public_https_result.status == 200
+  retries: 10
+  delay: 5
+  changed_when: false
+  tags: [go-live, phase10]
+
+- name: Go-live summary
+  ansible.builtin.debug:
+    msg: |
+      🚀 GO-LIVE COMPLETE
+
+      Domain:          {{ ja4proxy_domain }}
+      Public HTTPS:    https://{{ ja4proxy_domain }}:{{ ja4proxy_haproxy_tls_port }}
+      Public HTTP:     http://{{ ja4proxy_domain }}:{{ ja4proxy_haproxy_http_port }}
+      Grafana:         http://{{ ja4proxy_vm_host }}:{{ ja4proxy_grafana_port }}
+      Prometheus:      http://{{ ja4proxy_vm_host }}:{{ ja4proxy_prometheus_port }}
+
+      ⚠️  The system is now publicly accessible.
+         Monitor: make status VM_IP={{ ja4proxy_vm_host }}
+         Logs:    ssh root@{{ ja4proxy_vm_host }} "journalctl -u ja4proxy -f"

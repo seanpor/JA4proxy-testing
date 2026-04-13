@@ -27,9 +27,14 @@ services:
     container_name: ja4proxy-haproxy
     restart: unless-stopped
     ports:
+{% if ja4proxy_deployment_stage == "live" %}
       - "{{ ja4proxy_haproxy_tls_port }}:{{ ja4proxy_haproxy_tls_port }}"
       - "{{ ja4proxy_haproxy_http_port }}:{{ ja4proxy_haproxy_http_port }}"
       - "{{ ja4proxy_haproxy_stats_port }}:{{ ja4proxy_haproxy_stats_port }}"
+{% else %}
+      - "127.0.0.1:{{ ja4proxy_haproxy_tls_port }}:{{ ja4proxy_haproxy_tls_port }}"
+      - "127.0.0.1:{{ ja4proxy_haproxy_http_port }}:{{ ja4proxy_haproxy_http_port }}"
+{% endif %}
     volumes:
       - ./config/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     networks:
@@ -104,7 +109,11 @@ services:
       - '--storage.tsdb.retention.time={{ ja4proxy_loki_retention_days }}d'
       - '--web.listen-address=:9090'
     ports:
+{% if ja4proxy_deployment_stage == "live" %}
       - "{{ ja4proxy_prometheus_port }}:9090"
+{% else %}
+      - "127.0.0.1:{{ ja4proxy_prometheus_port }}:9090"
+{% endif %}
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
@@ -133,7 +142,11 @@ services:
       - GF_SERVER_HTTP_PORT=3000
       - GF_AUTH_ANONYMOUS_ENABLED=false
     ports:
+{% if ja4proxy_deployment_stage == "live" %}
       - "{{ ja4proxy_grafana_port }}:3000"
+{% else %}
+      - "127.0.0.1:{{ ja4proxy_grafana_port }}:3000"
+{% endif %}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
