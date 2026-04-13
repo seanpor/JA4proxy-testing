@@ -83,6 +83,7 @@
   retries: 5
   delay: 3
   changed_when: false
+  tags: [docker, phase4]
 
 - name: Docker Compose services summary
   ansible.builtin.debug:

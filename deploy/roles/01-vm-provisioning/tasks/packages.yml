@@ -5,12 +5,14 @@
   ansible.builtin.apt:
     update_cache: true
     cache_valid_time: 3600
+  tags: [packages, provisioning, phase1]
 
 - name: Upgrade all packages
   ansible.builtin.apt:
     upgrade: dist
     autoremove: true
     autoclean: true
+  tags: [packages, provisioning, phase1]
 
 - name: Install base packages
   ansible.builtin.apt:
@@ -35,6 +37,7 @@
       - aide
       - python3-pip
     state: present
+  tags: [packages, provisioning, phase1]
 
 - name: Enable unattended-upgrades
   ansible.builtin.debconf:
