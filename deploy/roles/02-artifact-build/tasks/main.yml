@@ -1,0 +1,19 @@
+---
+# Role 02: Artifact Build & Config Deployment
+# ─────────────────────────────────────────────────────────────
+# Corresponds to PHASE_02_ARTIFACT_PREPARATION.md
+#
+# Tasks:
+#   1. Build JA4proxy binary (or use prebuilt)
+#   2. Deploy all config files from templates
+#   3. GeoIP database
+# ─────────────────────────────────────────────────────────────
+
+- name: Build or copy JA4proxy binary
+  ansible.builtin.include_tasks: build.yml
+
+- name: Deploy configuration files
+  ansible.builtin.include_tasks: deploy-configs.yml
+
+- name: GeoIP database
+  ansible.builtin.include_tasks: geoip.yml

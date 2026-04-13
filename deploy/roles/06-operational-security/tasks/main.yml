@@ -1,0 +1,114 @@
+---
+# Role 06: Operational Security
+# ─────────────────────────────────────────────────────────────
+# Corresponds to PHASE_06_OPERATIONAL_SECURITY.md
+#
+# Tasks:
+#   1. Deploy monitoring scripts
+#   2. Deploy alerting service template
+#   3. Deploy backup script
+#   4. Set up cron for daily health check
+# ─────────────────────────────────────────────────────────────
+
+- name: Create scripts directory
+  ansible.builtin.file:
+    path: "{{ ja4proxy_base_dir }}/scripts"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy health check script
+  ansible.builtin.copy:
+    src: files/scripts/health-check.sh
+    dest: "{{ ja4proxy_base_dir }}/scripts/health-check.sh"
+    owner: root
+    group: root
+    mode: "0755"
+  ignore_errors: true
+
+- name: Deploy notify failure script
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      SERVICE_NAME="$1"
+      TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+      echo "ALERT: Service $SERVICE_NAME failed at $TIMESTAMP on $(hostname)" | \
+        mail -s "JA4proxy Research VM: $SERVICE_NAME failed" root@localhost
+    dest: "{{ ja4proxy_base_dir }}/scripts/notify-failure.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy backup configs script
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      BACKUP_DIR="/tmp/ja4proxy-backup-$(date +%Y%m%d)"
+      mkdir -p "$BACKUP_DIR"
+      cp {{ ja4proxy_config_dir }}/proxy.yml "$BACKUP_DIR/"
+      cp {{ ja4proxy_docker_base_dir }}/.env "$BACKUP_DIR/"
+      cp {{ ja4proxy_docker_base_dir }}/docker-compose.yml "$BACKUP_DIR/"
+      cp -r {{ ja4proxy_docker_config_dir }} "$BACKUP_DIR/"
+      tar czf "$BACKUP_DIR.tar.gz" -C /tmp "$BACKUP_DIR"
+      rm -rf "$BACKUP_DIR"
+      echo "Backup: $BACKUP_DIR.tar.gz"
+    dest: "{{ ja4proxy_base_dir }}/scripts/backup-configs.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy verify artifacts script
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      echo "=== Artifact Integrity Verification ==="
+      EXPECTED_SHA=$(sha256sum {{ ja4proxy_bin_dir }}/ja4proxy | awk '{print $1}')
+      echo "[1/1] JA4proxy binary SHA256: $EXPECTED_SHA"
+      for f in {{ ja4proxy_config_dir }}/proxy.yml {{ ja4proxy_docker_base_dir }}/.env \
+               {{ ja4proxy_docker_base_dir }}/docker-compose.yml; do
+          if [ -f "$f" ]; then
+              echo "  ✅ $f exists ($(stat -c%s "$f") bytes)"
+          else
+              echo "  ❌ $f MISSING"
+              exit 1
+          fi
+      done
+      echo "=== Verification Complete ==="
+    dest: "{{ ja4proxy_base_dir }}/scripts/verify-artifacts.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Add OnFailure alert to ja4proxy service
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/system/ja4proxy.service
+    regexp: "^OnFailure="
+    insertafter: "^\\[Unit\\]"
+    line: "OnFailure=alert@%n.service"
+  notify: Daemon reload systemd
+
+- name: Deploy alert service template
+  ansible.builtin.copy:
+    content: |
+      [Unit]
+      Description=Alert Handler for %i
+
+      [Service]
+      Type=oneshot
+      ExecStart={{ ja4proxy_base_dir }}/scripts/notify-failure.sh %i
+    dest: /etc/systemd/system/alert@.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Daemon reload systemd
+
+- name: Set up daily health check cron
+  ansible.builtin.cron:
+    name: "JA4proxy daily health check"
+    minute: "0"
+    hour: "6"
+    job: "ssh -o BatchMode=yes root@127.0.0.1 '{{ ja4proxy_base_dir }}/scripts/health-check.sh' 2>/dev/null || true"
+    user: root
+    state: present

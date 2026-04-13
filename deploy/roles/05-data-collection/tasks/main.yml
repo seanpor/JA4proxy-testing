@@ -1,0 +1,44 @@
+---
+# Role 05: Data Collection (Grafana dashboards, journald retention)
+# ─────────────────────────────────────────────────────────────
+# Corresponds to PHASE_05_DATA_COLLECTION.md
+#
+# Tasks:
+#   1. Deploy Grafana dashboard JSON files
+#   2. Configure journald retention
+# ─────────────────────────────────────────────────────────────
+
+- name: Deploy Grafana dashboards
+  ansible.builtin.copy:
+    src: "grafana-dashboards/{{ item }}"
+    dest: "{{ ja4proxy_docker_config_dir }}/grafana/dashboards/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - overview.json
+    - tls-analysis.json
+    - geographic.json
+    - bot-detection.json
+    - performance.json
+    - honeypot.json
+    - trends.json
+  ignore_errors: true
+  # Dashboards will be created in a follow-up task.
+  # This is safe to skip on first run.
+
+- name: Configure journald retention
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: "^#?{{ item.key }}"
+    line: "{{ item.key }}={{ item.value }}"
+  loop:
+    - { key: "MaxRetentionSec", value: "{{ ja4proxy_journald_max_retention }}" }
+    - { key: "MaxUse", value: "{{ ja4proxy_journald_max_use }}" }
+    - { key: "SystemMaxUse", value: "{{ ja4proxy_journald_max_use }}" }
+  notify: Restart journald
+
+- name: Restart journald
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted

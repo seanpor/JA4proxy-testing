@@ -1,0 +1,38 @@
+---
+# GeoIP database setup
+
+- name: Copy GeoIP from local file
+  ansible.builtin.copy:
+    src: "{{ ja4proxy_geoip_file_path }}"
+    dest: "{{ ja4proxy_geoip_dir }}/{{ ja4proxy_geoip_filename }}"
+    owner: "{{ ja4proxy_system_user }}"
+    group: "{{ ja4proxy_system_group }}"
+    mode: "0640"
+  when: >
+    ja4proxy_geoip_file_path is defined and ja4proxy_geoip_file_path | length > 0
+
+- name: Download GeoIP from URL
+  ansible.builtin.get_url:
+    url: "{{ ja4proxy_geoip_download_url }}"
+    dest: "{{ ja4proxy_geoip_dir }}/{{ ja4proxy_geoip_filename }}"
+    owner: "{{ ja4proxy_system_user }}"
+    group: "{{ ja4proxy_system_group }}"
+    mode: "0640"
+  when: >
+    ja4proxy_geoip_file_path is not defined or ja4proxy_geoip_file_path | length == 0
+    and ja4proxy_geoip_download_url is defined and ja4proxy_geoip_download_url | length > 0
+  register: geoip_download
+
+- name: Warn if GeoIP not provided
+  ansible.builtin.debug:
+    msg: |
+      ⚠️  GeoIP database not provided. JA4proxy will start without GeoIP lookups.
+      To add GeoIP later:
+        1. Download from https://lite.ip2location.com/
+        2. Copy to {{ ja4proxy_geoip_dir }}/{{ ja4proxy_geoip_filename }}
+        3. chown {{ ja4proxy_system_user }}:{{ ja4proxy_system_group }}
+        4. chmod 640
+        5. systemctl reload ja4proxy
+  when: >
+    (ja4proxy_geoip_file_path is not defined or ja4proxy_geoip_file_path | length == 0)
+    and (ja4proxy_geoip_download_url is not defined or ja4proxy_geoip_download_url | length == 0)

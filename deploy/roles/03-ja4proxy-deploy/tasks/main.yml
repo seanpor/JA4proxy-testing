@@ -1,0 +1,85 @@
+---
+# Role 03: JA4proxy systemd Deployment
+# ─────────────────────────────────────────────────────────────
+# Corresponds to PHASE_03_JA4PROXY_DEPLOYMENT.md
+#
+# Tasks:
+#   1. Deploy systemd service files
+#   2. Enable and start services
+#   3. Health checks
+# ─────────────────────────────────────────────────────────────
+
+- name: Deploy systemd service files
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { src: "templates/ja4proxy.service.j2", dest: "/etc/systemd/system/ja4proxy.service" }
+    - { src: "templates/ja4proxy-redis.service.j2", dest: "/etc/systemd/system/ja4proxy-redis.service" }
+  notify: Daemon reload systemd
+
+- name: Enable and start JA4proxy Redis wrapper
+  ansible.builtin.systemd:
+    name: ja4proxy-redis
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Wait for Redis container to be ready
+  ansible.builtin.command:
+    cmd: "docker exec ja4proxy-redis redis-cli -a {{ redis_password }} ping"
+  register: redis_ping
+  until: redis_ping.rc == 0 and "PONG" in redis_ping.stdout
+  retries: 10
+  delay: 5
+  changed_when: false
+  no_log: true
+
+- name: Enable and start JA4proxy service
+  ansible.builtin.systemd:
+    name: ja4proxy
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Wait for /health endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ ja4proxy_proxy_metrics_port }}/health"
+    return_content: true
+  register: health_result
+  until: health_result.status == 200
+  retries: 15
+  delay: 10
+  changed_when: false
+
+- name: Verify /health/deep endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ ja4proxy_proxy_metrics_port }}/health/deep"
+    return_content: true
+  register: deep_health_result
+  until: deep_health_result.status == 200
+  retries: 5
+  delay: 5
+  changed_when: false
+
+- name: Verify /metrics endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ ja4proxy_proxy_metrics_port }}/metrics"
+    return_content: true
+  register: metrics_result
+  until: metrics_result.status == 200
+  retries: 5
+  delay: 5
+  changed_when: false
+
+- name: JA4proxy health summary
+  ansible.builtin.debug:
+    msg: |
+      ✅ JA4proxy is healthy and accepting connections.
+      - /health: {{ health_result.status }}
+      - /health/deep: {{ deep_health_result.status }}
+      - /metrics: {{ metrics_result.status }}
+      - Dial: {{ ja4proxy_dial }} (monitor-only)

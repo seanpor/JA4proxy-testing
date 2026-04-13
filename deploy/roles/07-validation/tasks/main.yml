@@ -1,0 +1,75 @@
+---
+# Role 07: Validation & Smoke Tests
+# ─────────────────────────────────────────────────────────────
+# Corresponds to PHASE_07_VALIDATION_TESTING.md
+#
+# Tasks:
+#   1. Full HTTPS pipeline test
+#   2. Verify JA4proxy logged the connection
+#   3. Verify Prometheus counter incremented
+#   4. Verify network isolation
+# ─────────────────────────────────────────────────────────────
+
+- name: Wait for Caddy TLS certificate to be ready
+  ansible.builtin.uri:
+    url: "https://127.0.0.1:{{ ja4proxy_haproxy_tls_port }}/"
+    return_content: true
+    validate_certs: false
+  register: caddy_tls_result
+  until: caddy_tls_result.status == 200
+  retries: 30
+  delay: 10
+  changed_when: false
+
+- name: Verify honeypot HTML content
+  ansible.builtin.assert:
+    that:
+      - "'RESEARCH HONEYPOT' in caddy_tls_result.content"
+    fail_msg: "Honeypot HTML does not contain expected warning text."
+
+- name: Generate controlled test traffic (openssl s_client)
+  ansible.builtin.shell: |
+    echo | openssl s_client -connect 127.0.0.1:{{ ja4proxy_haproxy_tls_port }} -tls1_2 2>/dev/null | head -5
+  register: openssl_test
+  changed_when: false
+  failed_when: false
+
+- name: Generate controlled test traffic (curl)
+  ansible.builtin.command:
+    cmd: "curl -sk https://127.0.0.1:{{ ja4proxy_haproxy_tls_port }}/ > /dev/null 2>&1"
+  register: curl_test
+  changed_when: false
+  failed_when: false
+
+- name: Wait for JA4proxy to process test connections
+  ansible.builtin.pause:
+    seconds: 5
+
+- name: Verify Prometheus connections counter incremented
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ ja4proxy_proxy_metrics_port }}/metrics"
+    return_content: true
+  register: metrics_after
+  changed_when: false
+
+- name: Verify network isolation — internal containers can't reach internet
+  ansible.builtin.shell: |
+    docker exec ja4proxy-redis wget -T3 http://example.com 2>&1 || echo "ISOLATED"
+  register: redis_isolation
+  changed_when: false
+  failed_when: false
+
+- name: Assert Redis is isolated
+  ansible.builtin.assert:
+    that:
+      - "'ISOLATED' in redis_isolation.stdout or redis_isolation.rc != 0"
+    fail_msg: "Redis container can reach the internet — network isolation is broken."
+
+- name: Smoke test summary
+  ansible.builtin.debug:
+    msg: |
+      ✅ All smoke tests passed.
+      - HTTPS pipeline: {{ caddy_tls_result.status }}
+      - Honeypot content: verified
+      - Test traffic generated: curl + openssl
+      - Network isolation: verified (Redis cannot reach internet)

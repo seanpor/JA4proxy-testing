@@ -1,0 +1,99 @@
+---
+# Role 08: Security Hardening
+# ─────────────────────────────────────────────────────────────
+# Corresponds to PHASE_08_SECURITY_HARDENING.md
+#
+# Tasks:
+#   1. Deploy sysctl hardening configs
+#   2. Deploy AppArmor profile
+#   3. Kernel module lockdown
+#   4. AIDE file integrity monitoring
+# ─────────────────────────────────────────────────────────────
+
+- name: Deploy network sysctl hardening
+  ansible.builtin.template:
+    src: templates/sysctl-network-hardening.conf.j2
+    dest: /etc/sysctl.d/99-ja4proxy-network-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy process sysctl hardening
+  ansible.builtin.template:
+    src: templates/sysctl-process-hardening.conf.j2
+    dest: /etc/sysctl.d/99-ja4proxy-process-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Apply all sysctl
+  ansible.builtin.command:
+    cmd: sysctl --system
+  changed_when: false
+
+- name: Deploy AppArmor profile for JA4proxy
+  ansible.builtin.template:
+    src: templates/apparmor-ja4proxy.j2
+    dest: /etc/apparmor.d/opt.ja4proxy.bin.ja4proxy
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Load AppArmor profile
+  ansible.builtin.command:
+    cmd: apparmor_parser -r /etc/apparmor.d/opt.ja4proxy.bin.ja4proxy
+  changed_when: true
+  register: apparmor_load
+
+- name: Verify AppArmor profile is loaded
+  ansible.builtin.command:
+    cmd: aa-status
+  register: aa_status_result
+  changed_when: false
+  failed_when: false
+
+- name: Add AppArmor profile to systemd service
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/system/ja4proxy.service
+    regexp: "^AppArmorProfile="
+    line: "AppArmorProfile=opt.ja4proxy.bin.ja4proxy"
+  notify: Daemon reload systemd
+
+- name: Deploy kernel module lockdown
+  ansible.builtin.copy:
+    content: |
+      # Lock down unnecessary kernel modules
+      install dccp /bin/false
+      install sctp /bin/false
+      install rds /bin/false
+      install tipc /bin/false
+      install n-hdlc /bin/false
+      install ax25 /bin/false
+      install netrom /bin/false
+      install x25 /bin/false
+      install rose /bin/false
+      install decnet /bin/false
+      install econet /bin/false
+      install af_802154 /bin/false
+      install ipx /bin/false
+      install appletalk /bin/false
+    dest: /etc/modprobe.d/99-ja4proxy-lockdown.conf
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Initialize AIDE database (first run only)
+  ansible.builtin.command:
+    cmd: aideinit
+    creates: /var/lib/aide/aide.db.new
+  changed_when: true
+
+- name: AIDE hardening summary
+  ansible.builtin.debug:
+    msg: |
+      ✅ Security hardening applied.
+      - sysctl: network + process hardening deployed
+      - AppArmor: JA4proxy profile loaded
+      - Kernel modules: unnecessary modules blocked
+      - AIDE: file integrity monitoring initialized
+      Note: Full kernel lockdown requires a reboot.

@@ -1,0 +1,6 @@
+---
+# Handlers for Role 03
+
+- name: Daemon reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true

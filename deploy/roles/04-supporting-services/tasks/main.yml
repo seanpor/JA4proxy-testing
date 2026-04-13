@@ -1,0 +1,95 @@
+---
+# Role 04: Supporting Services (Docker Compose)
+# ─────────────────────────────────────────────────────────────
+# Corresponds to PHASE_04_SUPPORTING_SERVICES.md
+#
+# Tasks:
+#   1. Pull all Docker images
+#   2. Start Docker Compose stack
+#   3. Verify all containers running
+# ─────────────────────────────────────────────────────────────
+
+- name: Pull all Docker images
+  community.docker.docker_compose_v2:
+    project_src: "{{ ja4proxy_docker_base_dir }}"
+    pull: always
+    state: present
+  register: compose_pull
+  retries: 3
+  delay: 15
+  until: compose_pull is not failed
+
+- name: Start Docker Compose stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ ja4proxy_docker_base_dir }}"
+    state: present
+  register: compose_up
+
+- name: Verify all containers running
+  ansible.builtin.command:
+    cmd: "docker compose -f {{ ja4proxy_docker_base_dir }}/docker-compose.yml ps --format json"
+  register: container_ps
+  changed_when: false
+
+- name: Verify Redis
+  ansible.builtin.command:
+    cmd: "docker exec ja4proxy-redis redis-cli -a {{ redis_password }} ping"
+  register: redis_result
+  until: redis_result.rc == 0 and "PONG" in redis_result.stdout
+  retries: 10
+  delay: 3
+  changed_when: false
+  no_log: true
+
+- name: Verify Caddy honeypot
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ ja4proxy_caddy_internal_port }}/"
+    return_content: true
+  register: caddy_result
+  until: caddy_result.status == 200 and "RESEARCH HONEYPOT" in caddy_result.content
+  retries: 10
+  delay: 5
+  changed_when: false
+
+- name: Verify Prometheus
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ ja4proxy_prometheus_port }}/-/healthy"
+    return_content: true
+  register: prometheus_result
+  until: prometheus_result.status == 200
+  retries: 5
+  delay: 3
+  changed_when: false
+
+- name: Verify Grafana
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ ja4proxy_grafana_port }}/api/health"
+    user: admin
+    password: "{{ grafana_admin_password }}"
+    force_basic_auth: true
+    return_content: true
+  register: grafana_result
+  until: grafana_result.status == 200
+  retries: 5
+  delay: 3
+  changed_when: false
+
+- name: Verify Loki
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:3100/ready"
+    return_content: true
+  register: loki_result
+  until: loki_result.status == 200
+  retries: 5
+  delay: 3
+  changed_when: false
+
+- name: Docker Compose services summary
+  ansible.builtin.debug:
+    msg: |
+      ✅ All Docker Compose services are running and healthy.
+      - Redis: PONG
+      - Caddy: {{ caddy_result.status }}
+      - Prometheus: {{ prometheus_result.status }}
+      - Grafana: {{ grafana_result.status }}
+      - Loki: {{ loki_result.status }}

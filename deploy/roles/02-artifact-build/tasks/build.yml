@@ -1,0 +1,86 @@
+---
+# Build JA4proxy binary on the control machine, or use a pre-built binary
+
+- name: Check if prebuilt binary path is provided
+  ansible.builtin.stat:
+    path: "{{ ja4proxy_prebuilt_binary_path }}"
+  delegate_to: localhost
+  become: false
+  register: prebuilt_check
+  when: ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0
+
+- name: Use prebuilt binary
+  block:
+    - name: Verify prebuilt binary exists
+      ansible.builtin.assert:
+        that:
+          - prebuilt_check.stat.exists
+        fail_msg: "Prebuilt binary not found at {{ ja4proxy_prebuilt_binary_path }}"
+
+    - name: Copy prebuilt binary to target
+      ansible.builtin.copy:
+        src: "{{ ja4proxy_prebuilt_binary_path }}"
+        dest: "{{ ja4proxy_bin_dir }}/ja4proxy"
+        owner: "{{ ja4proxy_system_user }}"
+        group: "{{ ja4proxy_system_group }}"
+        mode: "0750"
+
+    - name: Generate checksum for prebuilt binary
+      ansible.builtin.command:
+        cmd: "sha256sum {{ ja4proxy_bin_dir }}/ja4proxy"
+      delegate_to: localhost
+      become: false
+      register: prebuilt_checksum
+      changed_when: false
+
+  when: ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0
+
+- name: Build from source
+  block:
+    - name: Verify Go repo path exists
+      ansible.builtin.stat:
+        path: "{{ ja4proxy_build_machine_go_path }}"
+      delegate_to: localhost
+      become: false
+      register: repo_check
+
+    - name: Build JA4proxy binary (cross-compile for Linux amd64)
+      ansible.builtin.command:
+        cmd: >
+          bash -c '
+            cd {{ ja4proxy_build_machine_go_path }} &&
+            GOOS=linux GOARCH=amd64 CGO_ENABLED=0 make go-build
+          '
+      delegate_to: localhost
+      become: false
+      args:
+        chdir: "{{ ja4proxy_build_machine_go_path }}"
+      register: build_result
+      changed_when: true
+
+    - name: Verify binary is static ELF
+      ansible.builtin.command:
+        cmd: file {{ ja4proxy_build_machine_go_path }}/bin/proxy
+      delegate_to: localhost
+      become: false
+      register: file_check
+      changed_when: false
+
+    - name: Copy built binary to target
+      ansible.builtin.copy:
+        src: "{{ ja4proxy_build_machine_go_path }}/bin/proxy"
+        dest: "{{ ja4proxy_bin_dir }}/ja4proxy"
+        owner: "{{ ja4proxy_system_user }}"
+        group: "{{ ja4proxy_system_group }}"
+        mode: "0750"
+
+    - name: Generate checksum for built binary
+      ansible.builtin.command:
+        cmd: "sha256sum {{ ja4proxy_build_machine_go_path }}/bin/proxy"
+      delegate_to: localhost
+      become: false
+      register: build_checksum
+      changed_when: false
+
+  when: >
+    not (ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0)

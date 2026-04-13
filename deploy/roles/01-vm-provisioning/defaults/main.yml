@@ -1,0 +1,4 @@
+---
+# Role 01 defaults — all overridden by group_vars/all.yml or vars_prompt
+ja4proxy_vm_hostname: "ja4proxy-research"
+ja4proxy_ssh_user: "root"
