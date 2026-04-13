@@ -21,12 +21,7 @@ Automated deployment of the JA4proxy research honeypot to an internet-facing Ubu
 
 ```bash
 # 1. Provision the VM (creates VPC, security group, ECS instance, EIP)
-make provision -- \
-  --region eu-central-1 \
-  --instance-type ecs.g7.large \
-  --ssh-key-name my-key-pair \
-  --admin-ip 1.2.3.4 \
-  --domain test-honeypot.example.com
+make cloud ALIYUN_ARGS="--region eu-central-1 --instance-type ecs.g7.large --ssh-key-name my-key-pair --admin-ip 1.2.3.4 --domain test-honeypot.example.com"
 
 # 2. Generate secrets (run once)
 make secrets
@@ -60,11 +55,23 @@ The playbook will prompt for 5 required inputs:
 
 ```bash
 make check          # Dry run — see what would change
-make provision      # Provision Alibaba Cloud VM (aliyun CLI required)
+make cloud          # Provision Alibaba Cloud VM (aliyun CLI required)
 make digests        # Pin Docker image SHA-256 digests (supply chain security)
 make docker         # Docker Compose only (Phase 4)
 make validate       # Smoke tests only (Phase 7)
 make harden         # Security hardening only (Phase 8)
+```
+
+## CI/CD Usage
+
+```bash
+# All inputs via environment variables — no prompts
+JA4PROXY_DOMAIN=test.example.com \
+JA4PROXY_VM_HOST=47.254.123.45 \
+JA4PROXY_ADMIN_IP=1.2.3.4 \
+JA4PROXY_SSH_PUBLIC_KEY="ssh-ed25519 AAAA..." \
+JA4PROXY_BUILD_MACHINE_GO_PATH=/home/user/JA4proxy \
+make ci-deploy
 ```
 
 ## Operations
