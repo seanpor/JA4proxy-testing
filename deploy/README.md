@@ -43,8 +43,8 @@ make harden         # Security hardening only (Phase 8)
 ## Operations
 
 ```bash
-make status         # Quick health check via SSH
-make destroy        # Stop all Docker containers
+make status VM_IP=47.254.123.45   # Quick health check via SSH
+make destroy VM_IP=47.254.123.45  # Stop all Docker containers
 ```
 
 ## After Deploying

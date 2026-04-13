@@ -21,7 +21,8 @@
 
 INVENTORY   := -i deploy/inventory/hosts.ini
 PLAYBOOK    := deploy/playbooks/site.yml
-ANSIBLE     := ansible-playbook $(INVENTORY)
+EXTRA_VARS  ?=
+ANSIBLE     := ansible-playbook $(INVENTORY) $(PLAYBOOK)
 
 .PHONY: deploy check provision docker validate harden secrets status destroy
 
@@ -29,33 +30,33 @@ deploy:
 	@echo "╔══════════════════════════════════════════════════════╗"
 	@echo "║   JA4proxy — Full Deployment                        ║"
 	@echo "╚══════════════════════════════════════════════════════╝"
-	$(ANSIBLE) $(PLAYBOOK)
+	$(ANSIBLE) $(EXTRA_VARS)
 
 check:
 	@echo "Running in check mode (dry run)..."
-	$(ANSIBLE) $(PLAYBOOK) --check --diff
+	$(ANSIBLE) --check --diff $(EXTRA_VARS)
 
 provision:
-	$(ANSIBLE) $(PLAYBOOK) --tags "provisioning"
+	$(ANSIBLE) --tags "provisioning,phase1" $(EXTRA_VARS)
 
 docker:
-	$(ANSIBLE) $(PLAYBOOK) --tags "docker"
+	$(ANSIBLE) --tags "docker,phase4" $(EXTRA_VARS)
 
 validate:
-	$(ANSIBLE) $(PLAYBOOK) --tags "validation"
+	$(ANSIBLE) --tags "validation,phase7" $(EXTRA_VARS)
 
 harden:
-	$(ANSIBLE) $(PLAYBOOK) --tags "hardening"
+	$(ANSIBLE) --tags "hardening,phase8" $(EXTRA_VARS)
 
 secrets:
 	@bash deploy/scripts/generate-secrets.sh
 
 status:
 	@echo "Connecting to VM for health check..."
-	ssh root@$$(grep -oP '^\S+' deploy/inventory/hosts.ini | head -1) \
+	@ssh root@$(VM_IP) \
 	  "systemctl is-active ja4proxy && docker compose -f /opt/ja4proxy-docker/docker-compose.yml ps"
 
 destroy:
 	@echo "Stopping all Docker containers..."
-	ssh root@$$(grep -oP '^\S+' deploy/inventory/hosts.ini | head -1) \
+	@ssh root@$(VM_IP) \
 	  "cd /opt/ja4proxy-docker && docker compose down"
