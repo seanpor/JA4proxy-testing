@@ -48,6 +48,12 @@ validate:
 harden:
 	$(ANSIBLE) --tags "hardening,phase8" $(EXTRA_VARS)
 
+digests:
+	$(ANSIBLE) --tags "digests,phase9" $(EXTRA_VARS)
+
+provision:
+	@bash deploy/scripts/provision-alibaba-cloud.sh
+
 secrets:
 	@bash deploy/scripts/generate-secrets.sh
 

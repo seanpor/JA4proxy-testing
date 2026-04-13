@@ -183,6 +183,10 @@
     - role: ../roles/08-hardening
       tags: [hardening, phase8]
 
+    # Phase 9: Image Digest Pinning (supply chain security)
+    - role: ../roles/09-image-digests
+      tags: [digests, phase9]
+
   post_tasks:
     - name: Deployment summary
       ansible.builtin.debug:

@@ -7,9 +7,35 @@ Automated deployment of the JA4proxy research honeypot to an internet-facing Ubu
 - **Ansible 2.14+** on your control machine: `pip install ansible`
 - **Go toolchain** (if building from source): `go version`
 - **SSH access** to the target VM
-- **Alibaba Cloud VM**: Ubuntu 22.04 LTS, minimum `ecs.g7.large` (2 vCPU, 8GB RAM, 40GB ESSD)
+- **Alibaba Cloud CLI** (`aliyun`) — for VM provisioning: `pip install aliyun-cli`
+- **Alibaba Cloud credentials** — set via `aliyun configure` or env vars
+
+### Required Collections (auto-installed on first run)
+- `community.general` — UFW, debconf modules
+- `community.docker` — Docker Compose v2 module
+- `ansible.posix` — sysctl, authorized_key modules
 
 ## Quick Start
+
+### Option A: Fresh Alibaba Cloud VM
+
+```bash
+# 1. Provision the VM (creates VPC, security group, ECS instance, EIP)
+make provision -- \
+  --region eu-central-1 \
+  --instance-type ecs.g7.large \
+  --ssh-key-name my-key-pair \
+  --admin-ip 1.2.3.4 \
+  --domain test-honeypot.example.com
+
+# 2. Generate secrets (run once)
+make secrets
+
+# 3. Deploy everything
+make deploy
+```
+
+### Option B: Existing VM
 
 ```bash
 # 1. Generate secrets (run once, stored in deploy/.vault/secrets.yml)
@@ -34,7 +60,8 @@ The playbook will prompt for 5 required inputs:
 
 ```bash
 make check          # Dry run — see what would change
-make provision      # VM provisioning only (Phase 1)
+make provision      # Provision Alibaba Cloud VM (aliyun CLI required)
+make digests        # Pin Docker image SHA-256 digests (supply chain security)
 make docker         # Docker Compose only (Phase 4)
 make validate       # Smoke tests only (Phase 7)
 make harden         # Security hardening only (Phase 8)

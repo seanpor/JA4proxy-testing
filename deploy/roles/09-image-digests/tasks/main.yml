@@ -1,0 +1,78 @@
+---
+# Role 09: Image Digest Pinning
+# ─────────────────────────────────────────────────────────────
+# Corresponds to PHASE_08_SECURITY_HARDENING.md §8.3.1
+#
+# Replaces Docker image tags (e.g. haproxy:2.8-alpine) with
+# SHA-256 digests to prevent supply chain attacks via tag mutation.
+#
+# This runs ONCE during initial deployment to resolve digests,
+# then the docker-compose.yml is rewritten with pinned digests.
+# ─────────────────────────────────────────────────────────────
+
+- name: Pull all images to resolve digests
+  ansible.builtin.command:
+    cmd: "docker pull {{ item }}"
+  loop:
+    - "{{ ja4proxy_docker_image_haproxy }}"
+    - "{{ ja4proxy_docker_image_redis }}"
+    - "{{ ja4proxy_docker_image_caddy }}"
+    - "{{ ja4proxy_docker_image_prometheus }}"
+    - "{{ ja4proxy_docker_image_grafana }}"
+    - "{{ ja4proxy_docker_image_loki }}"
+    - "{{ ja4proxy_docker_image_promtail }}"
+  register: pull_results
+  changed_when: false
+  retries: 3
+  delay: 10
+  until: pull_results is not failed
+
+- name: Resolve image digests
+  ansible.builtin.command:
+    cmd: "docker inspect --format='{{ '{{' }}index .RepoDigests 0{{ '}}' }}' {{ item }}"
+  loop:
+    - "{{ ja4proxy_docker_image_haproxy }}"
+    - "{{ ja4proxy_docker_image_redis }}"
+    - "{{ ja4proxy_docker_image_caddy }}"
+    - "{{ ja4proxy_docker_image_prometheus }}"
+    - "{{ ja4proxy_docker_image_grafana }}"
+    - "{{ ja4proxy_docker_image_loki }}"
+    - "{{ ja4proxy_docker_image_promtail }}"
+  register: digest_results
+  changed_when: false
+
+- name: Record resolved digests
+  ansible.builtin.set_fact:
+    resolved_digests: >-
+      {{ dict(
+        ['haproxy', 'redis', 'caddy', 'prometheus', 'grafana', 'loki', 'promtail']
+        | zip(digest_results.results | map(attribute='stdout'))
+      ) }}
+
+- name: Save digests to file for future reference
+  ansible.builtin.copy:
+    content: |
+      # Image Digests — Resolved on {{ ansible_date_time.iso8601 | default('unknown') }}
+      # These digests prevent supply chain attacks via Docker Hub tag mutation.
+      # To update: re-run this role or `make pin-digests`
+      {{ resolved_digests | to_nice_yaml(indent=2) }}
+    dest: "{{ ja4proxy_docker_base_dir }}/image-digests.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Update docker-compose.yml with pinned digests
+  ansible.builtin.lineinfile:
+    path: "{{ ja4proxy_docker_base_dir }}/docker-compose.yml"
+    regexp: "^    image: {{ item.value.split(':')[0] }}:"
+    line: "    image: {{ item.value }}"
+  loop: "{{ resolved_digests | dict2items }}"
+  when: item.value != ""
+
+- name: Display pinned digests
+  ansible.builtin.debug:
+    msg: |
+      ✅ Image digests resolved and pinned:
+      {% for name, digest in resolved_digests.items() %}
+      - {{ name }}: {{ digest }}
+      {% endfor %}
