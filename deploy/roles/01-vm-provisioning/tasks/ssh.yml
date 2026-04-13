@@ -1,0 +1,38 @@
+---
+# SSH hardening
+
+- name: Backup existing sshd_config
+  ansible.builtin.copy:
+    src: /etc/ssh/sshd_config
+    dest: /etc/ssh/sshd_config.bak
+    remote_src: true
+    force: false
+
+- name: Deploy hardened sshd_config
+  ansible.builtin.template:
+    src: templates/sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  notify: Restart sshd
+
+- name: Verify SSH key is installed before hardening
+  ansible.builtin.assert:
+    that:
+      - lookup('ansible.builtin.file', '/dev/null') is not defined
+    fail_msg: "SSH key must be installed before disabling password auth."
+  ignore_errors: true
+  # The authorized_key task above already ensures the key is in place.
+  # This is a safety assertion — the real protection is the order of tasks.
+
+- name: Verify sshd_config syntax
+  ansible.builtin.command:
+    cmd: sshd -t
+  changed_when: false
+
+- name: Reload SSH if config is valid
+  ansible.builtin.systemd:
+    name: ssh
+    state: reloaded

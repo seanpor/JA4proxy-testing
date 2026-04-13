@@ -1,0 +1,34 @@
+---
+# ─────────────────────────────────────────────────────────────
+# Role 01: VM Provisioning & Hardening
+# ─────────────────────────────────────────────────────────────
+# Corresponds to PHASE_01_VM_PROVISIONING.md
+#
+# Tasks:
+#   1. System update and base packages
+#   2. Automated security updates (unattended-upgrades)
+#   3. Create dedicated system users
+#   4. SSH hardening
+#   5. UFW firewall rules
+#   6. Fail2ban
+#   7. Docker installation
+#   8. Directory structure and system limits
+# ─────────────────────────────────────────────────────────────
+
+- name: System update and base packages
+  ansible.builtin.include_tasks: packages.yml
+
+- name: SSH hardening
+  ansible.builtin.include_tasks: ssh.yml
+
+- name: UFW firewall
+  ansible.builtin.include_tasks: ufw.yml
+
+- name: Fail2ban
+  ansible.builtin.include_tasks: fail2ban.yml
+
+- name: Docker installation
+  ansible.builtin.include_tasks: docker.yml
+
+- name: Directory structure and system limits
+  ansible.builtin.include_tasks: directories.yml

@@ -1,0 +1,86 @@
+---
+# System update and base packages
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+    autoremove: true
+    autoclean: true
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+      - apt-listchanges
+      - curl
+      - git
+      - jq
+      - htop
+      - vim-tiny
+      - net-tools
+      - dnsutils
+      - lsb-release
+      - ca-certificates
+      - gnupg
+      - software-properties-common
+      - apparmor
+      - apparmor-utils
+      - aide
+      - python3-pip
+    state: present
+
+- name: Enable unattended-upgrades
+  ansible.builtin.debconf:
+    name: unattended-upgrades
+    question: unattended-upgrades/enable_auto_updates
+    value: "true"
+    vtype: boolean
+
+- name: Start unattended-upgrades service
+  ansible.builtin.systemd:
+    name: unattended-upgrades
+    state: started
+    enabled: true
+
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ ja4proxy_vm_hostname }}"
+
+- name: Create JA4proxy system user
+  ansible.builtin.user:
+    name: "{{ ja4proxy_system_user }}"
+    group: "{{ ja4proxy_system_group }}"
+    system: true
+    create_home: false
+    shell: /usr/sbin/nologin
+
+- name: Create admin user (if different from SSH user)
+  ansible.builtin.user:
+    name: adminuser
+    groups: sudo
+    append: true
+    shell: /bin/bash
+    create_home: true
+    state: present
+  when: ja4proxy_ssh_user != "adminuser"
+
+- name: Install SSH public key for admin user
+  ansible.posix.authorized_key:
+    user: "{{ ja4proxy_ssh_user }}"
+    state: present
+    key: "{{ ja4proxy_ssh_public_key }}"
+  register: ssh_key_install
+
+- name: Install SSH public key for adminuser (if different)
+  ansible.posix.authorized_key:
+    user: adminuser
+    state: present
+    key: "{{ ja4proxy_ssh_public_key }}"
+  when: ja4proxy_ssh_user != "adminuser"

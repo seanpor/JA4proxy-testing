@@ -1,0 +1,66 @@
+---
+# Directory structure and system limits
+
+- name: Create JA4proxy directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ja4proxy_system_user }}"
+    group: "{{ ja4proxy_system_group }}"
+    mode: "0755"
+  loop:
+    - "{{ ja4proxy_bin_dir }}"
+    - "{{ ja4proxy_config_dir }}"
+    - "{{ ja4proxy_log_dir }}"
+    - "{{ ja4proxy_geoip_dir }}"
+
+- name: Create Docker base directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ ja4proxy_docker_base_dir }}"
+    - "{{ ja4proxy_docker_config_dir }}/haproxy"
+    - "{{ ja4proxy_docker_config_dir }}/caddy/html"
+    - "{{ ja4proxy_docker_config_dir }}/prometheus"
+    - "{{ ja4proxy_docker_config_dir }}/grafana/provisioning/datasources"
+    - "{{ ja4proxy_docker_config_dir }}/grafana/provisioning/dashboards"
+    - "{{ ja4proxy_docker_config_dir }}/grafana/dashboards"
+    - "{{ ja4proxy_docker_config_dir }}/loki"
+    - "{{ ja4proxy_docker_config_dir }}/promtail"
+
+- name: Append FD limits to limits.conf (idempotent)
+  ansible.builtin.blockinfile:
+    path: /etc/security/limits.conf
+    block: "{{ lookup('template', 'templates/limits.conf.j2') }}"
+    marker: "# {mark} ANSIBLE MANAGED — JA4proxy FD limits"
+    state: present
+
+- name: Deploy conntrack sysctl
+  ansible.builtin.copy:
+    content: |
+      net.netfilter.nf_conntrack_max={{ ja4proxy_conntrack_max }}
+    dest: /etc/sysctl.d/99-conntrack.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable IP forwarding sysctl
+  ansible.builtin.lineinfile:
+    path: /etc/sysctl.conf
+    regexp: "^#?net.ipv4.ip_forward"
+    line: "net.ipv4.ip_forward=1"
+
+- name: Apply all sysctl
+  ansible.builtin.command:
+    cmd: sysctl -p
+  changed_when: false
+
+- name: Load nf_conntrack module (may already be loaded by UFW)
+  ansible.builtin.modprobe:
+    name: nf_conntrack
+    state: present
+  ignore_errors: true
