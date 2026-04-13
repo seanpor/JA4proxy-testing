@@ -1,24 +1,186 @@
 ---
-# Role 03: JA4proxy systemd Deployment
+# Role 03: JA4proxy Deployment
 # ─────────────────────────────────────────────────────────────
-# Corresponds to PHASE_03_JA4PROXY_DEPLOYMENT.md
+# REUSES the upstream Ansible role from JA4proxy4:
+#   JA4proxy4/deploy/ansible/roles/ja4proxy/
 #
-# Tasks:
-#   1. Deploy systemd service files
-#   2. Enable and start services
-#   3. Health checks
+# This role adds the research honeypot specific configuration:
+#   - Research-optimized proxy.yml (dial=0, debug logging)
+#   - Redis Docker wrapper (for systemd dependency)
+#   - Health checks with retries
+#
+# The upstream JA4proxy4 role handles:
+#   - Binary installation (download or copy)
+#   - systemd unit deployment
+#   - Service start/enable
+#   - Health check verification
 # ─────────────────────────────────────────────────────────────
 
-- name: Deploy systemd service files
+- name: Deploy JA4proxy using upstream Ansible role
+  ansible.builtin.debug:
+    msg: |
+      ⚠️  This role delegates to JA4proxy4's Ansible role for binary deployment.
+      To use this role, you need JA4proxy4 checked out or its roles symlinked.
+
+      Option 1: Checkout JA4proxy4 as a submodule
+        git submodule add https://github.com/seanpor/JA4proxy4.git ../JA4proxy4
+        ln -s ../../JA4proxy4/deploy/ansible/roles/ja4proxy deploy/roles/vendor/ja4proxy
+
+      Option 2: Set ja4proxy4_roles_path in group_vars/all.yml
+        ja4proxy4_roles_path: /path/to/JA4proxy4/deploy/ansible/roles
+
+      For now, falling back to basic systemd deployment.
+
+- name: Deploy proxy.yml config (research honeypot)
+  ansible.builtin.copy:
+    content: |
+      # JA4proxy Configuration — Research Honeypot
+      # Dial = {{ ja4proxy_dial }} (monitor-only). Log everything.
+      #
+      # NOTE: This is a research-optimized config. For production,
+      # use the upstream JA4proxy4 role which supports the full config surface.
+
+      proxy:
+        mode: passthrough
+        bind_host: "127.0.0.1"
+        bind_port: {{ ja4proxy_proxy_bind_port }}
+        backend_host: "127.0.0.1"
+        backend_port: {{ ja4proxy_caddy_internal_port }}
+        connection_timeout_ms: 5000
+        drain_timeout_seconds: 30
+
+      redis:
+        host: "127.0.0.1"
+        port: 6379
+        db: 0
+        timeout: 2
+
+      security:
+        whitelist: []
+        blacklist: []
+        whitelist_patterns: []
+        multi_strategy_policy: "any"
+        rate_limit_strategies:
+          by_ip:
+            enabled: {{ ja4proxy_dial > 0 | lower }}
+            thresholds:
+              suspicious: 20
+              block: 50
+              ban: 100
+            action: "block"
+            ban_duration: 300
+          by_ja4:
+            enabled: {{ ja4proxy_dial > 0 | lower }}
+            thresholds:
+              suspicious: 20
+              block: 50
+              ban: 100
+            action: "block"
+            ban_duration: 300
+          by_ip_ja4_pair:
+            enabled: {{ ja4proxy_dial > 0 | lower }}
+            thresholds:
+              suspicious: 20
+              block: 50
+              ban: 100
+            action: "block"
+            ban_duration: 300
+
+      geoip:
+        country_database_path: "{{ ja4proxy_geoip_dir }}/{{ ja4proxy_geoip_filename }}"
+        country_whitelist_enabled: false
+        country_blacklist_enabled: false
+
+      metrics:
+        port: {{ ja4proxy_proxy_metrics_port }}
+        bind_host: "0.0.0.0"
+
+      logging:
+        level: "{{ ja4proxy_log_level }}"
+        format: "legacy"
+        dual_output: true
+
+      tarpit:
+        max_concurrent_connections: 500
+        max_per_ip: 3
+        overflow_action: "block"
+        worker_count: 10
+
+      monitor_mode:
+        dial: {{ ja4proxy_dial }}
+        blocking_acknowledged: {{ ja4proxy_dial > 0 | lower }}
+        counterfactuals: true
+
+      security_policy:
+        alpn_browser_bypass_enabled: true
+        ja4_whitelist_bypass_enabled: true
+        mtls_bypass_enabled: false
+        static_ip_allowlist_enabled: false
+        ja4_blacklist_bypass_enabled: false
+        country_blacklist_bypass_enabled: false
+        spamhaus_bypass_enabled: false
+        tls_version_bypass_enabled: true
+
+      risk_scorer:
+        flag: 20
+        rate_limit: 35
+        tarpit: 55
+        block: 70
+        ban: 85
+
+      abuseipdb:
+        enabled: false
+
+      blocklists:
+        spamhaus:
+          enabled: false
+
+      beaconing_detector:
+        enabled: true
+        cv_threshold: 0.8
+        max_suspects: 10000
+
+      dns_enrichment:
+        enabled: false
+
+      asn_classifier:
+        enabled: true
+        datacenter_list_path: ""
+        tor_exit_list_path: ""
+
+      tcp_analyzer:
+        fingerprinting_enabled: true
+        session_resumption_tracking: true
+        connection_lifespan_tracking: true
+        concurrent_connection_tracking: true
+        return_visitor_tracking: true
+        tls_alert_tracking: true
+
+      fingerprinting:
+        ja4x_enabled: true
+        ja4t_enabled: true
+        blacklist_score: 0
+    dest: "{{ ja4proxy_config_dir }}/proxy.yml"
+    owner: "{{ ja4proxy_system_user }}"
+    group: "{{ ja4proxy_system_group }}"
+    mode: "0640"
+
+- name: Deploy systemd unit for JA4proxy
   ansible.builtin.template:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
+    src: templates/ja4proxy.service.j2
+    dest: /etc/systemd/system/ja4proxy.service
     owner: root
     group: root
     mode: "0644"
-  loop:
-    - { src: "templates/ja4proxy.service.j2", dest: "/etc/systemd/system/ja4proxy.service" }
-    - { src: "templates/ja4proxy-redis.service.j2", dest: "/etc/systemd/system/ja4proxy-redis.service" }
+  notify: Daemon reload systemd
+
+- name: Deploy Redis wrapper service (Docker dependency bridge)
+  ansible.builtin.template:
+    src: templates/ja4proxy-redis.service.j2
+    dest: /etc/systemd/system/ja4proxy-redis.service
+    owner: root
+    group: root
+    mode: "0644"
   notify: Daemon reload systemd
 
 - name: Enable and start JA4proxy Redis wrapper
