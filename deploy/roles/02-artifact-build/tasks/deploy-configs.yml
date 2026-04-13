@@ -92,14 +92,34 @@
     group: root
     mode: "0644"
 
-- name: Verify dial=0 in deployed config
+- name: Deploy Caddy honeypot HTML
   tags: [artifacts, phase2]
-  ansible.builtin.command:
-    cmd: "grep 'dial:' {{ ja4proxy_config_dir }}/proxy.yml"
-  changed_when: false
-  register: dial_check
+  ansible.builtin.template:
+    src: templates/honeypot-index.html
+    dest: "{{ ja4proxy_docker_config_dir }}/caddy/html/index.html"
+    owner: root
+    group: root
+    mode: "0644"
 
-- name: Display dial setting
+- name: Verify all config files deployed
   tags: [artifacts, phase2]
-  ansible.builtin.debug:
-    msg: "JA4proxy dial setting: {{ dial_check.stdout }}"
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ ja4proxy_docker_base_dir }}/docker-compose.yml"
+    - "{{ ja4proxy_docker_config_dir }}/haproxy/haproxy.cfg"
+    - "{{ ja4proxy_docker_config_dir }}/caddy/Caddyfile"
+    - "{{ ja4proxy_docker_config_dir }}/caddy/html/index.html"
+    - "{{ ja4proxy_docker_config_dir }}/prometheus/prometheus.yml"
+    - "{{ ja4proxy_docker_config_dir }}/grafana/provisioning/datasources/datasources.yml"
+    - "{{ ja4proxy_docker_config_dir }}/grafana/provisioning/dashboards/dashboards.yml"
+    - "{{ ja4proxy_docker_config_dir }}/loki/loki.yml"
+    - "{{ ja4proxy_docker_config_dir }}/promtail/promtail.yml"
+  register: config_files_check
+
+- name: Assert all config files exist
+  tags: [artifacts, phase2]
+  ansible.builtin.assert:
+    that: config_files_check.results | map(attribute='stat.exists') | unique == [true]
+    fail_msg: "One or more config files were not deployed."
+    quiet: true
