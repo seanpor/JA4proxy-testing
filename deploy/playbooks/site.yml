@@ -6,12 +6,9 @@
 # Usage:
 #   ansible-playbook -i deploy/inventory/hosts.ini deploy/playbooks/site.yml
 #
-# This playbook:
-#   1. Prompts for 5 required inputs
-#   2. Validates them
-#   3. Generates/loads secrets
-#   4. Runs all 8 phase roles in dependency order
-#   5. Prints a post-deployment summary
+# CI/CD: Set environment variables to skip prompts:
+#   JA4PROXY_DOMAIN, JA4PROXY_VM_HOST, JA4PROXY_ADMIN_IP,
+#   JA4PROXY_SSH_PUBLIC_KEY, JA4PROXY_BUILD_MACHINE_GO_PATH
 # ─────────────────────────────────────────────────────────────
 
 - name: Deploy JA4proxy Research Environment
@@ -19,14 +16,28 @@
   become: true
   gather_facts: true
 
+  # ── CI/CD environment variable lookups ──
+  vars:
+    _env_domain: "{{ lookup('env', 'JA4PROXY_DOMAIN') | default('', true) }}"
+    _env_vm_host: "{{ lookup('env', 'JA4PROXY_VM_HOST') | default('', true) }}"
+    _env_ssh_user: "{{ lookup('env', 'JA4PROXY_SSH_USER') | default('', true) }}"
+    _env_admin_ip: "{{ lookup('env', 'JA4PROXY_ADMIN_IP') | default('', true) }}"
+    _env_ssh_key: "{{ lookup('env', 'JA4PROXY_SSH_PUBLIC_KEY') | default('', true) }}"
+    _env_go_path: "{{ lookup('env', 'JA4PROXY_BUILD_MACHINE_GO_PATH') | default('', true) }}"
+    _env_binary_path: "{{ lookup('env', 'JA4PROXY_PREBUILT_BINARY_PATH') | default('', true) }}"
+    _env_geoip_path: "{{ lookup('env', 'JA4PROXY_GEOIP_FILE_PATH') | default('', true) }}"
+
+  # ── Interactive prompts (overridden by env vars or -e) ──
   vars_prompt:
     - name: ja4proxy_domain
       prompt: "Research domain name (e.g. test-honeypot.example.com)"
       private: false
+      default: ""
 
     - name: ja4proxy_vm_host
       prompt: "VM DNS name or IP address"
       private: false
+      default: ""
 
     - name: ja4proxy_ssh_user
       prompt: "SSH user for initial connection (default: root)"
@@ -42,6 +53,48 @@
       private: false
 
   pre_tasks:
+    # ── CI/CD: override prompts with env vars ──
+    - name: Override domain from environment
+      ansible.builtin.set_fact:
+        ja4proxy_domain: "{{ _env_domain }}"
+      when: _env_domain | length > 0
+
+    - name: Override VM host from environment
+      ansible.builtin.set_fact:
+        ja4proxy_vm_host: "{{ _env_vm_host }}"
+      when: _env_vm_host | length > 0
+
+    - name: Override admin IP from environment
+      ansible.builtin.set_fact:
+        ja4proxy_admin_ip: "{{ _env_admin_ip }}"
+      when: _env_admin_ip | length > 0
+
+    - name: Override SSH public key from environment
+      ansible.builtin.set_fact:
+        ja4proxy_ssh_public_key: "{{ _env_ssh_key }}"
+      when: _env_ssh_key | length > 0
+
+    - name: Override SSH user from environment
+      ansible.builtin.set_fact:
+        ja4proxy_ssh_user: "{{ _env_ssh_user }}"
+      when: _env_ssh_user | length > 0
+
+    - name: Override Go build path from environment
+      ansible.builtin.set_fact:
+        ja4proxy_build_machine_go_path: "{{ _env_go_path }}"
+      when: _env_go_path | length > 0
+
+    - name: Override prebuilt binary path from environment
+      ansible.builtin.set_fact:
+        ja4proxy_prebuilt_binary_path: "{{ _env_binary_path }}"
+      when: _env_binary_path | length > 0
+
+    - name: Override GeoIP path from environment
+      ansible.builtin.set_fact:
+        ja4proxy_geoip_file_path: "{{ _env_geoip_path }}"
+      when: _env_geoip_path | length > 0
+
+    # ── Validation ──
     - name: Validate required inputs
       ansible.builtin.assert:
         that:
@@ -95,6 +148,7 @@
       run_once: true
       become: false
 
+    # ── Secrets ──
     - name: Generate secrets if they don't exist
       ansible.builtin.script:
         cmd: "{{ playbook_dir }}/../scripts/generate-secrets.sh"
@@ -121,6 +175,26 @@
         haproxy_stats_password: "{{ ja4proxy_secrets.haproxy_stats_password }}"
         haproxy_stats_user: "{{ ja4proxy_secrets.haproxy_stats_user | default('haproxy-admin') }}"
 
+    # ── Collections ──
+    - name: Ensure required Ansible collections are installed
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection install community.general community.docker ansible.posix
+      delegate_to: localhost
+      run_once: true
+      become: false
+      changed_when: false
+
+    # ── Dynamic inventory ──
+    - name: Add target host to inventory dynamically
+      ansible.builtin.add_host:
+        name: "{{ ja4proxy_vm_host }}"
+        groups: ja4proxy_vm
+        ansible_user: "{{ ja4proxy_ssh_user }}"
+        ansible_ssh_private_key_file: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519"
+        ansible_python_interpreter: /usr/bin/python3
+      changed_when: false
+
+    # ── Banner ──
     - name: Display deployment banner
       ansible.builtin.debug:
         msg: |
@@ -132,23 +206,6 @@
           ║   Admin IP: {{ ja4proxy_admin_ip | default('N/A') }}
           ║   Dial: {{ ja4proxy_dial }} (monitor-only)
           ╚══════════════════════════════════════════════════════╝
-
-    - name: Add target host to inventory dynamically
-      ansible.builtin.add_host:
-        name: "{{ ja4proxy_vm_host }}"
-        groups: ja4proxy_vm
-        ansible_user: "{{ ja4proxy_ssh_user }}"
-        ansible_ssh_private_key_file: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519"
-        ansible_python_interpreter: /usr/bin/python3
-      changed_when: false
-
-    - name: Ensure required Ansible collections are installed
-      ansible.builtin.command:
-        cmd: ansible-galaxy collection install community.general community.docker ansible.posix
-      delegate_to: localhost
-      run_once: true
-      become: false
-      changed_when: false
 
   roles:
     # Phase 1: VM Provisioning & Hardening
