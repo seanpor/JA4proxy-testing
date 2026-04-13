@@ -1,0 +1,121 @@
+# ─────────────────────────────────────────────────────────────
+# JA4proxy — All Configurable Variables
+# ─────────────────────────────────────────────────────────────
+#
+# Override these via:
+#   1. vars_prompt at playbook start (interactive)
+#   2. -e "key=value" on the command line
+#   3. group_vars/all.yml edits (persistent)
+#
+# Variables without defaults are REQUIRED and must be supplied.
+# ─────────────────────────────────────────────────────────────
+
+# ── Required Inputs (set via vars_prompt or -e) ──────────────
+
+# Research domain name for the honeypot (e.g. test-honeypot.example.com)
+# ja4proxy_domain: ""
+
+# Public IP of the administrator (for SSH + Grafana + Prometheus allowlists)
+# ja4proxy_admin_ip: ""
+
+# SSH user to connect to the target VM on first run (typically 'root')
+ja4proxy_ssh_user: "root"
+
+# Path on the control machine to a local clone of the JA4proxy Go repo.
+# The playbook will build from this path.
+# If unset and ja4proxy_prebuilt_binary_path IS set, skips build and uses the binary.
+# ja4proxy_build_machine_go_path: ""
+
+# Absolute path on the control machine to a pre-built static Linux amd64 binary.
+# If set, skips the Go build step and copies this binary directly.
+# ja4proxy_prebuilt_binary_path: ""
+
+# ── VM Specifications ────────────────────────────────────────
+
+# Hostname to set on the target VM
+ja4proxy_vm_hostname: "ja4proxy-research"
+
+# ── Network / Ports ──────────────────────────────────────────
+
+ja4proxy_haproxy_tls_port: 443
+ja4proxy_haproxy_http_port: 80
+ja4proxy_haproxy_stats_port: 8404
+ja4proxy_proxy_bind_port: 8080
+ja4proxy_proxy_metrics_port: 9090
+ja4proxy_caddy_internal_port: 8081
+ja4proxy_grafana_port: 3000
+ja4proxy_prometheus_port: 9091
+
+# ── Paths on Target VM ───────────────────────────────────────
+
+ja4proxy_base_dir: "/opt/ja4proxy"
+ja4proxy_bin_dir: "/opt/ja4proxy/bin"
+ja4proxy_config_dir: "/opt/ja4proxy/config"
+ja4proxy_log_dir: "/opt/ja4proxy/logs"
+ja4proxy_geoip_dir: "/opt/ja4proxy/geoip"
+
+ja4proxy_docker_base_dir: "/opt/ja4proxy-docker"
+ja4proxy_docker_config_dir: "/opt/ja4proxy-docker/config"
+
+# ── JA4proxy Service ─────────────────────────────────────────
+
+ja4proxy_system_user: "ja4proxy"
+ja4proxy_system_group: "ja4proxy"
+ja4proxy_dial: 0                          # Monitor-only initially
+ja4proxy_log_level: "debug"
+ja4proxy_fd_limit_soft: 65536
+ja4proxy_fd_limit_hard: 65536
+
+# ── Docker Images (tags — digests pinned at deploy time) ────
+
+ja4proxy_docker_image_haproxy: "haproxy:2.8-alpine"
+ja4proxy_docker_image_redis: "redis:7-alpine"
+ja4proxy_docker_image_caddy: "caddy:2-alpine"
+ja4proxy_docker_image_prometheus: "prom/prometheus:latest"
+ja4proxy_docker_image_grafana: "grafana/grafana:latest"
+ja4proxy_docker_image_loki: "grafana/loki:latest"
+ja4proxy_docker_image_promtail: "grafana/promtail:latest"
+
+# ── Resource Limits ──────────────────────────────────────────
+
+ja4proxy_conntrack_max: 262144
+ja4proxy_journald_max_retention: "90d"
+ja4proxy_journald_max_use: "2G"
+
+# ── Loki Retention ───────────────────────────────────────────
+
+ja4proxy_loki_retention_days: 90
+
+# ── GeoIP ────────────────────────────────────────────────────
+
+# If set, copy this local file to the VM instead of downloading.
+# ja4proxy_geoip_file_path: ""
+
+# If set, download from this URL during deployment.
+# ja4proxy_geoip_download_url: ""
+
+# Filename on the VM after deployment
+ja4proxy_geoip_filename: "IP2LOCATION-LITE-DB1.IPV6.BIN"
+
+# ── Docker Network Names ─────────────────────────────────────
+
+ja4proxy_network_frontend: "ja4proxy-frontend"
+ja4proxy_network_internal: "ja4proxy-internal"
+ja4proxy_network_monitoring: "ja4proxy-monitoring"
+
+# ── Docker Resource Limits ───────────────────────────────────
+
+ja4proxy_haproxy_memory_limit: "256M"
+ja4proxy_haproxy_cpu_limit: "0.5"
+ja4proxy_redis_memory_limit: "256mb"
+ja4proxy_redis_cpu_limit: "0.25"
+ja4proxy_caddy_memory_limit: "128M"
+ja4proxy_caddy_cpu_limit: "0.25"
+ja4proxy_prometheus_memory_limit: "512M"
+ja4proxy_prometheus_cpu_limit: "0.5"
+ja4proxy_grafana_memory_limit: "256M"
+ja4proxy_grafana_cpu_limit: "0.5"
+ja4proxy_loki_memory_limit: "256M"
+ja4proxy_loki_cpu_limit: "0.25"
+ja4proxy_promtail_memory_limit: "128M"
+ja4proxy_promtail_cpu_limit: "0.25"

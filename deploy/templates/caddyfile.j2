@@ -1,0 +1,28 @@
+{
+    admin off
+}
+
+{{ ja4proxy_domain }} {
+    tls {
+        # ACME (Let's Encrypt) — auto-provisioned via port 80
+    }
+
+    log {
+        output stdout
+        format json
+    }
+
+    root * /srv
+    file_server
+
+    @submit path /submit
+    handle @submit {
+        respond "Submission received and discarded for research.\n" 200
+    }
+
+    encode gzip
+}
+
+http://{{ ja4proxy_domain }} {
+    redir https://{host}{uri} 301
+}

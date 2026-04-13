@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚠️ RESEARCH HONEYPOT — DO NOT SUBMIT REAL DATA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: monospace;
+            background: #0a0a0a;
+            color: #ff4444;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .warning {
+            background: #ff0000;
+            color: #ffffff;
+            padding: 40px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            width: 100%;
+            border-bottom: 4px solid #cc0000;
+        }
+        .warning small {
+            display: block;
+            font-size: 16px;
+            margin-top: 10px;
+            font-weight: normal;
+        }
+        .content {
+            max-width: 600px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .content h2 {
+            font-size: 20px;
+            color: #ffaa00;
+            margin-bottom: 20px;
+        }
+        .content p {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        .form-box {
+            background: #1a1a1a;
+            border: 2px solid #ff4444;
+            padding: 30px;
+            margin-top: 30px;
+            border-radius: 8px;
+        }
+        .form-box input, .form-box textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            background: #0a0a0a;
+            border: 1px solid #444;
+            color: #888;
+            font-size: 14px;
+            font-family: monospace;
+        }
+        .form-box button {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .form-box button:hover {
+            background: #cc0000;
+        }
+        .meta {
+            font-size: 11px;
+            color: #555;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="warning">
+        ⚠️ THIS IS A RESEARCH HONEYPOT ⚠️
+        <small>No real data is collected. Any submissions are logged and discarded.
+        If you are a legitimate user, you are in the wrong place.</small>
+    </div>
+    <div class="content">
+        <h2>🔬 JA4proxy Research Environment</h2>
+        <p>This server exists solely for TLS fingerprinting research.</p>
+        <p>Your connection has been fingerprinted (JA4). Metadata including
+        IP address, TLS parameters, and behavioral patterns are being logged
+        for research analysis only.</p>
+
+        <div class="form-box">
+            <form method="POST" action="/submit">
+                <input type="text" name="name" placeholder="Name (FAKE DATA ONLY)" autocomplete="off">
+                <input type="email" name="email" placeholder="Email (FAKE DATA ONLY)" autocomplete="off">
+                <textarea name="message" rows="4" placeholder="Message (FAKE DATA ONLY — do NOT submit real info)"></textarea>
+                <button type="submit">Submit (FAKE DATA)</button>
+            </form>
+            <p class="meta">All submissions are logged for research and immediately discarded. No data is stored.</p>
+        </div>
+
+        <p class="meta">JA4proxy Research Project — <span id="timestamp"></span></p>
+    </div>
+    <script>
+        document.getElementById('timestamp').textContent = new Date().toISOString();
+    </script>
+</body>
+</html>

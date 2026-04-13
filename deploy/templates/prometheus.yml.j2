@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # JA4proxy metrics
+  - job_name: 'ja4proxy'
+    static_configs:
+      - targets: ['host.docker.internal:{{ ja4proxy_proxy_metrics_port }}']
+        labels:
+          component: 'ja4proxy'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          component: 'prometheus'
+
+  # HAProxy metrics via CSV stats endpoint
+  - job_name: 'haproxy-csv'
+    metrics_path: '/stats'
+    params:
+      format: ['csv']
+    static_configs:
+      - targets: ['haproxy:{{ ja4proxy_haproxy_stats_port }}']
+        labels:
+          component: 'haproxy'

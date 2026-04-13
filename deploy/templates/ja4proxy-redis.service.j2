@@ -1,0 +1,14 @@
+[Unit]
+Description=JA4proxy Redis (Docker)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/docker compose -f {{ ja4proxy_docker_base_dir }}/docker-compose.yml up -d redis
+ExecStop=/usr/bin/docker compose -f {{ ja4proxy_docker_base_dir }}/docker-compose.yml stop redis
+WorkingDirectory={{ ja4proxy_docker_base_dir }}
+
+[Install]
+WantedBy=multi-user.target

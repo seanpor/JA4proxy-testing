@@ -1,0 +1,53 @@
+#include <tunables/global>
+
+{{ ja4proxy_bin_dir }}/ja4proxy {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  # Binary — read-only
+  {{ ja4proxy_bin_dir }}/ja4proxy mr,
+
+  # Config — read-only
+  {{ ja4proxy_config_dir }}/proxy.yml r,
+
+  # GeoIP — read-only
+  {{ ja4proxy_geoip_dir }}/** r,
+
+  # Logs — write only
+  {{ ja4proxy_log_dir }}/** rw,
+
+  # Network — TCP
+  network inet tcp,
+  network inet6 tcp,
+
+  # DNS
+  network inet dgram,
+  network inet6 dgram,
+
+  # Redis (local)
+  network inet stream,
+
+  # Deny sensitive paths
+  deny /etc/shadow r,
+  deny /etc/gshadow r,
+  deny /etc/passwd w,
+  deny /etc/group w,
+  deny /root/** rw,
+  deny /home/** rw,
+  deny /tmp/** w,
+  deny /var/tmp/** w,
+  deny @{PROC}/[0-9]*/fd/ r,
+  deny mount,
+  deny umount,
+  deny pivot_root,
+  deny capability sys_admin,
+  deny capability sys_ptrace,
+  deny capability dac_override,
+  deny capability dac_read_search,
+  deny capability fowner,
+  deny capability setuid,
+  deny capability setgid,
+
+  audit deny /** wl,
+  audit deny /** k,
+}

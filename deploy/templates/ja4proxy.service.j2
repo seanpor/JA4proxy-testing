@@ -1,0 +1,49 @@
+[Unit]
+Description=JA4proxy — TLS Fingerprinting Research Proxy
+Documentation=https://github.com/seanpor/JA4proxy
+After=network-online.target
+Wants=network-online.target
+Requires=ja4proxy-redis.service
+
+[Service]
+Type=simple
+User={{ ja4proxy_system_user }}
+Group={{ ja4proxy_system_group }}
+
+ExecStart={{ ja4proxy_bin_dir }}/ja4proxy
+Environment=CONFIG_PATH={{ ja4proxy_config_dir }}/proxy.yml
+
+Restart=always
+RestartSec=5
+
+# Graceful shutdown
+TimeoutStopSec=35
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ja4proxy
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+ReadWritePaths={{ ja4proxy_log_dir }}
+ReadOnlyPaths={{ ja4proxy_config_dir }} {{ ja4proxy_geoip_dir }}
+
+# Resource limits
+LimitNOFILE={{ ja4proxy_fd_limit_soft }}
+LimitNPROC=4096
+
+Environment="GODEBUG=netdns=go"
+
+[Install]
+WantedBy=multi-user.target

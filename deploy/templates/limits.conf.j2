@@ -1,0 +1,8 @@
+# ─────────────────────────────────────────────────────────────
+# File Descriptor Limits — JA4proxy Research VM
+# Appended by Ansible. Safe to re-run (idempotent grep guard).
+# ─────────────────────────────────────────────────────────────
+
+# JA4proxy needs high FD limits for connection handling
+{{ ja4proxy_system_user }}    soft    nofile    {{ ja4proxy_fd_limit_soft }}
+{{ ja4proxy_system_user }}    hard    nofile    {{ ja4proxy_fd_limit_hard }}

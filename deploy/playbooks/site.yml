@@ -1,0 +1,169 @@
+---
+# ─────────────────────────────────────────────────────────────
+# JA4proxy — Master Playbook
+# ─────────────────────────────────────────────────────────────
+#
+# Usage:
+#   ansible-playbook -i deploy/inventory/hosts.ini deploy/playbooks/site.yml
+#
+# This playbook:
+#   1. Prompts for 5 required inputs
+#   2. Validates them
+#   3. Generates/loads secrets
+#   4. Runs all 8 phase roles in dependency order
+#   5. Prints a post-deployment summary
+# ─────────────────────────────────────────────────────────────
+
+- name: Deploy JA4proxy Research Environment
+  hosts: ja4proxy_vm
+  become: true
+  gather_facts: true
+
+  vars_prompt:
+    - name: ja4proxy_domain
+      prompt: "Research domain name (e.g. test-honeypot.example.com)"
+      private: false
+
+    - name: ja4proxy_vm_host
+      prompt: "VM DNS name or IP address"
+      private: false
+
+    - name: ja4proxy_ssh_user
+      prompt: "SSH user for initial connection (default: root)"
+      private: false
+      default: "root"
+
+    - name: ja4proxy_admin_ip
+      prompt: "Your public IP address (for SSH + admin UI access)"
+      private: false
+
+    - name: ja4proxy_ssh_public_key
+      prompt: "Your SSH public key (paste the full public key string)"
+      private: false
+
+  pre_tasks:
+    - name: Validate required inputs
+      ansible.builtin.assert:
+        that:
+          - ja4proxy_domain | length > 0
+          - ja4proxy_vm_host | length > 0
+          - ja4proxy_admin_ip | length > 0
+          - ja4proxy_ssh_public_key | length > 0
+        fail_msg: "All required inputs must be non-empty."
+        quiet: true
+
+    - name: Validate admin IP format
+      ansible.builtin.assert:
+        that:
+          - ja4proxy_admin_ip is match('^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
+        fail_msg: "Admin IP must be a valid IPv4 address (e.g. 1.2.3.4)."
+        quiet: true
+
+    - name: Validate build input (either Go path or prebuilt binary)
+      ansible.builtin.assert:
+        that:
+          - ja4proxy_build_machine_go_path is defined and ja4proxy_build_machine_go_path | length > 0
+            or ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0
+        fail_msg: "You must provide either a local Go repo path (ja4proxy_build_machine_go_path) or a prebuilt binary path (ja4proxy_prebuilt_binary_path)."
+        quiet: true
+      delegate_to: localhost
+      run_once: true
+      become: false
+
+    - name: Generate secrets if they don't exist
+      ansible.builtin.script:
+        cmd: "{{ playbook_dir }}/../scripts/generate-secrets.sh"
+      delegate_to: localhost
+      run_once: true
+      become: false
+      register: secrets_output
+      changed_when: "'[gen]' in secrets_output.stdout"
+
+    - name: Load secrets from vault file
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../.vault/secrets.yml"
+        name: ja4proxy_secrets
+      delegate_to: localhost
+      run_once: true
+      become: false
+
+    - name: Set secret variables for play scope
+      ansible.builtin.set_fact:
+        redis_password: "{{ ja4proxy_secrets.redis_password }}"
+        grafana_admin_password: "{{ ja4proxy_secrets.grafana_admin_password }}"
+        grafana_password: "{{ ja4proxy_secrets.grafana_password }}"
+        redis_signing_key: "{{ ja4proxy_secrets.redis_signing_key }}"
+        haproxy_stats_password: "{{ ja4proxy_secrets.haproxy_stats_password }}"
+        haproxy_stats_user: "{{ ja4proxy_secrets.haproxy_stats_user | default('haproxy-admin') }}"
+
+    - name: Display deployment banner
+      ansible.builtin.debug:
+        msg: |
+
+          ╔══════════════════════════════════════════════════════╗
+          ║   JA4proxy Research Environment Deployment          ║
+          ║   Domain: {{ ja4proxy_domain | default('N/A') }}
+          ║   VM: {{ ja4proxy_vm_host | default('N/A') }}
+          ║   Admin IP: {{ ja4proxy_admin_ip | default('N/A') }}
+          ║   Dial: {{ ja4proxy_dial }} (monitor-only)
+          ╚══════════════════════════════════════════════════════╝
+
+  roles:
+    # Phase 1: VM Provisioning & Hardening
+    - role: 01-vm-provisioning
+
+    # Phase 2: Artifact Build & Config Deployment
+    - role: 02-artifact-build
+
+    # Phase 3: JA4proxy systemd Deployment
+    - role: 03-ja4proxy-deploy
+
+    # Phase 4: Supporting Services (Docker Compose)
+    - role: 04-supporting-services
+
+    # Phase 5: Data Collection (Grafana, journald)
+    - role: 05-data-collection
+
+    # Phase 6: Operational Security
+    - role: 06-operational-security
+
+    # Phase 7: Validation & Smoke Tests
+    - role: 07-validation
+
+    # Phase 8: Security Hardening
+    - role: 08-hardening
+
+  post_tasks:
+    - name: Deployment summary
+      ansible.builtin.debug:
+        msg: |
+
+          ╔══════════════════════════════════════════════════════╗
+          ║              DEPLOYMENT COMPLETE                     ║
+          ╚══════════════════════════════════════════════════════╝
+
+          Domain:          {{ ja4proxy_domain }}
+          VM:              {{ ja4proxy_vm_host }}
+          Admin IP:        {{ ja4proxy_admin_ip }}
+          Dial:            {{ ja4proxy_dial }}
+
+          ── Services ──────────────────────────────────────────
+          JA4proxy:        systemd (active)
+          HAProxy:         Docker (:443, :80)
+          Redis:           Docker (internal)
+          Caddy:           Docker (:8081 internal)
+          Prometheus:      Docker (:9091 host)
+          Grafana:         Docker (:3000 host)
+          Loki:            Docker (internal)
+          Promtail:        Docker (internal)
+
+          ── Next Steps ────────────────────────────────────────
+          1. Access Grafana: http://{{ ja4proxy_vm_host }}:3000
+             User: admin | Password: (see .vault/secrets.yml)
+          2. Access Prometheus: http://{{ ja4proxy_vm_host }}:9091
+          3. Monitor logs: ssh root@{{ ja4proxy_vm_host }} "journalctl -u ja4proxy -f"
+          4. Change dial: edit /opt/ja4proxy/config/proxy.yml + SIGHUP
+          5. Weekly review: check Grafana dashboards for traffic patterns
+
+          ⚠️  Remember: dial=0 means MONITOR-ONLY. No traffic is blocked.
+             Increase dial gradually (see docs/phases/PHASE_07_VALIDATION_TESTING.md).
