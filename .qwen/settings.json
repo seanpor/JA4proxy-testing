@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl *)",
+      "Bash(python3 *)",
+      "Bash(mkdir *)",
+      "Bash(do *)",
+      "Bash(done)"
+    ]
+  },
+  "$version": 3
+}
