@@ -124,9 +124,9 @@ lint-secrets:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -229,6 +229,10 @@ test-heartbeat-timer:
 test-blackbox-exporter:
 	@echo "── blackbox_exporter wired + CertExpiringSoon rule (13-F) ──"
 	@$(PY) scripts/ci/check_blackbox_exporter.py
+
+test-threat-model:
+	@echo "── THREAT_MODEL.md present + reviewed within 365 days (TM-A) ──"
+	@$(PY) scripts/ci/check_threat_model.py
 
 # 14-E: run Molecule tests (requires `pip install molecule molecule-plugins[docker] docker`).
 # Not yet wired into ci.yml; enable per-PR with a dedicated job later.

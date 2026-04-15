@@ -1046,4 +1046,4 @@ visible.
 - [ ] 15-B — runbook IR scenarios
 - [ ] 15-C — governance docs body
 - [x] 15-D — README Operations (PR #28)
-- [ ] TM-A — THREAT_MODEL.md
+- [x] TM-A — THREAT_MODEL.md (PR #30)
