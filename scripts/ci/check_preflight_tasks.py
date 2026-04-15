@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Go-live preflight tasks (11-D regression).
+"""Go-live preflight tasks (11-D + 13-G regression).
 
 Assert that deploy/roles/10-go-live/tasks/main.yml contains:
-  - A `dig +short MX {{ ja4proxy_domain }}` preflight task.
-  - An `assert` that the MX stdout is non-empty.
-  - The `ja4proxy_skip_mx_preflight` escape hatch.
+  - A `dig +short MX {{ ja4proxy_domain }}` preflight (11-D) with
+    an assertion on stdout and the `ja4proxy_skip_mx_preflight`
+    escape hatch.
+  - A `dig +short A {{ ja4proxy_domain }}` preflight (13-G) with
+    the `ja4proxy_skip_dns_preflight` escape hatch.
 
 Can't actually resolve DNS in CI — this just ensures the tasks exist
 so a future refactor can't silently delete them.
@@ -25,9 +27,12 @@ else:
     text = TASK.read_text()
     for marker, why in (
         ("dig +short MX", "no MX dig preflight command"),
-        ("_abuse_mx_preflight", "preflight result register removed"),
-        ("_abuse_mx_preflight.stdout", "preflight assertion removed"),
-        ("ja4proxy_skip_mx_preflight", "escape hatch removed"),
+        ("_abuse_mx_preflight", "MX preflight result register removed"),
+        ("_abuse_mx_preflight.stdout", "MX preflight assertion removed"),
+        ("ja4proxy_skip_mx_preflight", "MX escape hatch removed"),
+        ("dig +short A", "no A dig preflight command (13-G)"),
+        ("_domain_a_preflight", "A preflight result register removed"),
+        ("ja4proxy_skip_dns_preflight", "A escape hatch removed"),
     ):
         if marker not in text:
             errors.append(f"{TASK.relative_to(ROOT)}: {why} (missing `{marker}`)")
