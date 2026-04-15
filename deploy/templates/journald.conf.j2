@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+# 13-A: templated by role 05-data-collection. Edit
+# deploy/templates/journald.conf.j2, not this file in place.
+#
+# Retention periods here back the claim made in PHASE_11's privacy
+# page. Keep them aligned with ja4proxy_journald_max_retention in
+# group_vars/all.yml and RETENTION.md.
+
+[Journal]
+Storage=persistent
+Compress=yes
+MaxRetentionSec={{ ja4proxy_journald_max_retention }}
+SystemMaxUse={{ ja4proxy_journald_max_use }}
+MaxUse={{ ja4proxy_journald_max_use }}
+ForwardToSyslog=no
