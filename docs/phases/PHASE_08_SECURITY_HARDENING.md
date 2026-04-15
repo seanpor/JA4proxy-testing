@@ -22,6 +22,12 @@ See `CRITICAL_REVIEW.md` §A for detail. Summary of defects affecting this phase
 
 ## 8.1 STRIDE Threat Model
 
+Higher-level attacker-goal view (VM compromise, DDoS reflector abuse,
+DNS hijack, data exfiltration) lives in [`THREAT_MODEL.md`](../../THREAT_MODEL.md)
+at the repo root. The STRIDE matrix below remains the ground-truth
+per-mitigation list; the repo-level model names the attacker goals
+and points back here.
+
 ```mermaid
 flowchart TD
     subgraph STRIDE["🔴 STRIDE Threat Model"]
