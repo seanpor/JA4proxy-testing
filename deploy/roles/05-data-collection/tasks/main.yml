@@ -25,14 +25,12 @@
     - honeypot.json
     - trends.json
 
-- name: Configure journald retention
+- name: Template journald configuration
   tags: [data-collection, phase5]
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/journald.conf
-    regexp: "^#?{{ item.key }}"
-    line: "{{ item.key }}={{ item.value }}"
-  loop:
-    - { key: "MaxRetentionSec", value: "{{ ja4proxy_journald_max_retention }}" }
-    - { key: "MaxUse", value: "{{ ja4proxy_journald_max_use }}" }
-    - { key: "SystemMaxUse", value: "{{ ja4proxy_journald_max_use }}" }
+  ansible.builtin.template:
+    src: journald.conf.j2
+    dest: /etc/systemd/journald.conf
+    owner: root
+    group: root
+    mode: "0644"
   notify: Restart journald
