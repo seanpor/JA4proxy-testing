@@ -1,0 +1,23 @@
+---
+# 14-E: post-converge assertions for role 01.
+
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Assert ja4proxy system user exists
+      ansible.builtin.getent:
+        database: passwd
+        key: ja4proxy
+
+    - name: Assert base directory exists
+      ansible.builtin.stat:
+        path: /opt/ja4proxy
+      register: base_dir
+      failed_when: not base_dir.stat.exists or not base_dir.stat.isdir
+
+    - name: Assert curl is installed (baseline package)
+      ansible.builtin.command:
+        cmd: curl --version
+      changed_when: false

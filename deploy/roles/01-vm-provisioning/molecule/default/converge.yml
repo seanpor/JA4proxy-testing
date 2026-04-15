@@ -1,0 +1,18 @@
+---
+# 14-E: apply role 01 to the Molecule instance.
+# Skips UFW and Docker daemon config via tags because those interact
+# badly with docker-in-docker; junior can broaden coverage later.
+
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Apply role 01 — packages and directories only
+      ansible.builtin.include_role:
+        name: 01-vm-provisioning
+        tasks_from: packages.yml
+    - name: Apply role 01 — directories
+      ansible.builtin.include_role:
+        name: 01-vm-provisioning
+        tasks_from: directories.yml
