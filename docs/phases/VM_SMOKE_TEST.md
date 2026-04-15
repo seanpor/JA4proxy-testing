@@ -81,6 +81,21 @@ Watch for:
 
 Deploy should finish without any `ignored=1` or `failed=1` totals in the final PLAY RECAP.
 
+## Idempotency (14-D)
+
+Before the functional verify, re-run the playbook. If any task
+reports `changed > 0` on the second run, something is non-idempotent
+and will drift on every subsequent deploy.
+
+```bash
+make idempotency VM_IP=$VM_IP
+# ✓ idempotent: second run reports changed=0 for all hosts
+```
+
+Failure here is a blocker for merging whatever change introduced it:
+wrap bare `command:` tasks with `changed_when: false` / `creates:`,
+or swap them for dedicated modules.
+
 ## Verify
 
 ```bash

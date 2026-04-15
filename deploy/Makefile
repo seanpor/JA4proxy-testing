@@ -29,7 +29,7 @@ ANSIBLE     := ansible-playbook $(INVENTORY) $(PLAYBOOK)
 # Usage: make cloud ALIYUN_ARGS="--region eu-central-1 --ssh-key-name mykey --admin-ip 1.2.3.4"
 ALIYUN_ARGS ?=
 
-.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections status destroy
+.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections status destroy idempotency
 
 deploy:
 	@echo "╔══════════════════════════════════════════════════════╗"
@@ -85,6 +85,14 @@ vault-rekey:
 	@ansible-vault rekey \
 	  --vault-password-file deploy/.vault/.vault-pass \
 	  deploy/.vault/secrets.yml
+
+# 14-D: idempotency check — re-runs the playbook and asserts the
+# second run is a no-op. Cheap insurance against silent drift.
+idempotency:
+ifndef VM_IP
+	$(error VM_IP is required. Usage: make idempotency VM_IP=1.2.3.4)
+endif
+	@VM_IP=$(VM_IP) bash deploy/scripts/check-idempotency.sh
 
 # Verify all services locally via SSH (no public ports needed)
 verify:
