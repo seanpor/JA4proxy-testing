@@ -67,12 +67,45 @@
 
 - name: Update docker-compose.yml with pinned digests
   tags: [digests, phase9]
-  ansible.builtin.lineinfile:
+  ansible.builtin.replace:
     path: "{{ ja4proxy_docker_base_dir }}/docker-compose.yml"
-    regexp: "^    image: {{ item.value.split(':')[0] }}:"
-    line: "    image: {{ item.value }}"
+    # Match any "image: <short>[:@]<anything>" line — tolerates both pre-pin
+    # tag form (haproxy:2.8-alpine) and post-pin digest form on re-runs
+    # (haproxy@sha256:...). Replacement is keyed by service name, not by
+    # the pre-existing value.
+    regexp: "^(\\s*image:\\s+){{ digest_image_short[item.key] | regex_escape }}[:@][^\\s]+\\s*$"
+    replace: '\1{{ item.value }}'
   loop: "{{ resolved_digests | dict2items }}"
-  when: item.value != ""
+  when: item.value | length > 0
+  vars:
+    digest_image_short:
+      haproxy: haproxy
+      redis: redis
+      caddy: caddy
+      prometheus: prom/prometheus
+      grafana: grafana/grafana
+      loki: grafana/loki
+      promtail: grafana/promtail
+
+- name: Read pinned docker-compose.yml for verification
+  tags: [digests, phase9]
+  ansible.builtin.slurp:
+    src: "{{ ja4proxy_docker_base_dir }}/docker-compose.yml"
+  register: pinned_compose
+
+- name: Assert every image line is digest-pinned
+  tags: [digests, phase9]
+  ansible.builtin.assert:
+    that:
+      - (pinned_compose.content | b64decode).split('\n')
+        | select('match', '^\\s*image:\\s+')
+        | reject('search', '@sha256:[0-9a-f]{64}')
+        | list | length == 0
+    fail_msg: >-
+      docker-compose.yml still contains un-pinned image references after
+      role 09. This almost always means digest_image_short is missing an
+      entry or a new service was added without updating this role.
+    success_msg: "All image: lines are digest-pinned."
 
 - name: Display pinned digests
   tags: [digests, phase9]
