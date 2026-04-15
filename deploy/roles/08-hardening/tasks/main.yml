@@ -30,31 +30,64 @@
     mode: "0644"
   notify: Reload sysctl
 
-- name: Deploy AppArmor profile for JA4proxy
-  tags: [hardening, phase8]
-  ansible.builtin.template:
-    src: templates/apparmor-ja4proxy.j2
-    dest: /etc/apparmor.d/opt.ja4proxy.bin.ja4proxy
-    owner: root
-    group: root
-    mode: "0644"
-  notify: Reload AppArmor
+# AppArmor profile is deployed and loaded by role 03 BEFORE the service
+# starts, so confinement is active from the first ExecStart. This phase
+# only verifies that the running ja4proxy process is actually confined
+# by the expected profile. See docs/phases/CRITICAL_REVIEW.md §A3.
+- name: Verify AppArmor profile is loaded in kernel
+  tags: [hardening, phase8, apparmor]
+  ansible.builtin.command:
+    cmd: aa-status --enabled
+  register: aa_enabled
+  changed_when: false
+  failed_when: aa_enabled.rc != 0
 
-- name: Verify AppArmor profile is loaded
-  tags: [hardening, phase8]
+- name: Read AppArmor status
+  tags: [hardening, phase8, apparmor]
   ansible.builtin.command:
     cmd: aa-status
-  register: aa_status_result
+  register: aa_status
   changed_when: false
-  failed_when: false
 
-- name: Add AppArmor profile to systemd service
-  tags: [hardening, phase8]
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/system/ja4proxy.service
-    regexp: "^AppArmorProfile="
-    line: "AppArmorProfile=opt.ja4proxy.bin.ja4proxy"
-  notify: Daemon reload systemd
+- name: Assert ja4proxy profile is loaded and in enforce mode
+  tags: [hardening, phase8, apparmor]
+  ansible.builtin.assert:
+    that:
+      - ja4proxy_apparmor_profile_name in aa_status.stdout
+    fail_msg: >-
+      AppArmor profile {{ ja4proxy_apparmor_profile_name }} is not loaded.
+      It should have been deployed by role 03 before the service started.
+
+- name: Read AppArmor label of the running ja4proxy process
+  tags: [hardening, phase8, apparmor]
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      pid=$(systemctl show ja4proxy -p MainPID --value)
+      if [ -z "$pid" ] || [ "$pid" = "0" ]; then
+        echo "ja4proxy-not-running"
+        exit 1
+      fi
+      cat "/proc/${pid}/attr/current"
+    executable: /bin/bash
+  register: proc_apparmor_label
+  changed_when: false
+
+- name: Assert running ja4proxy process is confined by the expected profile
+  tags: [hardening, phase8, apparmor]
+  ansible.builtin.assert:
+    that:
+      - ja4proxy_apparmor_profile_name in proc_apparmor_label.stdout
+      - "'(enforce)' in proc_apparmor_label.stdout or '(complain)' in proc_apparmor_label.stdout"
+    fail_msg: >-
+      /proc/<ja4proxy>/attr/current reports "{{ proc_apparmor_label.stdout }}",
+      which does not match the expected profile
+      {{ ja4proxy_apparmor_profile_name }}. The service template is likely
+      missing the AppArmorProfile= directive, or the service was started
+      before the profile was loaded. Re-run role 03 and restart ja4proxy.
+    success_msg: >-
+      AppArmor confinement active:
+      {{ proc_apparmor_label.stdout }}
 
 - name: Deploy kernel module lockdown
   tags: [hardening, phase8]

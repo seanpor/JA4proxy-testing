@@ -167,6 +167,24 @@
     group: "{{ ja4proxy_system_group }}"
     mode: "0640"
 
+# AppArmor profile must be loaded *before* the systemd unit is first
+# started, because systemd consults AppArmorProfile= at ExecStart time.
+# See docs/phases/CRITICAL_REVIEW.md §A3.
+- name: Deploy AppArmor profile for JA4proxy
+  tags: [deploy, phase3, apparmor]
+  ansible.builtin.template:
+    src: templates/apparmor-ja4proxy.j2
+    dest: "/etc/apparmor.d/{{ ja4proxy_apparmor_profile_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: ja4proxy_apparmor_enabled | default(true)
+  notify: Reload AppArmor
+
+- name: Flush handlers so AppArmor profile is loaded before service start
+  tags: [deploy, phase3, apparmor]
+  ansible.builtin.meta: flush_handlers
+
 - name: Deploy systemd unit for JA4proxy
   tags: [deploy, phase3]
   ansible.builtin.template:
