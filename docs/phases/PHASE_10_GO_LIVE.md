@@ -19,6 +19,7 @@ All of these must hold when the role enters. If any fails, fail loudly; do not h
 5. JA4proxy, HAProxy, Caddy, Redis, Prometheus, Grafana, Loki, Promtail are all `active (running)` / `healthy`.
 6. `docker-compose.yml` contains only digest-pinned images (grep assertion from PHASE_09).
 7. Caddy has a valid staging cert already (i.e. the ACME flow was exercised against `acme-staging-v02.api.letsencrypt.org` on a previous deploy). This bounds the blast radius of the LE rate-limit budget.
+8. **MX preflight (11-D).** `dig +short MX {{ ja4proxy_domain }}` on the control machine returns a non-empty answer. The disclosure page and `security.txt` advertise `abuse@` and `privacy@` on this domain; without an MX, complaints bounce silently and the honeypot looks malicious. Override with `-e ja4proxy_skip_mx_preflight=true` only if mail for the domain is handled outside DNS (e.g. a catch-all on a parent zone).
 
 ## Actions
 
