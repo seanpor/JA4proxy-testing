@@ -8,7 +8,9 @@
 
 set -euo pipefail
 
-VAULT_DIR="$(cd "$(dirname "$0")/../.." && pwd)/.vault"
+# Canonical location — must match the path loaded by deploy/playbooks/site.yml
+# (include_vars: "{{ playbook_dir }}/../.vault/secrets.yml"), i.e. deploy/.vault/.
+VAULT_DIR="$(cd "$(dirname "$0")/.." && pwd)/.vault"
 SECRETS_FILE="$VAULT_DIR/secrets.yml"
 
 mkdir -p "$VAULT_DIR"
