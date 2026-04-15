@@ -60,9 +60,22 @@
     reload: true
     state: present
 
-- name: Load nf_conntrack module (may already be loaded by UFW)
+- name: Load nf_conntrack module (may already be auto-loaded by UFW)
   tags: [provisioning, phase1]
   ansible.builtin.modprobe:
     name: nf_conntrack
     state: present
-  ignore_errors: true
+  register: _nf_conntrack_modprobe
+  # Succeed if modprobe returns clean, OR if the module is already present
+  # in the kernel (common: UFW/iptables already loaded it). Anything else
+  # (missing kernel module, unprivileged, SELinux denial) should fail loudly.
+  failed_when:
+    - _nf_conntrack_modprobe.failed | default(false)
+    - "'already' not in (_nf_conntrack_modprobe.msg | default(''))"
+
+- name: Verify nf_conntrack is loaded
+  tags: [provisioning, phase1]
+  ansible.builtin.command: grep -qw nf_conntrack /proc/modules
+  changed_when: false
+  register: _nf_conntrack_check
+  failed_when: _nf_conntrack_check.rc != 0

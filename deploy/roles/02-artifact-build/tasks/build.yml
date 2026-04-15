@@ -18,6 +18,15 @@
           - prebuilt_check.stat.exists
         fail_msg: "Prebuilt binary not found at {{ ja4proxy_prebuilt_binary_path }}"
 
+    - name: Record source-side SHA256 of prebuilt binary
+      ansible.builtin.stat:
+        path: "{{ ja4proxy_prebuilt_binary_path }}"
+        checksum_algorithm: sha256
+        get_checksum: true
+      delegate_to: localhost
+      become: false
+      register: prebuilt_source_stat
+
     - name: Copy prebuilt binary to target
       ansible.builtin.copy:
         src: "{{ ja4proxy_prebuilt_binary_path }}"
@@ -26,13 +35,23 @@
         group: "{{ ja4proxy_system_group }}"
         mode: "0750"
 
-    - name: Generate checksum for prebuilt binary
-      ansible.builtin.command:
-        cmd: "sha256sum {{ ja4proxy_bin_dir }}/ja4proxy"
-      delegate_to: localhost
-      become: false
-      register: prebuilt_checksum
-      changed_when: false
+    - name: Record target-side SHA256 of deployed binary
+      ansible.builtin.stat:
+        path: "{{ ja4proxy_bin_dir }}/ja4proxy"
+        checksum_algorithm: sha256
+        get_checksum: true
+      register: prebuilt_target_stat
+
+    - name: Assert deployed binary matches source checksum
+      ansible.builtin.assert:
+        that:
+          - prebuilt_target_stat.stat.checksum == prebuilt_source_stat.stat.checksum
+        fail_msg: >-
+          Binary checksum mismatch after copy.
+          Source: {{ prebuilt_source_stat.stat.checksum }}
+          Target: {{ prebuilt_target_stat.stat.checksum }}
+        success_msg: "JA4proxy binary SHA256 verified: {{ prebuilt_target_stat.stat.checksum }}"
+        quiet: false
 
   when: ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0
 
@@ -67,6 +86,15 @@
       register: file_check
       changed_when: false
 
+    - name: Record source-side SHA256 of freshly-built binary
+      ansible.builtin.stat:
+        path: "{{ ja4proxy_build_machine_go_path }}/bin/proxy"
+        checksum_algorithm: sha256
+        get_checksum: true
+      delegate_to: localhost
+      become: false
+      register: build_source_stat
+
     - name: Copy built binary to target
       ansible.builtin.copy:
         src: "{{ ja4proxy_build_machine_go_path }}/bin/proxy"
@@ -75,13 +103,23 @@
         group: "{{ ja4proxy_system_group }}"
         mode: "0750"
 
-    - name: Generate checksum for built binary
-      ansible.builtin.command:
-        cmd: "sha256sum {{ ja4proxy_build_machine_go_path }}/bin/proxy"
-      delegate_to: localhost
-      become: false
-      register: build_checksum
-      changed_when: false
+    - name: Record target-side SHA256 of deployed binary
+      ansible.builtin.stat:
+        path: "{{ ja4proxy_bin_dir }}/ja4proxy"
+        checksum_algorithm: sha256
+        get_checksum: true
+      register: build_target_stat
+
+    - name: Assert deployed binary matches build-time checksum
+      ansible.builtin.assert:
+        that:
+          - build_target_stat.stat.checksum == build_source_stat.stat.checksum
+        fail_msg: >-
+          Binary checksum mismatch after copy.
+          Source: {{ build_source_stat.stat.checksum }}
+          Target: {{ build_target_stat.stat.checksum }}
+        success_msg: "JA4proxy binary SHA256 verified: {{ build_target_stat.stat.checksum }}"
+        quiet: false
 
   when: >
     not (ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0)
