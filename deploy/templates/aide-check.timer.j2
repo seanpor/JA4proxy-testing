@@ -1,0 +1,13 @@
+[Unit]
+# {{ ansible_managed }}
+# 13-I: run aide --check daily at 03:30 local time.
+Description=Daily AIDE file integrity check
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+RandomizedDelaySec=300
+Unit=aide-check.service
+
+[Install]
+WantedBy=timers.target
