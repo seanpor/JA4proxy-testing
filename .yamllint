@@ -1,0 +1,47 @@
+---
+extends: default
+
+# Applied across deploy/, .github/, and any YAML at the repo root.
+# Templates (.j2) are excluded because they are not valid YAML until rendered.
+ignore: |
+  .venv-dev/
+  deploy/.vault/
+  deploy/templates/*.j2
+  **/*.j2
+
+rules:
+  line-length:
+    max: 160
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
+  # Comments next to keys are legitimate in Ansible vars files.
+  comments-indentation: disable
+  comments:
+    min-spaces-from-content: 1
+
+  # Let Ansible's own parser judge truthiness; yamllint is too strict here
+  # (it flags "true"/"false" as recommended-only variants).
+  truthy:
+    allowed-values: ["true", "false", "True", "False", "yes", "no"]
+    check-keys: false
+
+  # ok to omit the --- prefix in include_vars payloads and group_vars
+  document-start: disable
+
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+    check-multi-line-strings: false
+
+  # Let long Ansible module args be; readable over strict.
+  braces:
+    max-spaces-inside: 1
+
+  brackets:
+    max-spaces-inside: 1
+
+  # Required by ansible-lint's yaml rule.
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true

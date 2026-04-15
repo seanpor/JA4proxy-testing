@@ -142,7 +142,10 @@
             (ja4proxy_build_machine_go_path is defined and ja4proxy_build_machine_go_path | length > 0 and build_path_check.stat.exists | default(false))
             or
             (ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0 and prebuilt_path_check.stat.exists | default(false))
-        fail_msg: "You must provide either a valid local Go repo path (ja4proxy_build_machine_go_path) or a valid prebuilt binary path (ja4proxy_prebuilt_binary_path)."
+        fail_msg: >-
+          You must provide either a valid local Go repo path
+          (ja4proxy_build_machine_go_path) or a valid prebuilt
+          binary path (ja4proxy_prebuilt_binary_path).
         quiet: true
       delegate_to: localhost
       run_once: true

@@ -243,7 +243,7 @@ aliyun ecs StartInstance --InstanceId "$INSTANCE_ID" 2>/dev/null || true
 
 # Wait for instance to be running
 echo "Waiting for instance to start (up to 120s)..."
-for i in $(seq 1 24); do
+for _ in $(seq 1 24); do
     STATUS=$(aliyun ecs DescribeInstanceStatus \
         --RegionId "$REGION" \
         --output cols=Status rows=InstanceStatuses.InstanceStatus[] 2>/dev/null | head -1 || true)
