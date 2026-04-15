@@ -110,6 +110,24 @@
     group: root
     mode: "0644"
 
+- name: Ensure .well-known directory exists (11-C)
+  tags: [artifacts, phase2]
+  ansible.builtin.file:
+    path: "{{ ja4proxy_docker_config_dir }}/caddy/html/.well-known"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy RFC 9116 security.txt (11-C)
+  tags: [artifacts, phase2]
+  ansible.builtin.template:
+    src: templates/security.txt.j2
+    dest: "{{ ja4proxy_docker_config_dir }}/caddy/html/.well-known/security.txt"
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Verify all config files deployed
   tags: [artifacts, phase2]
   ansible.builtin.stat:
