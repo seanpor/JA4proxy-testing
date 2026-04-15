@@ -124,9 +124,9 @@ lint-secrets:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -161,6 +161,10 @@ test-collections:
 test-go-build-flags:
 	@echo "── Go build injects -trimpath + -buildvcs via GOFLAGS (14-A) ──"
 	@$(PY) scripts/ci/check_go_build_flags.py
+
+test-pinned-artifacts:
+	@echo "── expected-binary-sha256.txt well-formed + referenced (14-B) ──"
+	@$(PY) scripts/ci/check_pinned_artifacts.py
 
 # ─────────────────────────────────────────────────────────────
 # Deployment target passthrough (to deploy/Makefile)
