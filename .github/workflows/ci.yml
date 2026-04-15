@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+    branches: [main, review-fixes]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Install dev tools (ansible-lint, yamllint, jinja2, pyyaml)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install -r deploy/requirements.yml
+
+      - name: make lint
+        env:
+          YAMLLINT: yamllint
+          ANSIBLE_LINT: ansible-lint
+          ANSIBLE_PLAYBOOK: ansible-playbook
+        run: make lint
+
+      - name: make test
+        run: make test

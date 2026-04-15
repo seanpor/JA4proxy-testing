@@ -1,0 +1,42 @@
+---
+# ansible-lint configuration for JA4proxy-testing.
+# Runs against the full playbook; paths are relative to this file.
+
+profile: moderate
+
+exclude_paths:
+  - .venv-dev/
+  - deploy/.vault/
+  - docs/
+  - .github/
+
+# Skip rules where the project has a deliberate, documented deviation.
+# Each entry should have a justification line.
+skip_list:
+  # The playbook is one file that runs against a dynamically-constructed
+  # inventory; role loop ordering matters and linting each role in
+  # isolation flags cross-role facts as undefined.
+  - var-naming[no-role-prefix]
+  # We deploy configs whose ownership is ja4proxy_system_user (a fact set
+  # from group_vars at play level). ansible-lint's role-naming heuristic
+  # doesn't pick this up and would have us prefix every variable.
+  - role-name
+  # Stylistic only — we put `when:` before `block:` in build.yml to
+  # surface the gating predicate before the long block body.
+  - key-order[task]
+  # Role 07 deliberately uses curl with -k for self-signed cert reachability
+  # checks during validation; the uri module's ssl handling differs.
+  - command-instead-of-module
+
+# Warn (don't fail) on these — useful signal, but not release blockers.
+warn_list:
+  - experimental
+  - yaml[line-length]  # handled by yamllint with our own max
+  - name[casing]
+  - fqcn[action-core]  # we already use ansible.builtin.* everywhere that matters
+
+# Enable the offline-friendly rule set; skip anything requiring a live
+# Ansible-Galaxy lookup.
+offline: true
+
+use_default_rules: true

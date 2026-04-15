@@ -3,3 +3,9 @@ deploy/.vault/
 
 # Ansible artifacts
 *.retry
+
+# Dev tooling
+.venv-dev/
+__pycache__/
+*.pyc
+.pytest_cache/

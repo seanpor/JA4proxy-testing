@@ -24,6 +24,9 @@ StandardError=journal
 SyslogIdentifier=ja4proxy
 
 # Security hardening
+{% if ja4proxy_apparmor_enabled | default(true) %}
+AppArmorProfile={{ ja4proxy_apparmor_profile_name }}
+{% endif %}
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=yes

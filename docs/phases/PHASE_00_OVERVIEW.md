@@ -264,15 +264,23 @@ flowchart TD
 
 | Phase | Document | Status |
 |-------|----------|--------|
-| **Phase 0** | This document — overview, architecture, diagrams | ✅ This file |
-| **Phase 1** | `PHASE_01_VM_PROVISIONING.md` — VM setup, hardening, firewall | ⏳ Next |
-| **Phase 2** | `PHASE_02_ARTIFACT_PREPARATION.md` — build, config prep, transfer | ⏳ |
-| **Phase 3** | `PHASE_03_JA4PROXY_DEPLOYMENT.md` — Go binary, systemd, monitor mode | ⏳ |
-| **Phase 4** | `PHASE_04_SUPPORTING_SERVICES.md` — Docker Compose stack | ⏳ |
-| **Phase 5** | `PHASE_05_DATA_COLLECTION.md` — research plan, dashboards, retention | ⏳ |
-| **Phase 6** | `PHASE_06_OPERATIONAL_SECURITY.md` — access, alerting, incident response | ⏳ |
-| **Phase 7** | `PHASE_07_VALIDATION_TESTING.md` — verification, traffic generation, dial escalation | ⏳ |
-| **Phase 8** | `PHASE_08_SECURITY_HARDENING.md` — STRIDE threat model, kernel hardening, container security, forensics | ⏳ |
+| **Phase 0** | This document — overview, architecture, diagrams | ✅ |
+| **Phase 1** | `PHASE_01_VM_PROVISIONING.md` — VM setup, hardening, firewall | ✅ implemented (role 01) |
+| **Phase 2** | `PHASE_02_ARTIFACT_PREPARATION.md` — build, config prep, transfer | ✅ implemented (role 02) |
+| **Phase 3** | `PHASE_03_JA4PROXY_DEPLOYMENT.md` — Go binary, systemd, monitor mode | ⚠ implemented with caveats (role 03, see known-issues note in that doc) |
+| **Phase 4** | `PHASE_04_SUPPORTING_SERVICES.md` — Docker Compose stack | ✅ implemented (role 04) |
+| **Phase 5** | `PHASE_05_DATA_COLLECTION.md` — research plan, dashboards, retention | ⚠ retention enforcement is aspirational, see PHASE_12 |
+| **Phase 6** | `PHASE_06_OPERATIONAL_SECURITY.md` — access, alerting, incident response | ⚠ alerting is only *dashboarded*, not delivered — see PHASE_13 |
+| **Phase 7** | `PHASE_07_VALIDATION_TESTING.md` — verification, traffic generation, dial escalation | ✅ implemented (role 07 + `verify-local.sh`) |
+| **Phase 8** | `PHASE_08_SECURITY_HARDENING.md` — STRIDE, kernel, container | ⚠ implemented with AppArmor-ordering bug, see known-issues note |
+| **Phase 9** | `PHASE_09_IMAGE_DIGESTS.md` — Docker image digest pinning | ⚠ implemented with regex bug, see that doc |
+| **Phase 10** | `PHASE_10_GO_LIVE.md` — public exposure transition | ✅ implemented (role 10); needs DNS + legal preconditions from PHASE_11/13 |
+| **Phase 11** | `PHASE_11_LEGAL_ETHICS_AND_HONEYPOT_DISCLOSURE.md` | ❌ not implemented — **blocks go-live** |
+| **Phase 12** | `PHASE_12_DATA_LIFECYCLE_AND_EXPORT.md` | ❌ not implemented |
+| **Phase 13** | `PHASE_13_POST_LAUNCH_OPERATIONS.md` — alerting, cert, DNS preflight, rotation | ❌ not implemented |
+| **Phase 14** | `PHASE_14_CI_AND_IDEMPOTENCY.md` — Ansible test harness | ❌ not implemented |
+| **Phase 15** | `PHASE_15_ABUSE_AND_INCIDENT_RESPONSE.md` — abuse queue, IR playbooks | ❌ not implemented |
+| **Review** | `CRITICAL_REVIEW.md` — expert pass, 2026-04-15 | ✅ |
 
 ---
 

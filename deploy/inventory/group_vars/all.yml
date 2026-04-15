@@ -70,6 +70,13 @@ ja4proxy_log_level: "debug"
 ja4proxy_fd_limit_soft: 65536
 ja4proxy_fd_limit_hard: 65536
 
+# AppArmor confinement. When true, the profile is loaded in Phase 3
+# before the service first starts, and the systemd unit carries an
+# AppArmorProfile= directive so confinement is active from the first
+# ExecStart. Phase 8 then verifies the running service is confined.
+ja4proxy_apparmor_enabled: true
+ja4proxy_apparmor_profile_name: "opt.ja4proxy.bin.ja4proxy"
+
 # ── Docker Images (tags — digests pinned at deploy time) ────
 
 ja4proxy_docker_image_haproxy: "haproxy:2.8-alpine"
