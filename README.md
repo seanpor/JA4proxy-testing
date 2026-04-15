@@ -260,6 +260,23 @@ make ci-deploy
 make status VM_IP=<ip>
 ```
 
+### Dead-man's-switch heartbeat
+
+Set `JA4PROXY_HEARTBEAT_URL` to a [healthchecks.io](https://healthchecks.io)
+(or compatible) check URL and the deploy will install a systemd timer
+that pings it every 5 minutes. If the VM falls off the net — compromised,
+unpaid, rebooted into a wedged state — you get a push alert within
+one ping interval. Budget alerts (see `docs/phases/RUNBOOK.md` →
+"Budget alert setup") catch the *cost* failure mode; the heartbeat
+catches the *availability* one.
+
+### Cost guard
+
+`make cloud` refuses to provision without `--confirm`, printing an
+indicative monthly EUR estimate first. See the runbook's "Budget
+alert setup" section for the Alibaba-console follow-up that turns
+the warning into an actual spend cap.
+
 ### Change Dial Setting (Gradual Enforcement)
 ```bash
 # Current dial (0 = monitor, 100 = full block)

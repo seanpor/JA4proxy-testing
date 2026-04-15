@@ -1037,7 +1037,7 @@ visible.
 - [ ] 13-F — blackbox_exporter + heartbeat
 - [ ] 13-I — AIDE timer
 - [ ] 13-J — secrets rotation role
-- [ ] 13-K — heartbeat / cost hints
+- [x] 13-K — heartbeat / cost hints (PR #26)
 - [ ] 12-A — weekly export timer
 - [ ] 12-B — anonymisation in export
 - [ ] 12-C — export-pull on control machine
