@@ -21,6 +21,14 @@ to `main`, the following must all be green:
    post-merge run goes red, treat it as a P0: revert or fix-forward
    immediately, do not pile new commits on top.
 
+`main` is branch-protected:
+- `lint-and-test` is a required status check (strict: branch must be up
+  to date before merge)
+- force pushes, deletions, and non-linear history are blocked
+- unresolved PR conversations block merge
+- admins are not enforced (so you can still push directly in a true
+  emergency — but the default path is a PR)
+
 Bootstrap once per clone:
 
 ```
