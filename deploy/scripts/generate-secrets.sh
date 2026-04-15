@@ -79,6 +79,15 @@ if ! grep -q "^haproxy_stats_user:" "$WORK" 2>/dev/null; then
     echo "  [gen]  haproxy_stats_user"
 fi
 
+# 13-D: smtp_password is intentionally NOT auto-generated — the
+# operator pastes the relay's real password (or leaves the line as
+# empty string to opt out of email delivery). Seed an empty value
+# the first time so the alertmanager template renders cleanly.
+if ! grep -q "^smtp_password:" "$WORK" 2>/dev/null; then
+    echo "smtp_password: ''" >> "$WORK"
+    echo "  [gen]  smtp_password (empty placeholder — set to enable email alerts)"
+fi
+
 ansible-vault encrypt --vault-password-file "$PASS_FILE" \
     --output "$SECRETS_FILE" "$WORK" >/dev/null
 chmod 600 "$SECRETS_FILE"

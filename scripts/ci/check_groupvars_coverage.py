@@ -36,6 +36,10 @@ play_facts |= {
     # Injected from vault-loaded ja4proxy_secrets:
     "redis_password", "grafana_admin_password", "grafana_password",
     "redis_signing_key", "haproxy_stats_password", "haproxy_stats_user",
+    # 13-D: vault-loaded secrets dict used in alertmanager.yml.j2 as
+    # `ja4proxy_secrets.smtp_password`. Referenced only in templates;
+    # not declared in group_vars.
+    "ja4proxy_secrets",
 }
 known = defined | play_facts
 

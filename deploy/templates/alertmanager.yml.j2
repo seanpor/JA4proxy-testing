@@ -1,0 +1,38 @@
+# Alertmanager — 13-D
+#
+# Single-route config sending to the operator via SMTP. If SMTP vars
+# are empty the receiver has no email target — alerts still queue at
+# :9093/api/v2/alerts but nothing is delivered. This lets a deployment
+# opt out of email delivery cleanly (for example when the dead-man's
+# heartbeat at healthchecks.io is considered sufficient).
+global:
+  resolve_timeout: 5m
+{% if ja4proxy_alertmanager_smtp_smarthost %}
+  smtp_smarthost: "{{ ja4proxy_alertmanager_smtp_smarthost }}"
+  smtp_from: "{{ ja4proxy_alertmanager_from }}"
+  smtp_require_tls: {{ ja4proxy_alertmanager_smtp_require_tls | lower }}
+  smtp_auth_username: "{{ ja4proxy_alertmanager_from }}"
+  smtp_auth_password: "{{ ja4proxy_secrets.smtp_password | default('') }}"
+{% endif %}
+
+route:
+  receiver: operator
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: operator
+{% if ja4proxy_alertmanager_smtp_smarthost and ja4proxy_alertmanager_to %}
+    email_configs:
+      - to: "{{ ja4proxy_alertmanager_to }}"
+        send_resolved: true
+{% endif %}
+
+inhibit_rules:
+  # If the whole honeypot is down, don't also spam about individual
+  # probe failures — the root-cause alert is enough.
+  - source_matchers: ['alertname="HoneypotProbeFailing"']
+    target_matchers: ['severity="warning"']
+    equal: ['instance']
