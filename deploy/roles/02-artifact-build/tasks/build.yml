@@ -69,7 +69,9 @@
         cmd: >
           bash -c '
             cd {{ ja4proxy_build_machine_go_path }} &&
-            GOOS=linux GOARCH=amd64 CGO_ENABLED=0 make go-build
+            GOOS=linux GOARCH=amd64 CGO_ENABLED=0
+            GOFLAGS="{{ ja4proxy_go_build_flags }}"
+            make go-build
           '
       delegate_to: localhost
       become: false

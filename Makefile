@@ -124,9 +124,9 @@ lint-secrets:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -157,6 +157,10 @@ test-makefile:
 test-collections:
 	@echo "── Ansible collections pinned + used FQCNs covered ──"
 	@$(PY) scripts/ci/check_collections.py
+
+test-go-build-flags:
+	@echo "── Go build injects -trimpath + -buildvcs via GOFLAGS (14-A) ──"
+	@$(PY) scripts/ci/check_go_build_flags.py
 
 # ─────────────────────────────────────────────────────────────
 # Deployment target passthrough (to deploy/Makefile)
