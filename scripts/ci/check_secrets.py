@@ -38,7 +38,11 @@ KEY_MARKERS = (
     b"-----BEGIN DSA PRIVATE KEY-----",
     b"-----BEGIN PRIVATE KEY-----",
 )
+# The scanner itself carries these markers as string literals — exempt it.
+KEY_SCAN_EXEMPT = {"scripts/ci/check_secrets.py"}
 for rel in tracked:
+    if rel in KEY_SCAN_EXEMPT:
+        continue
     p = ROOT / rel
     if not p.is_file() or p.stat().st_size > 1_000_000:
         continue
