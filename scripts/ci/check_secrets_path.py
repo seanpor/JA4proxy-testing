@@ -42,6 +42,13 @@ with tempfile.TemporaryDirectory() as tmp:
     )
     (tmp / "deploy" / ".vault").mkdir(exist_ok=True)
 
+    # Skip the dynamic run if ansible-vault isn't on PATH (e.g. pre-commit
+    # hook running outside the dev venv). The static check above is still
+    # enough to catch A1 path drift.
+    if shutil.which("ansible-vault") is None:
+        print("✓ secrets-path contract holds (static only — ansible-vault not on PATH)")
+        raise SystemExit
+
     subprocess.run(
         ["bash", "deploy/scripts/generate-secrets.sh"],
         cwd=tmp,
@@ -51,9 +58,15 @@ with tempfile.TemporaryDirectory() as tmp:
 
     want = tmp / "deploy" / ".vault" / "secrets.yml"
     stray = tmp / ".vault" / "secrets.yml"
+    pass_file = tmp / "deploy" / ".vault" / ".vault-pass"
     if not want.is_file():
         sys.exit(f"A1 regression: secrets not at {want}")
     if stray.exists():
         sys.exit(f"A1 regression: secrets leaked to {stray}")
+    if not pass_file.is_file():
+        sys.exit(f"A5 regression: vault password file missing at {pass_file}")
+    head = want.read_bytes()[:20]
+    if not head.startswith(b"$ANSIBLE_VAULT;"):
+        sys.exit("A5 regression: secrets.yml is not vault-encrypted at rest")
 
-print("✓ secrets-path contract holds (A1 regression test)")
+print("✓ secrets-path + at-rest-encryption contract holds (A1 + A5 regression)")
