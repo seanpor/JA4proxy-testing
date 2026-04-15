@@ -1030,7 +1030,7 @@ visible.
 - [x] 11-D — MX preflight before go-live (PR #19)
 - [x] 13-G — DNS A-record preflight (PR #20)
 - [x] 13-H — ACME staging default + go-live flip (PR #21)
-- [ ] 11-B — /privacy GDPR page
+- [x] 11-B — /privacy GDPR page (PR #27)
 - [ ] 11-E — governance document skeletons
 - [ ] 13-D — Alertmanager
 - [ ] 13-E — alert rules
