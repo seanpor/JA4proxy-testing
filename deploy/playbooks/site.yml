@@ -187,13 +187,52 @@
       become: false
       changed_when: false
 
+    # ── SSH private key discovery ──
+    # Order: explicit env var → ~/.ssh/id_ed25519 → ~/.ssh/id_rsa.
+    # We stat each candidate and pick the first that exists; failing
+    # loudly with a clear message beats a cryptic Ansible connection error.
+    - name: Stat candidate SSH private keys
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ lookup('env', 'JA4PROXY_SSH_PRIVATE_KEY') | default('', true) }}"
+        - "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519"
+        - "{{ lookup('env', 'HOME') }}/.ssh/id_rsa"
+      register: _ssh_key_candidates
+      delegate_to: localhost
+      run_once: true
+      become: false
+      changed_when: false
+      when: item | length > 0
+
+    - name: Pick first existing SSH private key
+      ansible.builtin.set_fact:
+        ja4proxy_ssh_private_key_file: >-
+          {{ (_ssh_key_candidates.results
+              | selectattr('stat', 'defined')
+              | selectattr('stat.exists', 'equalto', true)
+              | map(attribute='item')
+              | list
+              | first) }}
+      run_once: true
+
+    - name: Assert SSH private key was found
+      ansible.builtin.assert:
+        that:
+          - ja4proxy_ssh_private_key_file | length > 0
+        fail_msg: >-
+          No SSH private key found. Set JA4PROXY_SSH_PRIVATE_KEY or
+          place one at ~/.ssh/id_ed25519 or ~/.ssh/id_rsa.
+        quiet: true
+      run_once: true
+
     # ── Dynamic inventory ──
     - name: Add target host to inventory dynamically
       ansible.builtin.add_host:
         name: "{{ ja4proxy_vm_host }}"
         groups: ja4proxy_vm
         ansible_user: "{{ ja4proxy_ssh_user }}"
-        ansible_ssh_private_key_file: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519"
+        ansible_ssh_private_key_file: "{{ ja4proxy_ssh_private_key_file }}"
         ansible_python_interpreter: /usr/bin/python3
       changed_when: false
 
