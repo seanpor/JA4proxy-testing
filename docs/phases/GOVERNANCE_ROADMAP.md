@@ -1016,3 +1016,34 @@ visible.
 ## Status
 
 <!-- Append as chunks land. -->
+
+- [x] 14-A — GOFLAGS -trimpath + -buildvcs (PR #?)
+- [x] 14-B — prebuilt binary sha256 pin (PR #?)
+- [x] 14-C — GeoIP sha256 pin (PR #?)
+- [x] 14-D — idempotency re-run target (PR #?)
+- [x] 14-E — Molecule scenario skeleton (PR #?)
+- [x] 13-A — journald.conf template (PR #?)
+- [x] 13-B — Loki retention regression guard (PR #15)
+- [x] 13-C — Prometheus TSDB retention time + size (PR #16)
+- [x] 11-A — honeypot disclosure page (PR #17)
+- [x] 11-C — RFC 9116 security.txt (PR #18)
+- [x] 11-D — MX preflight before go-live (PR #19)
+- [x] 13-G — DNS A-record preflight (PR #20)
+- [x] 13-H — ACME staging default + go-live flip (PR #21)
+- [ ] 11-B — /privacy GDPR page
+- [ ] 11-E — governance document skeletons
+- [ ] 13-D — Alertmanager
+- [ ] 13-E — alert rules
+- [ ] 13-F — blackbox_exporter + heartbeat
+- [ ] 13-I — AIDE timer
+- [ ] 13-J — secrets rotation role
+- [ ] 13-K — heartbeat / cost hints
+- [ ] 12-A — weekly export timer
+- [ ] 12-B — anonymisation in export
+- [ ] 12-C — export-pull on control machine
+- [ ] 12-D — binary provenance
+- [ ] 15-A — preserve-evidence.sh
+- [ ] 15-B — runbook IR scenarios
+- [ ] 15-C — governance docs body
+- [ ] 15-D — README Operations
+- [ ] TM-A — THREAT_MODEL.md
