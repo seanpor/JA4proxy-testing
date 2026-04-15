@@ -1,0 +1,43 @@
+---
+# 14-E: Molecule scenario for role 01-vm-provisioning.
+#
+# Boots Ubuntu 22.04 in Docker, applies the role, and runs assertions.
+# Not yet wired into GitHub Actions — gated behind `make molecule` for
+# now to keep PR feedback fast. Enable in CI with a dedicated job later.
+
+driver:
+  name: docker
+
+platforms:
+  - name: ja4proxy-mol-01
+    image: geerlingguy/docker-ubuntu2204-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /sbin/init
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host
+
+provisioner:
+  name: ansible
+  inventory:
+    group_vars:
+      all:
+        # Minimum vars role 01 expects. Keep in sync with
+        # deploy/inventory/group_vars/all.yml defaults.
+        ja4proxy_system_user: ja4proxy
+        ja4proxy_system_group: ja4proxy
+        ja4proxy_base_dir: /opt/ja4proxy
+        ja4proxy_bin_dir: /opt/ja4proxy/bin
+        ja4proxy_config_dir: /opt/ja4proxy/config
+        ja4proxy_log_dir: /opt/ja4proxy/logs
+        ja4proxy_geoip_dir: /opt/ja4proxy/geoip
+        ja4proxy_docker_base_dir: /opt/ja4proxy-docker
+        ja4proxy_docker_config_dir: /opt/ja4proxy-docker/config
+        ja4proxy_admin_ip: "127.0.0.1"
+        ja4proxy_fd_limit_soft: 65536
+        ja4proxy_fd_limit_hard: 65536
+        ja4proxy_conntrack_max: 262144
+
+verifier:
+  name: ansible

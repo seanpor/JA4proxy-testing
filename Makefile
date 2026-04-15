@@ -124,9 +124,9 @@ lint-secrets:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -169,6 +169,21 @@ test-pinned-artifacts:
 test-geoip-pin:
 	@echo "── ja4proxy_geoip_expected_sha256 declared + used (14-C) ──"
 	@$(PY) scripts/ci/check_geoip_pin.py
+
+test-molecule-scenarios:
+	@echo "── Molecule scenarios have molecule.yml/converge.yml/verify.yml (14-E) ──"
+	@$(PY) scripts/ci/check_molecule_scenarios.py
+
+# 14-E: run Molecule tests (requires `pip install molecule molecule-plugins[docker] docker`).
+# Not yet wired into ci.yml; enable per-PR with a dedicated job later.
+.PHONY: molecule
+molecule:
+	@command -v molecule >/dev/null || { \
+	  echo "molecule not on PATH."; \
+	  echo "Install:  pip install molecule molecule-plugins[docker] docker"; \
+	  exit 2; \
+	}
+	@cd deploy/roles/01-vm-provisioning && molecule test
 
 # ─────────────────────────────────────────────────────────────
 # Deployment target passthrough (to deploy/Makefile)
