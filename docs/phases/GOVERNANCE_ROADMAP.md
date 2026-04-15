@@ -1045,5 +1045,5 @@ visible.
 - [ ] 15-A — preserve-evidence.sh
 - [ ] 15-B — runbook IR scenarios
 - [ ] 15-C — governance docs body
-- [ ] 15-D — README Operations
+- [x] 15-D — README Operations (PR #28)
 - [ ] TM-A — THREAT_MODEL.md

@@ -255,6 +255,24 @@ make ci-deploy
 
 ## Operations
 
+### On-call posture
+
+This is a research honeypot run by a small team (often one person).
+Response windows are deliberately modest so expectations stay honest:
+
+- **Abuse emails to `abuse@<domain>`**: triaged within **3 business days**.
+  Escalations via the contact in `/.well-known/security.txt`.
+- **Down-alerts from the heartbeat or budget alert**: investigated within
+  **24 h**. First response is usually `make status VM_IP=…` followed by
+  the matching `docs/phases/RUNBOOK.md` scenario.
+- **Planned away periods** (holiday, no laptop): stop the stack before
+  leaving — either `make destroy VM_IP=…` or a manual `docker compose
+  down` + `systemctl stop ja4proxy`. A dark honeypot is safer than an
+  unmonitored one; bringing it back is one `make deploy` away.
+
+See `docs/phases/RUNBOOK.md` for the step-by-step scenarios referenced
+above.
+
 ### Daily Checks (1 minute)
 ```bash
 make status VM_IP=<ip>
