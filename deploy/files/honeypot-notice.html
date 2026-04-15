@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honeypot Notice — JA4proxy Research</title>
+    <style>
+        body { font-family: sans-serif; max-width: 720px; margin: 40px auto;
+               padding: 0 20px; line-height: 1.6; color: #222; }
+        h1 { color: #b00; }
+        h2 { margin-top: 30px; }
+        code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Research Honeypot Notice</h1>
+
+    <p><strong>This server is a research honeypot.</strong> It is not a
+    production service. If you believe you reached it by accident, you are
+    in the wrong place and no action is required on your part.</p>
+
+    <h2>What this server does</h2>
+    <p>It records TLS handshake fingerprints (JA4), source IP address, and
+    HTTP request metadata from clients that connect to it. The form on the
+    landing page is decorative: submitted values are logged and immediately
+    discarded. No account, session, or personal record is created.</p>
+
+    <h2>What this server does not do</h2>
+    <ul>
+        <li>It does not offer a real product, service, or API.</li>
+        <li>It does not sell, forward, or trade collected data.</li>
+        <li>It does not issue credentials, authenticate users, or store
+            passwords.</li>
+    </ul>
+
+    <h2>Lawful basis (GDPR Art. 6(1)(f))</h2>
+    <p>Processing of connection metadata is carried out under the legitimate
+    interest of security research into TLS-fingerprintable bot and
+    attacker behaviour. A balancing assessment is available on request.</p>
+
+    <h2>Retention</h2>
+    <p>Connection logs and metrics are retained for up to 90 days and then
+    deleted automatically by the log pipeline.</p>
+
+    <h2>Contact</h2>
+    <ul>
+        <li>Abuse reports: <code>abuse@</code> the domain serving this page.</li>
+        <li>Privacy / data-subject requests: <code>privacy@</code> the domain
+            serving this page.</li>
+    </ul>
+
+    <p><small>This page is static and auto-generated from a template in the
+    deployment repository. Last updated at deploy time.</small></p>
+</body>
+</html>
