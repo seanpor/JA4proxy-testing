@@ -110,6 +110,24 @@
     mode: "0644"
   notify: Daemon reload systemd
 
+- name: Deploy incident-response evidence collector (15-A)
+  tags: [opsec, phase6]
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../scripts/preserve-evidence.sh"
+    dest: /usr/local/sbin/preserve-evidence.sh
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Ensure evidence collection directory exists (15-A)
+  tags: [opsec, phase6]
+  ansible.builtin.file:
+    path: /var/lib/ja4proxy/evidence
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
 - name: Set up daily health check cron
   tags: [opsec, phase6]
   ansible.builtin.cron:
