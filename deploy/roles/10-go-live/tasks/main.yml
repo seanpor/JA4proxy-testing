@@ -27,6 +27,32 @@
     quiet: true
   tags: [go-live, phase10]
 
+- name: Preflight — resolve A record for deployment domain (13-G)
+  ansible.builtin.command:
+    cmd: "dig +short A {{ ja4proxy_domain }}"
+  delegate_to: localhost
+  become: false
+  register: _domain_a_preflight
+  changed_when: false
+  failed_when: false
+  tags: [go-live, phase10, preflight]
+
+- name: Assert domain A record matches VM host IP (13-G)
+  ansible.builtin.assert:
+    that:
+      - _domain_a_preflight.stdout | trim | length > 0
+      - ja4proxy_vm_host in (_domain_a_preflight.stdout.splitlines() | map('trim') | list)
+    fail_msg: |
+      ⚠️  {{ ja4proxy_domain }} does not resolve to {{ ja4proxy_vm_host }}.
+          dig returned: {{ _domain_a_preflight.stdout | default('(empty)') | trim }}
+      Going live with a mismatched A record would waste the Let's
+      Encrypt HTTP-01 challenge, burning rate-limit budget for the
+      domain. Fix DNS before retrying.
+      (Override: -e ja4proxy_skip_dns_preflight=true)
+    quiet: true
+  when: not (ja4proxy_skip_dns_preflight | default(false) | bool)
+  tags: [go-live, phase10, preflight]
+
 - name: Preflight — resolve MX record for abuse contact domain (11-D)
   ansible.builtin.command:
     cmd: "dig +short MX {{ ja4proxy_domain }}"
