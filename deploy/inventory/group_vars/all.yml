@@ -97,6 +97,7 @@ ja4proxy_docker_image_grafana: "grafana/grafana:latest"
 ja4proxy_docker_image_loki: "grafana/loki:latest"
 ja4proxy_docker_image_promtail: "grafana/promtail:latest"
 ja4proxy_docker_image_blackbox_exporter: "prom/blackbox-exporter:latest"
+ja4proxy_docker_image_alertmanager: "prom/alertmanager:latest"
 
 # ── Resource Limits ──────────────────────────────────────────
 
@@ -122,6 +123,16 @@ ja4proxy_loki_retention_days: 90
 
 ja4proxy_prometheus_retention_days: 90
 ja4proxy_prometheus_retention_size: "10GB"
+
+# ── Alertmanager (13-D) ──────────────────────────────────────
+# Email delivery for Prometheus alerts. All three values empty =
+# alertmanager still runs (so rules don't fire into /dev/null) but
+# email delivery is disabled; alerts remain queryable at :9093/api.
+# Set these + ja4proxy_secrets.smtp_password to turn on email.
+ja4proxy_alertmanager_smtp_smarthost: ""
+ja4proxy_alertmanager_from: ""
+ja4proxy_alertmanager_to: ""
+ja4proxy_alertmanager_smtp_require_tls: true
 
 # ── Heartbeat (13-F) ─────────────────────────────────────────
 # External dead-man's-switch URL (healthchecks.io or compatible).

@@ -19,6 +19,7 @@ volumes:
   grafana-data:
   caddy-data:
   caddy-config:
+  alertmanager-data:
 
 services:
   # ── HAProxy: TLS Passthrough ──
@@ -207,6 +208,37 @@ services:
         limits:
           memory: {{ ja4proxy_promtail_memory_limit }}
           cpus: "{{ ja4proxy_promtail_cpu_limit }}"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Alertmanager: notification delivery (13-D) ──
+  # Consumes alerts from Prometheus and delivers them via SMTP (or
+  # nothing, if SMTP vars are unset). Loopback-only outside the live
+  # stage; the live stage still keeps it internal — only Prometheus
+  # talks to it, no external consumer.
+  alertmanager:
+    image: {{ ja4proxy_docker_image_alertmanager }}
+    container_name: ja4proxy-alertmanager
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.listen-address=:9093'
+    ports:
+      - "127.0.0.1:9093:9093"
+    volumes:
+      - ./config/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    networks:
+      - {{ ja4proxy_network_monitoring }}
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.10"
     logging:
       driver: json-file
       options:

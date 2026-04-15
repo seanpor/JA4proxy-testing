@@ -83,6 +83,24 @@
     group: root
     mode: "0644"
 
+- name: Ensure alertmanager config dir exists (13-D)
+  tags: [artifacts, phase2]
+  ansible.builtin.file:
+    path: "{{ ja4proxy_docker_config_dir }}/alertmanager"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy alertmanager config (13-D)
+  tags: [artifacts, phase2]
+  ansible.builtin.template:
+    src: templates/alertmanager.yml.j2
+    dest: "{{ ja4proxy_docker_config_dir }}/alertmanager/alertmanager.yml"
+    owner: root
+    group: root
+    mode: "0640"
+
 - name: Deploy Grafana datasources provisioning
   tags: [artifacts, phase2]
   ansible.builtin.template:

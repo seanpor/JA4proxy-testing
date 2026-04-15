@@ -9,6 +9,14 @@ global:
 rule_files:
   - /etc/prometheus/alert-rules.yml
 
+# 13-D: Alertmanager delivery. The container listens on :9093 on the
+# internal monitoring network; Prometheus resolves it by service name.
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
 scrape_configs:
   # JA4proxy metrics
   - job_name: 'ja4proxy'

@@ -124,9 +124,9 @@ lint-secrets:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -237,6 +237,10 @@ test-threat-model:
 test-governance-docs:
 	@echo "── docs/governance/ skeletons present + fresh (11-E, 15-C) ──"
 	@$(PY) scripts/ci/check_governance_docs.py
+
+test-alertmanager:
+	@echo "── Alertmanager service + Prometheus alerting block (13-D) ──"
+	@$(PY) scripts/ci/check_alertmanager.py
 
 # 14-E: run Molecule tests (requires `pip install molecule molecule-plugins[docker] docker`).
 # Not yet wired into ci.yml; enable per-PR with a dedicated job later.
