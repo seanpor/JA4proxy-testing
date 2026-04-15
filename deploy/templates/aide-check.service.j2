@@ -1,0 +1,19 @@
+[Unit]
+# {{ ansible_managed }}
+# 13-I: daily file-integrity check via AIDE.
+Description=AIDE file integrity check (JA4proxy honeypot)
+After=network.target
+
+[Service]
+Type=oneshot
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+# --check exits non-zero on any detected change.
+ExecStart=/bin/bash -c 'set -o pipefail; aide --check | tee /var/log/aide-check.log'
+{% if ja4proxy_aide_email | default("") | length > 0 %}
+# On failure, mail the operator.
+ExecStopPost=/bin/bash -c 'if [ "$SERVICE_RESULT" != "success" ]; then \
+  mail -s "[aide] file-integrity changes on $(hostname)" {{ ja4proxy_aide_email }} < /var/log/aide-check.log || true; \
+fi'
+{% endif %}

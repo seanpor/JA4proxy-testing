@@ -28,6 +28,10 @@ ja4proxy_deployment_stage: "locked"
 # DNS + MX preflights pass.
 ja4proxy_acme_staging: true
 
+# 13-I: operator email for AIDE file-integrity change alerts.
+# Empty string (default) = log only, do not mail.
+ja4proxy_aide_email: ""
+
 # SSH user to connect to the target VM on first run (typically 'root')
 ja4proxy_ssh_user: "root"
 
