@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**Read `AGENTS.md` first** for the pre-merge / pre-push contract: `make lint` and `make test` must be green locally before pushing, and the GitHub Actions `ci` workflow must be green on both the PR commit and the post-merge `main` commit.
+
 ## What this repo is
 
 Ansible-based deployment automation for a **research honeypot** that puts [JA4proxy](https://github.com/FoxIO-LLC/ja4) in front of a fake HTTPS form to collect real-world bot/attacker TLS fingerprints. It is *not* the JA4proxy source code and it is *not* a production deployment (that lives in a sibling repo, `JA4proxy4`). This repo only owns the research-specific stack: honeypot + observability + staged go-live.
