@@ -1,0 +1,18 @@
+# {{ ansible_managed }}
+# 13-F: dead-man's-switch heartbeat. Pings ja4proxy_heartbeat_url
+# every 5 minutes; if it stops, healthchecks.io (or compatible)
+# alerts the operator that the VM has gone dark.
+[Unit]
+Description=JA4proxy heartbeat (external availability probe)
+Documentation=https://healthchecks.io/docs/
+After=network-online.target
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=ja4proxy-heartbeat.service
+Persistent=false
+
+[Install]
+WantedBy=timers.target

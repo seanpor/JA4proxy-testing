@@ -22,6 +22,7 @@
     - "{{ ja4proxy_docker_image_grafana }}"
     - "{{ ja4proxy_docker_image_loki }}"
     - "{{ ja4proxy_docker_image_promtail }}"
+    - "{{ ja4proxy_docker_image_blackbox_exporter }}"
   register: pull_results
   changed_when: false
   retries: 3
@@ -40,6 +41,7 @@
     - "{{ ja4proxy_docker_image_grafana }}"
     - "{{ ja4proxy_docker_image_loki }}"
     - "{{ ja4proxy_docker_image_promtail }}"
+    - "{{ ja4proxy_docker_image_blackbox_exporter }}"
   register: digest_results
   changed_when: false
 
@@ -48,7 +50,7 @@
   ansible.builtin.set_fact:
     resolved_digests: >-
       {{ dict(
-        ['haproxy', 'redis', 'caddy', 'prometheus', 'grafana', 'loki', 'promtail']
+        ['haproxy', 'redis', 'caddy', 'prometheus', 'grafana', 'loki', 'promtail', 'blackbox_exporter']
         | zip(digest_results.results | map(attribute='stdout'))
       ) }}
 
@@ -86,6 +88,7 @@
       grafana: grafana/grafana
       loki: grafana/loki
       promtail: grafana/promtail
+      blackbox_exporter: prom/blackbox-exporter
 
 - name: Read pinned docker-compose.yml for verification
   tags: [digests, phase9]

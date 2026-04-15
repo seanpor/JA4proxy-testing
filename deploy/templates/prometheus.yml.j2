@@ -2,6 +2,13 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+# 13-F: alert rules live in a separate file so Prometheus reloads
+# them without a full config rewrite. Delivery (Alertmanager) is
+# deferred to 13-D; until then the rules surface via /alerts and
+# the ALERTS{} metric only.
+rule_files:
+  - /etc/prometheus/alert-rules.yml
+
 scrape_configs:
   # JA4proxy metrics
   - job_name: 'ja4proxy'
@@ -26,3 +33,20 @@ scrape_configs:
       - targets: ['haproxy:{{ ja4proxy_haproxy_stats_port }}']
         labels:
           component: 'haproxy'
+
+  # 13-F: blackbox probe of the public HTTPS endpoint. Exposes
+  # probe_ssl_earliest_cert_expiry for the CertExpiringSoon alert.
+  - job_name: 'blackbox-https'
+    metrics_path: /probe
+    params:
+      module: [https_2xx]
+    static_configs:
+      - targets:
+          - https://{{ ja4proxy_domain }}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115

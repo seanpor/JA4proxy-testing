@@ -117,6 +117,7 @@ services:
 {% endif %}
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
       - prometheus-data:/prometheus
     networks:
       - {{ ja4proxy_network_monitoring }}
@@ -206,6 +207,38 @@ services:
         limits:
           memory: {{ ja4proxy_promtail_memory_limit }}
           cpus: "{{ ja4proxy_promtail_cpu_limit }}"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Blackbox exporter: external HTTPS probe (13-F) ──
+  # Prometheus scrapes this to get probe_ssl_earliest_cert_expiry,
+  # which the CertExpiringSoon alert rule fires on. Loopback-only
+  # outside the live stage — the probe itself goes out to the public
+  # domain regardless, but the metrics endpoint stays internal.
+  blackbox_exporter:
+    image: {{ ja4proxy_docker_image_blackbox_exporter }}
+    container_name: ja4proxy-blackbox-exporter
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/blackbox_exporter/blackbox.yml'
+    ports:
+{% if ja4proxy_deployment_stage == "live" %}
+      - "9115:9115"
+{% else %}
+      - "127.0.0.1:9115:9115"
+{% endif %}
+    volumes:
+      - ./config/blackbox/blackbox.yml:/etc/blackbox_exporter/blackbox.yml:ro
+    networks:
+      - {{ ja4proxy_network_monitoring }}
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: "0.10"
     logging:
       driver: json-file
       options:

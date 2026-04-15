@@ -56,6 +56,33 @@
     group: root
     mode: "0644"
 
+- name: Deploy Prometheus alert rules (13-F)
+  tags: [artifacts, phase2]
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../files/prometheus/alert-rules.yml"
+    dest: "{{ ja4proxy_docker_config_dir }}/prometheus/alert-rules.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Ensure blackbox_exporter config dir exists (13-F)
+  tags: [artifacts, phase2]
+  ansible.builtin.file:
+    path: "{{ ja4proxy_docker_config_dir }}/blackbox"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy blackbox_exporter config (13-F)
+  tags: [artifacts, phase2]
+  ansible.builtin.template:
+    src: templates/blackbox.yml.j2
+    dest: "{{ ja4proxy_docker_config_dir }}/blackbox/blackbox.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Deploy Grafana datasources provisioning
   tags: [artifacts, phase2]
   ansible.builtin.template:
