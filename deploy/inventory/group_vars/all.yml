@@ -22,6 +22,12 @@
 # Workflow: deploy (locked) → verify → go-live → live
 ja4proxy_deployment_stage: "locked"
 
+# 13-H: When deployment_stage == "live", this flag selects the ACME
+# directory. Default true (staging) so an accidental go-live doesn't
+# burn the weekly LE rate limit. Role 10 flips this to false after
+# DNS + MX preflights pass.
+ja4proxy_acme_staging: true
+
 # SSH user to connect to the target VM on first run (typically 'root')
 ja4proxy_ssh_user: "root"
 
