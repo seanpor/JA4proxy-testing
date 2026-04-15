@@ -8,6 +8,18 @@ This document provides deep-dive security hardening beyond the baseline Phase 1-
 
 ---
 
+## ⚠ Known issues (2026-04-15)
+
+See `CRITICAL_REVIEW.md` §A for detail. Summary of defects affecting this phase:
+
+1. **AppArmor profile is applied *after* JA4proxy is already running and the service is never restarted.** `deploy/roles/08-hardening/tasks/main.yml:51–57` uses `lineinfile` to add `AppArmorProfile=opt.ja4proxy.bin.ja4proxy` to the unit file and notifies only a `daemon-reload`. systemd consults `AppArmorProfile=` at `ExecStart` time, so the running JA4proxy process is unconfined until the next restart.
+   **Fix:** move `AppArmorProfile=opt.ja4proxy.bin.ja4proxy` into `templates/ja4proxy.service.j2` (rendered by Phase 3), deploy the AppArmor profile earlier (Phase 2 or 3), and replace the Phase 8 `lineinfile` task with a verification assert (`systemctl show ja4proxy -p AppArmorProfile` must equal the expected value).
+2. **AIDE is initialised but never checked on a schedule.** `aideinit` runs once and nothing ever compares the live filesystem against the baseline database. Add a daily systemd timer invoking `aide --check` and emailing the operator on non-zero exit — see `PHASE_13_POST_LAUNCH_OPERATIONS.md` §13.8.
+3. **Image-digest pinning (§8.3.1) does not work on first run** because of a regex bug in role 09. See `PHASE_09_IMAGE_DIGESTS.md` for the fix. Until that is corrected, the "supply chain hardened via image digests" claim in this document is not true at runtime.
+4. **Kernel-module lockdown requires a reboot** (noted in the role's own summary line) but the playbook does not perform or schedule one. Document in the runbook that the operator must reboot after the first Phase 8 run, and re-run `make verify` afterwards.
+
+---
+
 ## 8.1 STRIDE Threat Model
 
 ```mermaid

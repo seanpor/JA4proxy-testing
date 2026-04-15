@@ -6,6 +6,19 @@ Deploy the JA4proxy Go binary as a production-grade systemd service in **monitor
 
 ---
 
+## ⚠ Known issues (2026-04-15)
+
+See `CRITICAL_REVIEW.md` for full context. Summary of defects affecting this phase:
+
+1. **Upstream role reuse is aspirational.** `deploy/roles/03-ja4proxy-deploy/tasks/main.yml:19–33` emits a debug message acknowledging that JA4proxy4's Ansible role is not actually wired in. The role falls back to an inline `proxy.yml` template. This works, but:
+   - The inline config may drift from the binary's schema over time with no compile-time check.
+   - The "15+ security hardening flags" claim in `README.md` depends on whatever lives in `templates/ja4proxy.service.j2`; that file should be audited against a required-flags baseline, not assumed to have them.
+2. **Binary integrity is not verified.** `deploy/roles/02-artifact-build/tasks/build.yml` computes a sha256 of the binary but never compares it to an expected value. Treat the "checksum generated" line as a provenance record, not a verification. See `PHASE_14_CI_AND_IDEMPOTENCY.md` §14.7 for the remediation.
+3. **Counterfactual logging is configured but not validated.** `monitor_mode.counterfactuals: true` is written into `proxy.yml` but `deploy/roles/07-validation/` does not assert a `ja4proxy_counterfactual_*` metric is present post-deploy. Add a Phase 7 check that `curl -s http://127.0.0.1:9090/metrics | grep -q counterfactual` succeeds.
+4. **AppArmor confinement is not active when this role finishes.** The profile is applied in Phase 8 via `lineinfile`, which modifies the unit file but does not restart the running process. Move the `AppArmorProfile=` directive into `templates/ja4proxy.service.j2` so it takes effect the first time the service starts (see `PHASE_08` known-issues note).
+
+---
+
 ## 3.1 Deployment Overview
 
 ```mermaid
