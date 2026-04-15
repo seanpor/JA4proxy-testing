@@ -106,7 +106,8 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time={{ ja4proxy_loki_retention_days }}d'
+      - '--storage.tsdb.retention.time={{ ja4proxy_prometheus_retention_days }}d'
+      - '--storage.tsdb.retention.size={{ ja4proxy_prometheus_retention_size }}'
       - '--web.listen-address=:9090'
     ports:
 {% if ja4proxy_deployment_stage == "live" %}
