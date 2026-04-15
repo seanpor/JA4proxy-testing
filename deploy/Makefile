@@ -29,7 +29,7 @@ ANSIBLE     := ansible-playbook $(INVENTORY) $(PLAYBOOK)
 # Usage: make cloud ALIYUN_ARGS="--region eu-central-1 --ssh-key-name mykey --admin-ip 1.2.3.4"
 ALIYUN_ARGS ?=
 
-.PHONY: deploy check cloud digests docker validate harden secrets status destroy
+.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey status destroy
 
 deploy:
 	@echo "╔══════════════════════════════════════════════════════╗"
@@ -62,8 +62,25 @@ harden:
 	$(ANSIBLE) --tags "hardening,phase8" $(EXTRA_VARS)
 
 # ── Operations ──────────────────────────────────────────────
+# Generate missing secrets and (re-)encrypt the vault file at rest.
 secrets:
 	@bash deploy/scripts/generate-secrets.sh
+
+# Edit the encrypted secrets file in $EDITOR.
+vault-edit:
+	@test -s deploy/.vault/.vault-pass || { \
+	  echo "No vault password file. Run: make secrets"; exit 1; }
+	@ansible-vault edit \
+	  --vault-password-file deploy/.vault/.vault-pass \
+	  deploy/.vault/secrets.yml
+
+# Rotate the vault password (prompts for the new one).
+vault-rekey:
+	@test -s deploy/.vault/.vault-pass || { \
+	  echo "No vault password file. Run: make secrets"; exit 1; }
+	@ansible-vault rekey \
+	  --vault-password-file deploy/.vault/.vault-pass \
+	  deploy/.vault/secrets.yml
 
 # Verify all services locally via SSH (no public ports needed)
 verify:

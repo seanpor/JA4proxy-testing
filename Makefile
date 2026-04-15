@@ -158,9 +158,9 @@ test-makefile:
 # Deployment target passthrough (to deploy/Makefile)
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: deploy check cloud digests docker validate harden secrets verify go-live status destroy ci-deploy ci-check
+.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey verify go-live status destroy ci-deploy ci-check
 
-deploy check cloud digests docker validate harden secrets verify go-live status destroy ci-deploy ci-check:
+deploy check cloud digests docker validate harden secrets vault-edit vault-rekey verify go-live status destroy ci-deploy ci-check:
 	@$(MAKE) -f deploy/Makefile $@ \
 	  $(if $(VM_IP),VM_IP=$(VM_IP)) \
 	  $(if $(ALIYUN_ARGS),ALIYUN_ARGS="$(ALIYUN_ARGS)") \
