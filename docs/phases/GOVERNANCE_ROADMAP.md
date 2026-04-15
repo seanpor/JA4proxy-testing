@@ -1043,7 +1043,7 @@ visible.
 - [ ] 12-C — export-pull on control machine
 - [x] 12-D — binary provenance (PR #25)
 - [ ] 15-A — preserve-evidence.sh
-- [ ] 15-B — runbook IR scenarios
+- [x] 15-B — runbook IR scenarios (PR #33)
 - [ ] 15-C — governance docs body
 - [x] 15-D — README Operations (PR #28)
 - [x] TM-A — THREAT_MODEL.md (PR #30)
