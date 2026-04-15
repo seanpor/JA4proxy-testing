@@ -1041,7 +1041,7 @@ visible.
 - [ ] 12-A — weekly export timer
 - [ ] 12-B — anonymisation in export
 - [ ] 12-C — export-pull on control machine
-- [ ] 12-D — binary provenance
+- [x] 12-D — binary provenance (PR #25)
 - [ ] 15-A — preserve-evidence.sh
 - [ ] 15-B — runbook IR scenarios
 - [ ] 15-C — governance docs body

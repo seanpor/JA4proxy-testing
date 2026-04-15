@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+# 12-D: JA4proxy binary provenance.
+# Written by role 02 (artifact-build) immediately after the binary is
+# copied to the target and its sha256 has been verified end-to-end.
+# Consumed by the weekly export manifest (12-A) so a released dataset
+# can be traced back to an exact commit + build flags.
+binary_sha256: "{{ _provenance_sha256 }}"
+commit: "{{ _provenance_commit | default('unknown') }}"
+build_timestamp: "{{ _provenance_build_ts }}"
+goflags: "{{ ja4proxy_go_build_flags }}"
+source: "{{ _provenance_source }}"

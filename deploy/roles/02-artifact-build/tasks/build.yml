@@ -151,3 +151,69 @@
 
   when: >
     not (ja4proxy_prebuilt_binary_path is defined and ja4proxy_prebuilt_binary_path | length > 0)
+
+# 12-D: binary provenance. Record which commit + flags produced the
+# binary that is now on the target, so the weekly export manifest can
+# tie a released dataset back to reproducible build inputs.
+
+- name: Derive provenance source + sha256 (from-source path)
+  tags: [artifacts, phase2]
+  ansible.builtin.set_fact:
+    _provenance_source: from-source
+    _provenance_sha256: "{{ build_target_stat.stat.checksum }}"
+  when: build_target_stat is defined
+
+- name: Derive provenance source + sha256 (prebuilt path)
+  tags: [artifacts, phase2]
+  ansible.builtin.set_fact:
+    _provenance_source: prebuilt
+    _provenance_sha256: "{{ prebuilt_target_stat.stat.checksum }}"
+  when: prebuilt_target_stat is defined
+
+- name: Read commit hash from source tree (from-source path)
+  tags: [artifacts, phase2]
+  ansible.builtin.command:
+    cmd: git -C {{ ja4proxy_build_machine_go_path }} rev-parse HEAD
+  delegate_to: localhost
+  become: false
+  register: _provenance_git
+  changed_when: false
+  failed_when: false
+  when: _provenance_source == "from-source"
+
+- name: Extract vcs.revision from prebuilt binary (prebuilt path)
+  tags: [artifacts, phase2]
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      go version -m {{ ja4proxy_prebuilt_binary_path | quote }} 2>/dev/null \
+        | awk '$1 == "build" && $2 ~ /^vcs.revision=/ { sub(/^vcs.revision=/, "", $2); print $2 }'
+    executable: /bin/bash
+  delegate_to: localhost
+  become: false
+  register: _provenance_vcs
+  changed_when: false
+  failed_when: false
+  when: _provenance_source == "prebuilt"
+
+- name: Set provenance commit hash
+  tags: [artifacts, phase2]
+  ansible.builtin.set_fact:
+    _provenance_commit: >-
+      {{ (_provenance_git.stdout | default('') | trim)
+         if _provenance_source == 'from-source'
+         else (_provenance_vcs.stdout | default('') | trim) }}
+
+- name: Set provenance build timestamp
+  tags: [artifacts, phase2]
+  ansible.builtin.set_fact:
+    _provenance_build_ts: "{{ ansible_date_time.iso8601 }}"
+
+- name: Render binary-provenance.yml
+  tags: [artifacts, phase2]
+  ansible.builtin.template:
+    src: binary-provenance.yml.j2
+    dest: "{{ ja4proxy_config_dir }}/binary-provenance.yml"
+    owner: "{{ ja4proxy_system_user }}"
+    group: "{{ ja4proxy_system_group }}"
+    mode: "0640"
