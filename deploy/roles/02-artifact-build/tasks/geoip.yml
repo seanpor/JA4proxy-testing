@@ -25,6 +25,30 @@
     and ja4proxy_geoip_download_url is defined and ja4proxy_geoip_download_url | length > 0
   register: geoip_download
 
+# 14-C: verify GeoIP file checksum against pin, if one is set.
+- name: Stat GeoIP file for checksum verification
+  tags: [artifacts, phase2]
+  ansible.builtin.stat:
+    path: "{{ ja4proxy_geoip_dir }}/{{ ja4proxy_geoip_filename }}"
+    checksum_algorithm: sha256
+    get_checksum: true
+  register: _geoip_stat
+  when: ja4proxy_geoip_expected_sha256 | length > 0
+
+- name: Assert GeoIP file matches pinned sha256
+  tags: [artifacts, phase2]
+  ansible.builtin.assert:
+    that:
+      - _geoip_stat.stat.exists
+      - _geoip_stat.stat.checksum == ja4proxy_geoip_expected_sha256
+    fail_msg: >-
+      GeoIP file sha256 mismatch.
+      Expected: {{ ja4proxy_geoip_expected_sha256 }}
+      Got:      {{ _geoip_stat.stat.checksum | default('(file missing)') }}
+      Update ja4proxy_geoip_expected_sha256 in group_vars if intentional.
+    success_msg: "GeoIP file matches pin: {{ ja4proxy_geoip_expected_sha256 }}"
+  when: ja4proxy_geoip_expected_sha256 | length > 0
+
 - name: Warn if GeoIP not provided
   tags: [artifacts, phase2]
   ansible.builtin.debug:

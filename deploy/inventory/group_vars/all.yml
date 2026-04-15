@@ -113,6 +113,9 @@ ja4proxy_loki_retention_days: 90
 
 # Filename on the VM after deployment
 ja4proxy_geoip_filename: "IP2LOCATION-LITE-DB1.IPV6.BIN"
+# 14-C: pin GeoIP file sha256 for reproducibility. Empty = skip check
+# (smoke tests run without a real file). 64 hex chars = hard verify.
+ja4proxy_geoip_expected_sha256: ""
 
 # ── Docker Network Names ─────────────────────────────────────
 
