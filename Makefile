@@ -124,9 +124,9 @@ lint-secrets:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -165,6 +165,10 @@ test-go-build-flags:
 test-pinned-artifacts:
 	@echo "── expected-binary-sha256.txt well-formed + referenced (14-B) ──"
 	@$(PY) scripts/ci/check_pinned_artifacts.py
+
+test-geoip-pin:
+	@echo "── ja4proxy_geoip_expected_sha256 declared + used (14-C) ──"
+	@$(PY) scripts/ci/check_geoip_pin.py
 
 # ─────────────────────────────────────────────────────────────
 # Deployment target passthrough (to deploy/Makefile)
