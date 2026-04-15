@@ -27,6 +27,31 @@
     quiet: true
   tags: [go-live, phase10]
 
+- name: Preflight — resolve MX record for abuse contact domain (11-D)
+  ansible.builtin.command:
+    cmd: "dig +short MX {{ ja4proxy_domain }}"
+  delegate_to: localhost
+  become: false
+  register: _abuse_mx_preflight
+  changed_when: false
+  failed_when: false
+  tags: [go-live, phase10, preflight]
+
+- name: Assert abuse@ domain has an MX record (11-D)
+  ansible.builtin.assert:
+    that:
+      - _abuse_mx_preflight.stdout | trim | length > 0
+    fail_msg: |
+      ⚠️  No MX record for {{ ja4proxy_domain }}.
+      The disclosure page and security.txt advertise abuse@ and
+      privacy@ on this domain — without an MX, complaints bounce
+      silently. Configure mail before go-live.
+      (Override only if mail is explicitly handled elsewhere:
+       -e ja4proxy_skip_mx_preflight=true)
+    quiet: true
+  when: not (ja4proxy_skip_mx_preflight | default(false) | bool)
+  tags: [go-live, phase10, preflight]
+
 - name: Record go-live timestamp
   ansible.builtin.copy:
     content: "Go-live: {{ ansible_date_time.iso8601 | default('unknown') }}\n"
