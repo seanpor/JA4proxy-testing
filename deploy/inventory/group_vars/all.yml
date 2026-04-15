@@ -93,6 +93,12 @@ ja4proxy_conntrack_max: 262144
 ja4proxy_journald_max_retention: "90d"
 ja4proxy_journald_max_use: "2G"
 
+# Go build flags (14-A): -trimpath removes local paths from the binary;
+# -buildvcs=true embeds the source commit so `go version -m <binary>`
+# can answer "which commit produced this fingerprint?". Injected via
+# GOFLAGS so the sibling repo's Makefile picks them up without edits.
+ja4proxy_go_build_flags: "-trimpath -buildvcs=true"
+
 # ── Loki Retention ───────────────────────────────────────────
 
 ja4proxy_loki_retention_days: 90
