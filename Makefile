@@ -124,9 +124,9 @@ lint-secrets:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -185,6 +185,10 @@ test-loki-retention:
 test-prometheus-retention:
 	@echo "── Prometheus TSDB retention time + size bounds (13-C) ──"
 	@$(PY) scripts/ci/check_prometheus_retention.py
+
+test-honeypot-disclosure:
+	@echo "── honeypot-notice.html deployed + smoke-tested (11-A) ──"
+	@$(PY) scripts/ci/check_honeypot_disclosure.py
 
 # 14-E: run Molecule tests (requires `pip install molecule molecule-plugins[docker] docker`).
 # Not yet wired into ci.yml; enable per-PR with a dedicated job later.

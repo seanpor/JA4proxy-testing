@@ -29,6 +29,23 @@
       - "'RESEARCH HONEYPOT' in caddy_tls_result.content"
     fail_msg: "Honeypot HTML does not contain expected warning text."
 
+- name: Fetch honeypot disclosure notice (11-A)
+  tags: [validation, phase7]
+  ansible.builtin.uri:
+    url: "https://127.0.0.1:{{ ja4proxy_haproxy_tls_port }}/honeypot-notice.html"
+    return_content: true
+    validate_certs: false
+  register: honeypot_notice_result
+  changed_when: false
+
+- name: Assert disclosure notice lists abuse and privacy contacts
+  tags: [validation, phase7]
+  ansible.builtin.assert:
+    that:
+      - "'abuse@' in honeypot_notice_result.content"
+      - "'privacy@' in honeypot_notice_result.content"
+    fail_msg: "Honeypot disclosure notice missing abuse@ or privacy@ contact."
+
 - name: Generate controlled test traffic (openssl s_client)
   tags: [validation, phase7]
   ansible.builtin.shell: |

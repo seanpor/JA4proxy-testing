@@ -101,6 +101,15 @@
     group: root
     mode: "0644"
 
+- name: Deploy honeypot disclosure notice (11-A)
+  tags: [artifacts, phase2]
+  ansible.builtin.copy:
+    src: honeypot-notice.html
+    dest: "{{ ja4proxy_docker_config_dir }}/caddy/html/honeypot-notice.html"
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Verify all config files deployed
   tags: [artifacts, phase2]
   ansible.builtin.stat:
