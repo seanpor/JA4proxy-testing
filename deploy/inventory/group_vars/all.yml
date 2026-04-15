@@ -96,6 +96,7 @@ ja4proxy_docker_image_prometheus: "prom/prometheus:latest"
 ja4proxy_docker_image_grafana: "grafana/grafana:latest"
 ja4proxy_docker_image_loki: "grafana/loki:latest"
 ja4proxy_docker_image_promtail: "grafana/promtail:latest"
+ja4proxy_docker_image_blackbox_exporter: "prom/blackbox-exporter:latest"
 
 # ── Resource Limits ──────────────────────────────────────────
 
@@ -121,6 +122,11 @@ ja4proxy_loki_retention_days: 90
 
 ja4proxy_prometheus_retention_days: 90
 ja4proxy_prometheus_retention_size: "10GB"
+
+# ── Heartbeat (13-F) ─────────────────────────────────────────
+# External dead-man's-switch URL (healthchecks.io or compatible).
+# Empty string = skip; role 06 does not install the timer.
+ja4proxy_heartbeat_url: ""
 
 # ── GeoIP ────────────────────────────────────────────────────
 

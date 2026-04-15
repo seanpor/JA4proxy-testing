@@ -1034,7 +1034,7 @@ visible.
 - [ ] 11-E — governance document skeletons
 - [ ] 13-D — Alertmanager
 - [ ] 13-E — alert rules
-- [ ] 13-F — blackbox_exporter + heartbeat
+- [x] 13-F — blackbox_exporter + heartbeat (PR #29)
 - [ ] 13-I — AIDE timer
 - [ ] 13-J — secrets rotation role
 - [x] 13-K — heartbeat / cost hints (PR #26)

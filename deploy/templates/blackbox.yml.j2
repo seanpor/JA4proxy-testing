@@ -1,0 +1,24 @@
+# {{ ansible_managed }}
+# 13-F: blackbox_exporter probe modules. The only module we scrape
+# today is https_2xx, aimed at the honeypot's public endpoint so
+# Prometheus can expose probe_ssl_earliest_cert_expiry — the metric
+# the CertExpiringSoon alert rule fires on.
+modules:
+  https_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      preferred_ip_protocol: ip4
+      valid_http_versions:
+        - HTTP/1.1
+        - HTTP/2.0
+      valid_status_codes:
+        - 200
+        - 301
+        - 302
+        - 403
+      method: GET
+      fail_if_ssl: false
+      fail_if_not_ssl: true
+      tls_config:
+        insecure_skip_verify: false

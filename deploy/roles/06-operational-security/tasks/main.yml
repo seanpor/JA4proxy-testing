@@ -137,3 +137,39 @@
     job: "ssh -o BatchMode=yes root@127.0.0.1 '{{ ja4proxy_base_dir }}/scripts/health-check.sh' 2>/dev/null || true"
     user: root
     state: present
+
+# 13-F: dead-man's-switch heartbeat. Installed only when the operator
+# supplies ja4proxy_heartbeat_url (via env var, group_vars override,
+# or inventory). Empty URL = skip every task below so nothing fires
+# in CI/check runs where no URL is set.
+
+- name: Deploy heartbeat service unit (13-F)
+  tags: [opsec, phase6]
+  ansible.builtin.template:
+    src: templates/heartbeat.service.j2
+    dest: /etc/systemd/system/ja4proxy-heartbeat.service
+    owner: root
+    group: root
+    mode: "0644"
+  when: ja4proxy_heartbeat_url | default('') | length > 0
+  notify: Daemon reload systemd
+
+- name: Deploy heartbeat timer unit (13-F)
+  tags: [opsec, phase6]
+  ansible.builtin.template:
+    src: templates/heartbeat.timer.j2
+    dest: /etc/systemd/system/ja4proxy-heartbeat.timer
+    owner: root
+    group: root
+    mode: "0644"
+  when: ja4proxy_heartbeat_url | default('') | length > 0
+  notify: Daemon reload systemd
+
+- name: Enable and start heartbeat timer (13-F)
+  tags: [opsec, phase6]
+  ansible.builtin.systemd:
+    name: ja4proxy-heartbeat.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: ja4proxy_heartbeat_url | default('') | length > 0

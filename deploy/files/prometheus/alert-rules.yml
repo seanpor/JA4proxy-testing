@@ -1,0 +1,43 @@
+# 13-F: Prometheus alert rules. Delivery (Alertmanager) lands in 13-D;
+# until then these rules fire in-process and are visible via
+# /alerts and the ALERTS{alertstate="firing"} metric, but nothing
+# pages anyone.
+#
+# Keep this list small and focused on *silent* failure modes —
+# things an operator wouldn't otherwise notice until it's too late.
+groups:
+  - name: certificates
+    interval: 60s
+    rules:
+      - alert: CertExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 7 * 24 * 3600
+        for: 10m
+        labels:
+          severity: warning
+          component: caddy
+        annotations:
+          summary: "TLS cert for {{ $labels.instance }} expires in under 7 days"
+          description: |
+            Caddy should be renewing this automatically. If this alert has
+            fired for 10+ minutes the renewal pipeline is stuck. Check:
+              - docker logs ja4proxy-caddy (ACME failures)
+              - DNS A record resolves to this VM
+              - UFW still permits 80/tcp (Let's Encrypt HTTP-01 challenge)
+          runbook: "docs/phases/RUNBOOK.md"
+
+  - name: probes
+    interval: 60s
+    rules:
+      - alert: HoneypotProbeFailing
+        expr: probe_success == 0
+        for: 15m
+        labels:
+          severity: critical
+          component: honeypot
+        annotations:
+          summary: "Blackbox probe of {{ $labels.instance }} failing"
+          description: |
+            External HTTPS probe has been failing for 15+ minutes.
+            The honeypot is either down or unreachable from the
+            Prometheus container's network path.
+          runbook: "docs/phases/RUNBOOK.md"

@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+# 13-F: heartbeat ping. Runs as a short-lived oneshot; failure to
+# reach the URL is intentionally non-fatal — the *absence* of the
+# ping is what the external service alerts on, not a non-2xx.
+[Unit]
+Description=JA4proxy heartbeat ping
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+Type=oneshot
+# --fail so 4xx/5xx from the heartbeat service ends up in journal,
+# --max-time caps the request at 10s to keep the timer predictable.
+ExecStart=/usr/bin/curl -fsS --retry 2 --max-time 10 \
+  "{{ ja4proxy_heartbeat_url }}"
+# Don't cascade failure into the timer — a missed ping is the signal.
+SuccessExitStatus=0 6 7 22 28
