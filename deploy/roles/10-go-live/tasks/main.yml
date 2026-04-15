@@ -107,6 +107,11 @@
   notify: Restart docker compose
   tags: [go-live, phase10]
 
+- name: Flip ACME directory to production (13-H)
+  ansible.builtin.set_fact:
+    ja4proxy_acme_staging: false
+  tags: [go-live, phase10]
+
 - name: Update Caddyfile for production ACME
   ansible.builtin.template:
     src: templates/caddyfile.j2

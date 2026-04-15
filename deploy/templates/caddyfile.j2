@@ -1,9 +1,15 @@
 {
     admin off
 {% if ja4proxy_deployment_stage == "live" %}
+{%   if ja4proxy_acme_staging | default(false) | bool %}
+    # Let's Encrypt STAGING — exercises ACME without burning
+    # production rate-limit budget. Certs will be browser-invalid.
+    acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+{%   else %}
     # Production ACME (Let's Encrypt) — go-live approved
+{%   endif %}
 {% else %}
-    # Staging ACME / self-signed — DO NOT use in production
+    # Self-signed — pre-go-live, bound to 127.0.0.1
     auto_https ignore_loaded_certificates
 {% endif %}
 }
@@ -11,7 +17,8 @@
 {{ ja4proxy_domain }} {
 {% if ja4proxy_deployment_stage == "live" %}
     tls {
-        # Production Let's Encrypt certificates
+        # ACME-issued certificate (staging or production based on
+        # acme_ca above)
     }
 {% else %}
     tls internal
