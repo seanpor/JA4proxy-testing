@@ -124,9 +124,9 @@ lint-secrets:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -154,13 +154,17 @@ test-makefile:
 	@echo "── every make target in this Makefile is .PHONY ──"
 	@$(PY) scripts/ci/check_makefile_phony.py
 
+test-collections:
+	@echo "── Ansible collections pinned + used FQCNs covered ──"
+	@$(PY) scripts/ci/check_collections.py
+
 # ─────────────────────────────────────────────────────────────
 # Deployment target passthrough (to deploy/Makefile)
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey verify go-live status destroy ci-deploy ci-check
+.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections verify go-live status destroy ci-deploy ci-check
 
-deploy check cloud digests docker validate harden secrets vault-edit vault-rekey verify go-live status destroy ci-deploy ci-check:
+deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections verify go-live status destroy ci-deploy ci-check:
 	@$(MAKE) -f deploy/Makefile $@ \
 	  $(if $(VM_IP),VM_IP=$(VM_IP)) \
 	  $(if $(ALIYUN_ARGS),ALIYUN_ARGS="$(ALIYUN_ARGS)") \

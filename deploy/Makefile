@@ -29,7 +29,7 @@ ANSIBLE     := ansible-playbook $(INVENTORY) $(PLAYBOOK)
 # Usage: make cloud ALIYUN_ARGS="--region eu-central-1 --ssh-key-name mykey --admin-ip 1.2.3.4"
 ALIYUN_ARGS ?=
 
-.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey status destroy
+.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections status destroy
 
 deploy:
 	@echo "╔══════════════════════════════════════════════════════╗"
@@ -62,6 +62,10 @@ harden:
 	$(ANSIBLE) --tags "hardening,phase8" $(EXTRA_VARS)
 
 # ── Operations ──────────────────────────────────────────────
+# Install pinned Ansible collections from deploy/requirements.yml.
+collections:
+	@ansible-galaxy collection install -r deploy/requirements.yml
+
 # Generate missing secrets and (re-)encrypt the vault file at rest.
 secrets:
 	@bash deploy/scripts/generate-secrets.sh

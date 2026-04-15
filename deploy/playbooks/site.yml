@@ -179,13 +179,23 @@
         haproxy_stats_user: "{{ ja4proxy_secrets.haproxy_stats_user | default('haproxy-admin') }}"
 
     # ── Collections ──
-    - name: Ensure required Ansible collections are installed
+    # Previously this shelled out to `ansible-galaxy collection install`
+    # with unpinned names, silently upgrading to whatever latest was on
+    # Galaxy. Now we install from deploy/requirements.yml, which pins
+    # versions, so a drift upstream can't change what runs in prod.
+    - name: Install pinned Ansible collections from requirements.yml
       ansible.builtin.command:
-        cmd: ansible-galaxy collection install community.general community.docker ansible.posix
+        cmd: >-
+          ansible-galaxy collection install
+          -r {{ playbook_dir }}/../requirements.yml
       delegate_to: localhost
       run_once: true
       become: false
       changed_when: false
+      register: _galaxy_install
+      failed_when:
+        - _galaxy_install.rc != 0
+        - "'already installed' not in _galaxy_install.stdout"
 
     # ── SSH private key discovery ──
     # Order: explicit env var → ~/.ssh/id_ed25519 → ~/.ssh/id_rsa.
