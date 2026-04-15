@@ -110,6 +110,15 @@
     group: root
     mode: "0644"
 
+- name: Deploy GDPR privacy notice (11-B)
+  tags: [artifacts, phase2]
+  ansible.builtin.template:
+    src: templates/privacy.html.j2
+    dest: "{{ ja4proxy_docker_config_dir }}/caddy/html/privacy.html"
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Ensure .well-known directory exists (11-C)
   tags: [artifacts, phase2]
   ansible.builtin.file:

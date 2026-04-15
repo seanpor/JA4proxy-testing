@@ -63,6 +63,25 @@
       - "'privacy@' in honeypot_notice_result.content"
     fail_msg: "Honeypot disclosure notice missing abuse@ or privacy@ contact."
 
+- name: Fetch GDPR privacy notice (11-B)
+  tags: [validation, phase7]
+  ansible.builtin.uri:
+    url: "https://127.0.0.1:{{ ja4proxy_haproxy_tls_port }}/privacy.html"
+    return_content: true
+    validate_certs: false
+  register: privacy_page_result
+  changed_when: false
+
+- name: Assert privacy notice carries GDPR Art. 13 markers
+  tags: [validation, phase7]
+  ansible.builtin.assert:
+    that:
+      - "'Controller' in privacy_page_result.content"
+      - "'Lawful basis' in privacy_page_result.content"
+      - "'Retention' in privacy_page_result.content"
+      - "'Rights' in privacy_page_result.content"
+    fail_msg: "/privacy.html missing required GDPR Article 13 sections."
+
 - name: Generate controlled test traffic (openssl s_client)
   tags: [validation, phase7]
   ansible.builtin.shell: |

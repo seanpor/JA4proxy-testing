@@ -124,9 +124,9 @@ lint-secrets:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -213,6 +213,10 @@ test-preserve-evidence:
 test-binary-provenance:
 	@echo "── binary-provenance.yml.j2 rendered by role 02 (12-D) ──"
 	@$(PY) scripts/ci/check_binary_provenance.py
+
+test-privacy-page:
+	@echo "── privacy.html.j2 renders + deployed + smoke-tested (11-B) ──"
+	@$(PY) scripts/ci/check_privacy_page.py
 
 # 14-E: run Molecule tests (requires `pip install molecule molecule-plugins[docker] docker`).
 # Not yet wired into ci.yml; enable per-PR with a dedicated job later.
