@@ -92,6 +92,44 @@ make deploy
 | Redis not found by JA4proxy | Redis Docker not started | `systemctl start ja4proxy-redis` |
 | Prometheus scraping fails | JA4proxy metrics port not bound | `ss -tlnp \| grep 9090` |
 
+## Budget alert setup
+
+The `provision-alibaba-cloud.sh` script prints an indicative monthly
+cost estimate and refuses to run without `--confirm`. That's a reminder,
+not a hard limit — the Alibaba account itself is what the budget alert
+catches.
+
+1. In the Alibaba Cloud console, open **Billing Management → Budgets**.
+2. Create a budget named `ja4proxy-research` scoped to the tag or
+   resource group that holds the honeypot VM + EIP.
+3. Set the monthly amount to ~1.5× the estimate printed by the
+   provisioning script (gives headroom for egress spikes from scanners).
+4. Add two alert thresholds: **80%** (email only) and **100%** (email +
+   SMS if available).
+5. Confirm the alert email arrives by triggering a test notification
+   before relying on it.
+
+If the budget alert fires, the first action is `make destroy VM_IP=…`
+to stop the Docker stack and cut egress; only then diagnose the spike.
+
+## PTR record (reverse DNS) request
+
+A missing or generic PTR record causes abuse reports against the
+honeypot IP to be attributed to Alibaba rather than to you. Request
+a PTR before go-live:
+
+1. Decide the PTR target — typically `honeypot.<your-domain>` with an
+   `abuse@` mailbox already answered on it.
+2. Open an Alibaba ticket under **Network → EIP → Reverse DNS** with:
+   - EIP address
+   - Desired PTR FQDN (matching a forward A record you control)
+   - A one-line justification ("security research honeypot; abuse
+     contact published in /.well-known/security.txt")
+3. Wait for confirmation (usually < 24h) and verify with
+   `dig -x <eip>`. The answer must match the FQDN exactly.
+4. Only then run `make go-live VM_IP=…`. Abuse reports sent before the
+   PTR lands will go to Alibaba's abuse desk, not yours.
+
 ## Monitoring Schedule
 
 | Frequency | Action | Duration |

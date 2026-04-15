@@ -14,7 +14,12 @@
 #     --instance-type ecs.g7.large \
 #     --ssh-key-name my-key-pair \
 #     --admin-ip 1.2.3.4 \
-#     --domain test-honeypot.example.com
+#     --domain test-honeypot.example.com \
+#     --confirm
+#
+# Without --confirm the script prints an indicative monthly cost
+# estimate and exits 2 so the operator has a chance to set a budget
+# alert before any resources are created.
 #
 # This script:
 #   1. Creates a VPC and vSwitch (or reuses existing)
@@ -40,6 +45,7 @@ SYSTEM_DISK_SIZE=40
 SYSTEM_DISK_CATEGORY="cloud_essd"
 VPC_CIDR="172.16.0.0/16"
 VSWITCH_CIDR="172.16.0.0/24"
+CONFIRM="false"
 
 # ── Parse Arguments ──────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -52,7 +58,8 @@ while [[ $# -gt 0 ]]; do
         --domain) DOMAIN="$2"; shift 2 ;;
         --instance-name) INSTANCE_NAME="$2"; shift 2 ;;
         --disk-size) SYSTEM_DISK_SIZE="$2"; shift 2 ;;
-        --help) echo "Usage: $0 --region <region> --ssh-key-name <name> --admin-ip <ip>"; exit 0 ;;
+        --confirm) CONFIRM="true"; shift 1 ;;
+        --help) echo "Usage: $0 --region <region> --ssh-key-name <name> --admin-ip <ip> --confirm"; exit 0 ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -84,11 +91,39 @@ echo "Admin IP:      $ADMIN_IP"
 echo "Domain:        ${DOMAIN:-'Not set'}"
 echo "Disk:          ${SYSTEM_DISK_SIZE}GB ${SYSTEM_DISK_CATEGORY}"
 echo ""
-read -p "Proceed? (y/N) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Aborted."
-    exit 0
+
+# ── 13-K: Estimated monthly cost ─────────────────────────────
+# Indicative EUR figures for the default config in Frankfurt
+# (eu-central-1), based on Alibaba's list prices. Real bills depend
+# on egress, snapshots, and promotional credits — treat as an upper
+# bound and verify in the console before confirming.
+case "$INSTANCE_TYPE" in
+    ecs.g7.large)       EST_ECS_MONTHLY=55  ;;
+    ecs.g7.xlarge)      EST_ECS_MONTHLY=110 ;;
+    ecs.g6.large)       EST_ECS_MONTHLY=50  ;;
+    *)                  EST_ECS_MONTHLY=60  ;;
+esac
+EST_DISK_MONTHLY=$(( SYSTEM_DISK_SIZE * 14 / 100 ))   # ~0.14 EUR / GB / month for cloud_essd
+EST_EIP_MONTHLY=3                                     # EIP retention
+EST_BANDWIDTH_MONTHLY=10                              # PayByTraffic, low honeypot volume
+EST_TOTAL=$(( EST_ECS_MONTHLY + EST_DISK_MONTHLY + EST_EIP_MONTHLY + EST_BANDWIDTH_MONTHLY ))
+
+echo "── Estimated monthly cost (EUR, indicative) ──"
+printf "  ECS (%s):      ~€%d\n" "$INSTANCE_TYPE" "$EST_ECS_MONTHLY"
+printf "  System disk (%dGB): ~€%d\n" "$SYSTEM_DISK_SIZE" "$EST_DISK_MONTHLY"
+printf "  EIP retention:     ~€%d\n" "$EST_EIP_MONTHLY"
+printf "  Bandwidth (est.):  ~€%d\n" "$EST_BANDWIDTH_MONTHLY"
+printf "  ──────────────────────────\n"
+printf "  Approx total:      ~€%d / month\n" "$EST_TOTAL"
+echo ""
+echo "Set a budget alert in the Alibaba console BEFORE go-live."
+echo "See: docs/phases/RUNBOOK.md → 'Budget alert setup'"
+echo ""
+
+if [[ "$CONFIRM" != "true" ]]; then
+    echo "❌ Refusing to provision without --confirm."
+    echo "   Re-run with --confirm once you've reviewed the estimate above."
+    exit 2
 fi
 
 # ── Step 1: VPC ──────────────────────────────────────────────
