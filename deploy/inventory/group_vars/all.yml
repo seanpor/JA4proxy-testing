@@ -103,6 +103,15 @@ ja4proxy_go_build_flags: "-trimpath -buildvcs=true"
 
 ja4proxy_loki_retention_days: 90
 
+# ── Prometheus TSDB Retention (13-C) ─────────────────────────
+# Time bound matches the overall 90-day retention claim on the
+# privacy page. Size bound is a disk-safety net: if scraping
+# accelerates, Prometheus evicts oldest samples rather than
+# filling the volume.
+
+ja4proxy_prometheus_retention_days: 90
+ja4proxy_prometheus_retention_size: "10GB"
+
 # ── GeoIP ────────────────────────────────────────────────────
 
 # If set, copy this local file to the VM instead of downloading.
