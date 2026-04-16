@@ -217,3 +217,87 @@
     owner: "{{ ja4proxy_system_user }}"
     group: "{{ ja4proxy_system_group }}"
     mode: "0640"
+
+# 18-A: CycloneDX SBOM for the Go binary. Gated on cyclonedx-gomod
+# being available on the control machine — absent = warn + skip so
+# an air-gapped build host still deploys. Source path uses `mod`
+# (reads go.mod); prebuilt path uses `bin` (reads go version -m).
+
+- name: Probe for cyclonedx-gomod on control machine (18-A)
+  tags: [artifacts, phase2, sbom]
+  ansible.builtin.command:
+    cmd: cyclonedx-gomod version
+  delegate_to: localhost
+  become: false
+  register: _cyclonedx_probe
+  changed_when: false
+  failed_when: false
+
+- name: Warn when cyclonedx-gomod is not installed (18-A)
+  tags: [artifacts, phase2, sbom]
+  ansible.builtin.debug:
+    msg: >-
+      cyclonedx-gomod not found on control machine — skipping binary
+      SBOM emission. Install with:
+      `go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest`
+  when: _cyclonedx_probe.rc != 0
+
+- name: Generate SBOM from Go source tree (18-A, from-source path)
+  tags: [artifacts, phase2, sbom]
+  ansible.builtin.command:
+    cmd: >-
+      cyclonedx-gomod mod
+      -json
+      -output {{ ja4proxy_build_machine_go_path }}/ja4proxy.cdx.json
+      {{ ja4proxy_build_machine_go_path }}
+  delegate_to: localhost
+  become: false
+  register: _sbom_mod
+  changed_when: _sbom_mod.rc == 0
+  when:
+    - _cyclonedx_probe.rc == 0
+    - _provenance_source == "from-source"
+
+- name: Generate SBOM from prebuilt Go binary (18-A, prebuilt path)
+  tags: [artifacts, phase2, sbom]
+  ansible.builtin.command:
+    cmd: >-
+      cyclonedx-gomod bin
+      -json
+      -output {{ ja4proxy_prebuilt_binary_path | dirname }}/ja4proxy.cdx.json
+      {{ ja4proxy_prebuilt_binary_path }}
+  delegate_to: localhost
+  become: false
+  register: _sbom_bin
+  changed_when: _sbom_bin.rc == 0
+  when:
+    - _cyclonedx_probe.rc == 0
+    - _provenance_source == "prebuilt"
+
+- name: Set SBOM source path (from-source)
+  tags: [artifacts, phase2, sbom]
+  ansible.builtin.set_fact:
+    _sbom_src: "{{ ja4proxy_build_machine_go_path }}/ja4proxy.cdx.json"
+  when:
+    - _cyclonedx_probe.rc == 0
+    - _provenance_source == "from-source"
+
+- name: Set SBOM source path (prebuilt)
+  tags: [artifacts, phase2, sbom]
+  ansible.builtin.set_fact:
+    _sbom_src: "{{ ja4proxy_prebuilt_binary_path | dirname }}/ja4proxy.cdx.json"
+  when:
+    - _cyclonedx_probe.rc == 0
+    - _provenance_source == "prebuilt"
+
+- name: Copy binary SBOM to target (18-A)
+  tags: [artifacts, phase2, sbom]
+  ansible.builtin.copy:
+    src: "{{ _sbom_src }}"
+    dest: "{{ ja4proxy_config_dir }}/ja4proxy.cdx.json"
+    owner: "{{ ja4proxy_system_user }}"
+    group: "{{ ja4proxy_system_group }}"
+    mode: "0640"
+  when:
+    - _cyclonedx_probe.rc == 0
+    - _sbom_src is defined

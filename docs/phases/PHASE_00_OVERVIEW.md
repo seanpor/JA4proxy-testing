@@ -280,6 +280,10 @@ flowchart TD
 | **Phase 13** | `PHASE_13_POST_LAUNCH_OPERATIONS.md` — alerting, cert, DNS preflight, rotation | ❌ not implemented |
 | **Phase 14** | `PHASE_14_CI_AND_IDEMPOTENCY.md` — Ansible test harness | ❌ not implemented |
 | **Phase 15** | `PHASE_15_ABUSE_AND_INCIDENT_RESPONSE.md` — abuse queue, IR playbooks | ❌ not implemented |
+| **Phase 16** | `PHASE_16_LINT_COVERAGE.md` — lint to 100% across file types | ✅ |
+| **Phase 17** | `PHASE_17_CI_HARDENING.md` — CI bug fixes + new offline checks | ✅ |
+| **Phase 18** | `PHASE_18_SWEBOK_GAP_CLOSURE.md` — SBOM, SLSA, Scorecard, ADRs, SSDF mapping | ⏳ in progress |
+| **Phase 19** | `PHASE_19_PENTEST_CAMPAIGN.md` — full pre-go-live penetration test | ❌ not implemented |
 | **Review** | `CRITICAL_REVIEW.md` — expert pass, 2026-04-15 | ✅ |
 
 ---

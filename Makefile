@@ -137,9 +137,9 @@ lint-markdown:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -290,6 +290,10 @@ test-relative-paths:
 test-markdown-links:
 	@echo "── markdown relative links point to existing files (17-F) ──"
 	@$(PY) scripts/ci/check_markdown_links.py
+
+test-sbom:
+	@echo "── CycloneDX SBOM emission: compose + role 02 wiring (18-A) ──"
+	@$(PY) scripts/ci/check_sbom.py
 
 # 14-E: run Molecule tests (requires `pip install molecule molecule-plugins[docker] docker`).
 # Not yet wired into ci.yml; enable per-PR with a dedicated job later.

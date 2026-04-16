@@ -1056,3 +1056,4 @@ visible.
 - [x] 17-D — Relative path validation CI check
 - [x] 17-E — Docker Compose dependency DAG validation
 - [x] 17-F — Markdown internal link validation CI check
+- [x] 18-A — SBOM for Go binary + compose stack (CycloneDX 1.5)

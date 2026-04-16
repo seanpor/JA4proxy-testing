@@ -10,3 +10,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .claude/
+
+# 18-A: SBOM build outputs — emitted at deploy time, not committed
+*.cdx.json
