@@ -97,14 +97,14 @@ compose file.
 
 ## 17-F — Markdown internal link validation
 
-**Scope.** Parse all `.md` files for relative links (`[text](path)`)
-and verify the target file exists. Anchor links (`#section`) are
-validated where feasible.
+**Scope.** Parse all `.md` files for relative links
+(markdown link syntax) and verify the target file exists. Anchor
+links are validated where feasible.
 
 **Files.**
 - `scripts/ci/check_markdown_links.py`
 
-**Acceptance.** A broken `[see here](nonexistent.md)` link causes
+**Acceptance.** A broken relative link causes
 `make test-markdown-links` to fail.
 
 ---
