@@ -11,7 +11,7 @@ from pathlib import Path
 
 # Import from sibling module
 sys.path.insert(0, str(Path(__file__).parent))
-from anonymise import anonymise_ipv4, anonymise_ipv6, anonymise_line, hmac_hash  # noqa: E402
+from anonymise import anonymise_ipv4, anonymise_ipv6, anonymise_line, hmac_hash
 
 
 class TestHmacHash(unittest.TestCase):

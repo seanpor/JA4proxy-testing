@@ -80,7 +80,7 @@ else:
     try:
         rendered = Environment().from_string(AM.read_text()).render(**ctx)
         doc = yaml.safe_load(rendered)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         errors.append(f"alertmanager.yml.j2: render/parse failed: {e}")
         doc = None
     if isinstance(doc, dict):

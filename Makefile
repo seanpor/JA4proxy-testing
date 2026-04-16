@@ -40,7 +40,7 @@ help:
 	@echo "JA4proxy-testing — targets"
 	@echo
 	@echo "  Pre-merge / pre-push:"
-	@echo "    make lint           — fast static checks (yamllint, ansible-lint, syntax, shellcheck, jinja2)"
+	@echo "    make lint           — fast static checks (yamllint, ansible-lint, shellcheck, ruff, json, markdown)"
 	@echo "    make test           — lint + structural cross-checks"
 	@echo "    make lint-install   — create .venv-dev/ and install ansible-lint + yamllint"
 	@echo
@@ -110,7 +110,7 @@ lint-shell:
 	  echo "shellcheck not on PATH; skipping (install via your package manager)"; \
 	  exit 0; \
 	fi
-	@$(SHELLCHECK) -S warning $$(find deploy -name '*.sh' -type f)
+	@find deploy -name '*.sh' -type f -print0 | xargs -0 $(SHELLCHECK) -S warning
 
 lint-jinja:
 	@echo "── jinja2 template syntax ──"
@@ -304,4 +304,4 @@ deploy check cloud digests docker validate harden secrets vault-edit vault-rekey
 
 .PHONY: clean
 clean:
-	rm -rf $(VENV) .pytest_cache __pycache__ */__pycache__ */*/__pycache__
+	rm -rf $(VENV) .pytest_cache .ruff_cache __pycache__ */__pycache__ */*/__pycache__

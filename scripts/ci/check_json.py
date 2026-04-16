@@ -17,7 +17,7 @@ for f in sorted(REPO.rglob("*.json")):
         continue
     checked += 1
     try:
-        json.loads(f.read_text())
+        json.loads(f.read_text(encoding="utf-8-sig"))
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         errors.append(f"{f.relative_to(REPO)}: {exc}")
 
