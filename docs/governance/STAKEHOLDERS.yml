@@ -1,0 +1,45 @@
+# Stakeholder notification list
+#
+# Last reviewed: 2026-04-16
+#
+# Who to notify on specific events. The operator fills in real
+# contact details locally; this skeleton lists the roles and
+# triggers. CI validates this file is parseable YAML.
+
+stakeholders:
+  - role: operator
+    name: ""  # fill in
+    email: ""  # fill in — must match security.txt Contact
+    notify_on:
+      - vm_compromise
+      - budget_alert
+      - aide_integrity_change
+      - cert_expiring_soon
+      - le_request
+
+  - role: hosting_provider_abuse
+    name: "Alibaba Cloud"
+    email: ""  # fill in — from Alibaba abuse desk
+    notify_on:
+      - inbound_abuse_report_about_our_ip
+      - ptr_record_request
+
+  - role: domain_registrar
+    name: ""  # fill in
+    email: ""  # fill in
+    notify_on:
+      - dns_hijack_suspected
+      - domain_renewal
+
+  - role: national_cert
+    name: ""  # e.g. CERT-EU, US-CERT
+    email: ""  # fill in
+    notify_on:
+      - novel_zero_day_indicator
+      - gdpr_breach_notification
+
+  - role: data_protection_authority
+    name: ""  # fill in — supervisory authority for operator's jurisdiction
+    email: ""  # fill in
+    notify_on:
+      - gdpr_breach_notification  # Art. 33, within 72h

@@ -25,6 +25,84 @@ groups:
               - UFW still permits 80/tcp (Let's Encrypt HTTP-01 challenge)
           runbook: "docs/phases/RUNBOOK.md"
 
+  # 13-E: service-health and resource alerts. These cover silent
+  # failure modes an operator wouldn't notice without active
+  # monitoring. Alertmanager (13-D) delivers them.
+  - name: services
+    interval: 60s
+    rules:
+      - alert: JA4proxyDown
+        expr: up{job="ja4proxy"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: ja4proxy
+        annotations:
+          summary: "JA4proxy metrics endpoint unreachable for >2m"
+          description: |
+            Prometheus cannot scrape JA4proxy. The service may have
+            crashed or the metrics port is unreachable.
+              systemctl status ja4proxy
+              journalctl -u ja4proxy -n 50
+          runbook: "docs/phases/RUNBOOK.md"
+
+      - alert: HAProxyDown
+        expr: up{job="haproxy-csv"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: haproxy
+        annotations:
+          summary: "HAProxy stats endpoint unreachable for >2m"
+          description: |
+            HAProxy is either down or the stats socket is not
+            responding. TLS passthrough to JA4proxy is broken.
+              docker compose logs haproxy
+          runbook: "docs/phases/RUNBOOK.md"
+
+      - alert: RedisDown
+        expr: up{job="ja4proxy"} == 1 and ja4proxy_redis_connected == 0
+        for: 5m
+        labels:
+          severity: warning
+          component: redis
+        annotations:
+          summary: "JA4proxy reports Redis disconnected for >5m"
+          description: |
+            Ban lookups and rate-limit counters are unavailable.
+            JA4proxy continues to proxy traffic but cannot enforce
+            bans.
+              systemctl status ja4proxy-redis
+          runbook: "docs/phases/RUNBOOK.md"
+
+      - alert: NoTrafficLastHour
+        expr: increase(ja4proxy_connections_total[1h]) == 0
+        for: 1h
+        labels:
+          severity: warning
+          component: ja4proxy
+        annotations:
+          summary: "Zero connections to JA4proxy in the last hour"
+          description: |
+            This may be normal during low-traffic periods, but
+            sustained silence often means HAProxy or UFW stopped
+            forwarding. Check HAProxy and UFW status.
+          runbook: "docs/phases/RUNBOOK.md"
+
+      - alert: DiskFull
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.10
+        for: 10m
+        labels:
+          severity: critical
+          component: host
+        annotations:
+          summary: "Root filesystem <10% free for >10m"
+          description: |
+            Loki, Prometheus, or journald may be growing past
+            retention caps. See RUNBOOK scenario 4 (Disk full).
+              du -sh /var/lib/docker/volumes/* /var/log/*
+          runbook: "docs/phases/RUNBOOK.md"
+
   - name: probes
     interval: 60s
     rules:

@@ -1033,9 +1033,9 @@ visible.
 - [x] 11-B — /privacy GDPR page (PR #27)
 - [x] 11-E — governance document skeletons (PR #31)
 - [x] 13-D — Alertmanager (PR #32)
-- [ ] 13-E — alert rules
+- [x] 13-E — alert rules (PR #35)
 - [x] 13-F — blackbox_exporter + heartbeat (PR #29)
-- [ ] 13-I — AIDE timer
+- [x] 13-I — AIDE timer (PR #35)
 - [ ] 13-J — secrets rotation role
 - [x] 13-K — heartbeat / cost hints (PR #26)
 - [ ] 12-A — weekly export timer
@@ -1044,6 +1044,6 @@ visible.
 - [x] 12-D — binary provenance (PR #25)
 - [x] 15-A — preserve-evidence.sh (PR #34)
 - [x] 15-B — runbook IR scenarios (PR #33)
-- [ ] 15-C — governance docs body
+- [x] 15-C — governance docs body (PR #35)
 - [x] 15-D — README Operations (PR #28)
 - [x] TM-A — THREAT_MODEL.md (PR #30)
