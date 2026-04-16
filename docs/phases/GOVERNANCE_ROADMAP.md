@@ -1047,7 +1047,7 @@ visible.
 - [x] 15-C — governance docs body (PR #35)
 - [x] 15-D — README Operations (PR #28)
 - [x] TM-A — THREAT_MODEL.md (PR #30)
-- [ ] 16-A — Python linting with ruff
-- [ ] 16-B — Shellcheck for all .sh files
-- [ ] 16-C — JSON validation
-- [ ] 16-D — Markdown linting
+- [x] 16-A — Python linting with ruff
+- [x] 16-B — Shellcheck for all .sh files
+- [x] 16-C — JSON validation
+- [x] 16-D — Markdown linting
