@@ -16,7 +16,9 @@ Thank you for your report regarding traffic from [IP address].
 
 This IP hosts a **security research honeypot** operated by [operator
 name]. The system is designed to receive and fingerprint inbound
-connections — it does not initiate outbound traffic to third parties.
+connections. Its only outbound traffic is ACME certificate renewal
+and a periodic healthcheck ping — it does not initiate connections
+to third-party hosts.
 
 If you are seeing traffic from this IP, the most likely explanations
 are:

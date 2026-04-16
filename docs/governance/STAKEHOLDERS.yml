@@ -5,6 +5,10 @@
 # Who to notify on specific events. The operator fills in real
 # contact details locally; this skeleton lists the roles and
 # triggers. CI validates this file is parseable YAML.
+#
+# NOTE: notify_on lists are documentary — no automation consumes
+# them. They exist so the operator has a single place to look up
+# "who do I contact when X happens" during an incident.
 
 stakeholders:
   - role: operator
