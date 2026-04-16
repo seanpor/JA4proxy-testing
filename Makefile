@@ -110,7 +110,7 @@ lint-shell:
 	  echo "shellcheck not on PATH; skipping (install via your package manager)"; \
 	  exit 0; \
 	fi
-	@$(SHELLCHECK) -S warning deploy/scripts/*.sh
+	@$(SHELLCHECK) -S warning $$(find deploy -name '*.sh' -type f)
 
 lint-jinja:
 	@echo "── jinja2 template syntax ──"
