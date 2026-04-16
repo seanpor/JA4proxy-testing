@@ -172,8 +172,8 @@ Data exfiltration
 │     → mitigation: docker.sock mounted ro; Promtail does not
 │       accept inbound queries.
 ├── Export channel abuse
-│     → mitigations: weekly export (12-A, pending) is local-only;
-│       anonymisation (12-B, pending) HMACs IPs before any share;
+│     → mitigations: weekly export (12-A) is local-only;
+│       anonymisation (12-B) HMACs IPs before any share;
 │       no push to a third-party store is wired (out of scope).
 └── Form submissions retained
       → mitigation: honeypot landing page discards submissions
@@ -181,11 +181,11 @@ Data exfiltration
         (11-B). Nothing in the stack writes form content to disk.
 ```
 
-Residual risk: low until 12-A/B land. Today the dataset never
-leaves the VM except via operator-initiated `scp`. Evidence
-collection (15-A) is the one channel that does bundle raw logs — it
-writes mode-0600 tarballs in a mode-0700 directory and is
-incident-triggered, not continuous.
+Residual risk: low. The dataset leaves the VM only via
+operator-initiated `make export-pull` (12-C) or `scp`; HMAC
+anonymisation (12-B) scrubs IPs before any share. Evidence
+collection (15-A) bundles raw logs into mode-0600 tarballs in a
+mode-0700 directory and is incident-triggered, not continuous.
 
 ## 3. Residual risk register
 
@@ -195,9 +195,9 @@ incident-triggered, not continuous.
 | R2 | Registrar account takeover | Low | High | operator (out of repo) | registrar 2FA + pre-go-live DNS preflight |
 | R3 | BGP hijack of Alibaba prefix | Very low | High | cloud provider | accepted; heartbeat detects aftermath |
 | R4 | Operator absence during incident | Medium | Medium | operator | README on-call posture: 3 bus. days / 24 h; stop-before-away |
-| R5 | CertExpiringSoon fires with no delivery | Medium | Medium | operator | 13-F rule lands now; delivery deferred to 13-D Alertmanager |
+| R5 | CertExpiringSoon fires with no delivery | Low | Medium | operator | 13-D Alertmanager now delivers; SMTP config is operator opt-in |
 | R6 | Heartbeat URL exfil via env var in process listing | Low | Low | operator | accepted; URL is a low-secrecy identifier, rotatable at healthchecks.io |
-| R7 | Dataset deanonymisation via IP + timing | Medium | Medium | operator | 12-B HMAC anonymisation (pending); today dataset is VM-local only |
+| R7 | Dataset deanonymisation via IP + timing | Low | Medium | operator | 12-B HMAC anonymisation landed; IPs scrubbed before any share |
 | R8 | Egress UFW rules drift to allow arbitrary outbound | Medium | High | operator | no CI check today; candidate for a future chunk |
 
 ## 4. What this model does **not** cover
@@ -207,7 +207,7 @@ incident-triggered, not continuous.
 - **Multi-tenant isolation.** There is only one tenant — the operator.
 - **Insider threat beyond operator mistake.** Single-operator repo.
 - **Long-term dataset publication governance.** 11-E (DPIA / ROPA)
-  is the right place for that; pending.
+  skeletons are in place; operator fills in the legal content.
 
 ## 5. Cross-references
 
