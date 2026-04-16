@@ -38,21 +38,19 @@ SNAP_RESP=$(curl -sf -XPOST 'http://127.0.0.1:9090/api/v1/admin/tsdb/snapshot' 2
 if [ -n "${SNAP_RESP}" ]; then
     SNAP_NAME=$(echo "${SNAP_RESP}" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['name'])" 2>/dev/null || true)
     if [ -n "${SNAP_NAME}" ]; then
-        SNAP_SRC="/opt/ja4proxy-docker/prometheus-data/snapshots/${SNAP_NAME}"
-        # Prometheus runs in Docker; the snapshot is inside the volume.
-        # Try the Docker volume path first, fall back to a docker cp.
-        if [ -d "${SNAP_SRC}" ]; then
-            cp -a "${SNAP_SRC}" "${EXPORT_DIR}/prometheus-snapshot"
-        else
-            docker cp "ja4proxy-prometheus:/prometheus/snapshots/${SNAP_NAME}" \
-                "${EXPORT_DIR}/prometheus-snapshot" 2>/dev/null || \
-                log "WARNING: could not copy snapshot from container"
-        fi
+        # Prometheus runs in Docker — the snapshot lives inside the
+        # container's volume, not on the host filesystem. Use docker cp.
+        docker cp "ja4proxy-prometheus:/prometheus/snapshots/${SNAP_NAME}" \
+            "${EXPORT_DIR}/prometheus-snapshot" 2>/dev/null || \
+            log "WARNING: could not copy snapshot from container"
     fi
 fi
 
 # ── Loki logs (last 7 days) ────────────────────────────────
-log "Querying Loki for last 7 days"
+# NOTE: limit=100000 may truncate on busy honeypots. The query
+# returns a best-effort sample, not a complete dump. For full
+# coverage, increase the limit or paginate with start/end windows.
+log "Querying Loki for last 7 days (limit=100000)"
 END=$(date -u +%s)
 START=$((END - 7*86400))
 curl -sf "http://127.0.0.1:3100/loki/api/v1/query_range" \
@@ -86,6 +84,11 @@ log "Building manifest"
             echo "    sha256: \"${SHA}\""
         done
 } > "${MANIFEST}"
+
+# ── Cleanup old exports (>90 days) ─────────────────────────
+log "Cleaning exports older than 90 days"
+find /opt/ja4proxy-export -maxdepth 1 -mindepth 1 -type d -mtime +90 \
+    -exec rm -rf {} + 2>/dev/null || true
 
 log "Export complete: ${EXPORT_DIR}"
 log "Manifest: ${MANIFEST}"

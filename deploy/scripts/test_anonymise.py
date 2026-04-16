@@ -70,21 +70,42 @@ class TestAnonymiseLine(unittest.TestCase):
         self.assertNotIn("192.168.1.100", result)
         self.assertIn("port 443", result)
 
-    def test_pii_line_dropped(self):
+    def test_pii_redacted_not_dropped(self):
+        """Email replaced with [REDACTED], line preserved."""
         salt = b"salt"
-        line = "User submitted: user@example.com"
+        line = "User submitted: user@example.com on port 443"
         result = anonymise_line(salt, line)
-        self.assertIsNone(result)
+        self.assertIn("[REDACTED]", result)
+        self.assertNotIn("user@example.com", result)
+        self.assertIn("port 443", result)
 
-    def test_phone_line_dropped(self):
+    def test_phone_redacted_not_dropped(self):
+        """Phone replaced with [REDACTED], line preserved."""
         salt = b"salt"
-        line = "Phone: +1-555-123-4567"
+        line = "Phone: +1-555-123-4567 logged"
         result = anonymise_line(salt, line)
-        self.assertIsNone(result)
+        self.assertIn("[REDACTED]", result)
+        self.assertIn("logged", result)
+
+    def test_pii_and_ip_both_scrubbed(self):
+        """Line with both PII and IP: PII redacted, IP HMACed."""
+        salt = b"salt"
+        line = "From 10.0.0.1 user@test.org"
+        result = anonymise_line(salt, line)
+        self.assertNotIn("10.0.0.1", result)
+        self.assertNotIn("user@test.org", result)
+        self.assertIn("[REDACTED]", result)
+
+    def test_ja4_hash_not_mangled(self):
+        """JA4 fingerprint hashes must not be treated as IPv6."""
+        salt = b"salt"
+        line = "TLS handshake complete, JA4=t13d1516h2_8daaf6152771_b0da82dd1658"
+        result = anonymise_line(salt, line)
+        self.assertEqual(result, line)
 
     def test_clean_line_unchanged(self):
         salt = b"salt"
-        line = "TLS handshake complete, JA4=t13d1516h2_8daaf6152771_b0da82dd1658"
+        line = "Connection count: 42"
         result = anonymise_line(salt, line)
         self.assertEqual(result, line)
 

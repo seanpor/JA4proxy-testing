@@ -6,6 +6,12 @@
 # Triggered manually via `make rotate VM_IP=…`.
 #
 # NOT in the default site.yml roles list — runs via rotate.yml.
+#
+# WARNING: not idempotent. Each run generates new passwords.
+# If a run partially fails (e.g. a restart hangs), the vault
+# will contain passwords that don't match what's deployed.
+# Recovery: re-run `make rotate` to completion, or restore the
+# vault backup from before the failed run.
 # ─────────────────────────────────────────────────────────────
 
 - name: Generate new Redis password

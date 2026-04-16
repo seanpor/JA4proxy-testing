@@ -6,3 +6,8 @@
 ja4proxy_rotate_redis_password: true
 ja4proxy_rotate_grafana_password: true
 ja4proxy_rotate_haproxy_stats_password: true
+
+# redis_signing_key is NOT rotated — JA4proxy uses it for HMAC
+# verification of proxied requests. Rotating it would invalidate
+# in-flight sessions and requires a coordinated proxy reload
+# strategy. See roadmap 13-J "Not in scope".
