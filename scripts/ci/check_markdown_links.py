@@ -19,7 +19,13 @@ for md in sorted(REPO.rglob("*.md")):
     if any(d in md.parts for d in SKIP_DIRS):
         continue
     text = md.read_text(errors="replace")
+    in_code_block = False
     for lineno, line in enumerate(text.splitlines(), 1):
+        if line.strip().startswith("```"):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
         for m in LINK_RE.finditer(line):
             target = m.group(2).strip()
             # Skip URLs
