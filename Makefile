@@ -43,6 +43,7 @@ help:
 	@echo "    make lint           — fast static checks (yamllint, ansible-lint, shellcheck, ruff, json, markdown)"
 	@echo "    make test           — lint + structural cross-checks"
 	@echo "    make lint-install   — create .venv-dev/ and install ansible-lint + yamllint"
+	@echo "    make scan-images    — Trivy scan of compose images (needs trivy on PATH; 18-B)"
 	@echo
 	@echo "  Deployment (delegates to deploy/Makefile):"
 	@echo "    make secrets        — generate deploy/.vault/secrets.yml"
@@ -137,9 +138,9 @@ lint-markdown:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -294,6 +295,14 @@ test-markdown-links:
 test-sbom:
 	@echo "── CycloneDX SBOM emission: compose + role 02 wiring (18-A) ──"
 	@$(PY) scripts/ci/check_sbom.py
+
+test-image-scan-wired:
+	@echo "── Trivy image-scan job + make target + wrapper wired (18-B) ──"
+	@$(PY) scripts/ci/check_image_scan.py
+
+.PHONY: scan-images
+scan-images:
+	@scripts/ci/scan_images.sh
 
 # 14-E: run Molecule tests (requires `pip install molecule molecule-plugins[docker] docker`).
 # Not yet wired into ci.yml; enable per-PR with a dedicated job later.
