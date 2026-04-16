@@ -78,7 +78,7 @@ $(VENV)/.installed: requirements-dev.txt
 
 .PHONY: lint lint-yaml lint-ansible lint-syntax lint-shell lint-jinja lint-secrets lint-python lint-json lint-markdown
 
-lint: lint-yaml lint-syntax lint-ansible lint-shell lint-jinja lint-secrets lint-python lint-json
+lint: lint-yaml lint-syntax lint-ansible lint-shell lint-jinja lint-secrets lint-python lint-json lint-markdown
 	@echo
 	@echo "✅ lint: all checks passed"
 
@@ -127,6 +127,11 @@ lint-python:
 lint-json:
 	@echo "── JSON syntax ──"
 	@$(PY) scripts/ci/check_json.py
+
+lint-markdown:
+	@echo "── markdown (pymarkdown) ──"
+	@find . -name '*.md' -not -path './.git/*' -not -path './.venv*' -not -path './.qwen/*' \
+	  -print0 | xargs -0 pymarkdown --config .pymarkdown.json5 scan
 
 # ─────────────────────────────────────────────────────────────
 # Test — lint + structural cross-checks, still offline
