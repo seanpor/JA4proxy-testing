@@ -76,9 +76,9 @@ $(VENV)/.installed: requirements-dev.txt
 # Lint — fast static checks, ~seconds
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: lint lint-yaml lint-ansible lint-syntax lint-shell lint-jinja lint-secrets lint-markdown
+.PHONY: lint lint-yaml lint-ansible lint-syntax lint-shell lint-jinja lint-secrets lint-python lint-markdown
 
-lint: lint-yaml lint-syntax lint-ansible lint-shell lint-jinja lint-secrets
+lint: lint-yaml lint-syntax lint-ansible lint-shell lint-jinja lint-secrets lint-python
 	@echo
 	@echo "✅ lint: all checks passed"
 
@@ -119,6 +119,10 @@ lint-jinja:
 lint-secrets:
 	@echo "── secret scan ──"
 	@$(PY) scripts/ci/check_secrets.py
+
+lint-python:
+	@echo "── ruff (Python) ──"
+	@ruff check scripts/ci/ deploy/scripts/*.py
 
 # ─────────────────────────────────────────────────────────────
 # Test — lint + structural cross-checks, still offline

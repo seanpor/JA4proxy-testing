@@ -12,7 +12,6 @@ that the default var in group_vars carries both flag tokens.
 """
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
