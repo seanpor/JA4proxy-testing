@@ -45,27 +45,31 @@ if [ ! -f "${MANIFEST}" ]; then
 fi
 
 log "Verifying sha256 checksums from manifest"
-ERRORS=0
-while IFS= read -r line; do
-    # Parse "    sha256: "<hash>"" and "    path: "<relpath>""
-    if [[ "${line}" =~ path:\ \"(.+)\" ]]; then
-        CURRENT_PATH="${BASH_REMATCH[1]}"
-    fi
-    if [[ "${line}" =~ sha256:\ \"([0-9a-f]+)\" ]]; then
-        EXPECTED="${BASH_REMATCH[1]}"
-        ACTUAL=$(sha256sum "${LOCAL_DIR}/${CURRENT_PATH}" | awk '{print $1}')
-        if [ "${EXPECTED}" != "${ACTUAL}" ]; then
-            log "MISMATCH: ${CURRENT_PATH}"
-            log "  expected: ${EXPECTED}"
-            log "  actual:   ${ACTUAL}"
-            ERRORS=$((ERRORS + 1))
-        fi
-    fi
-done < "${MANIFEST}"
+# Use python3 + PyYAML for robust YAML parsing instead of fragile
+# bash regex that breaks if the manifest format drifts.
+python3 -c "
+import sys, hashlib, yaml
+from pathlib import Path
 
-if [ "${ERRORS}" -gt 0 ]; then
-    log "ERROR: ${ERRORS} file(s) failed sha256 verification"
-    exit 1
-fi
+manifest = yaml.safe_load(Path('${MANIFEST}').read_text())
+errors = 0
+for entry in manifest.get('files', []):
+    p = Path('${LOCAL_DIR}') / entry['path']
+    if not p.exists():
+        print(f'  MISSING: {entry[\"path\"]}')
+        errors += 1
+        continue
+    actual = hashlib.sha256(p.read_bytes()).hexdigest()
+    if actual != entry['sha256']:
+        print(f'  MISMATCH: {entry[\"path\"]}')
+        print(f'    expected: {entry[\"sha256\"]}')
+        print(f'    actual:   {actual}')
+        errors += 1
+    else:
+        print(f'  OK: {entry[\"path\"]}')
+if errors:
+    print(f'{errors} file(s) failed verification')
+    sys.exit(1)
+"
 
 log "All files verified. Export at: ${LOCAL_DIR}"

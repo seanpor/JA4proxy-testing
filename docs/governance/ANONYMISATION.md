@@ -16,8 +16,8 @@ output alone computationally infeasible.
 |-----------|---------------|
 | IPv4 address | `HMAC-SHA-256(salt, ip)[:16]` |
 | IPv6 address | `HMAC-SHA-256(salt, /64 prefix)[:16]` — host part discarded |
-| Email addresses | Line dropped entirely |
-| Phone numbers | Line dropped entirely |
+| Email addresses | Replaced with `[REDACTED]` (line preserved for context) |
+| Phone numbers | Replaced with `[REDACTED]` (line preserved for context) |
 | Binary files (.gz, .tar, .db, .wal) | Copied without scrubbing |
 | Everything else | Passed through unchanged |
 
