@@ -1,12 +1,12 @@
 ---
 # Handlers for Role 12
 
-- name: restart ja4proxy
+- name: Restart ja4proxy
   ansible.builtin.systemd:
     name: ja4proxy
     state: restarted
 
-- name: restart compose stack
+- name: Restart compose stack
   ansible.builtin.command:
-    cmd: docker compose -f {{ ja4proxy_docker_base_dir }}/docker-compose.yml up -d
+    cmd: docker compose -f {{ ja4proxy_docker_base_dir }}/docker-compose.yml up -d --force-recreate
   changed_when: true

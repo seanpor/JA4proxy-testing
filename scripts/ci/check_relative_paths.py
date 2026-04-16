@@ -24,7 +24,7 @@ for yml in sorted(ROLES.rglob("*.yml")):
             resolved = (PLAYBOOK_DIR / ("." + rel)).resolve()
             checked += 1
             # Skip .vault paths (generated at runtime, gitignored)
-            if ".vault" in str(resolved):
+            if any(part == ".vault" for part in resolved.parts):
                 continue
             if not resolved.exists():
                 role_rel = yml.relative_to(REPO)

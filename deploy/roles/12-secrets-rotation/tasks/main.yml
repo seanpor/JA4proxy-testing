@@ -41,7 +41,7 @@
     group: root
     mode: "0640"
   when: ja4proxy_rotate_redis_password | bool
-  notify: restart ja4proxy
+  notify: Restart ja4proxy
 
 - name: Re-template docker-compose.yml with new passwords
   tags: [rotate]
@@ -51,7 +51,7 @@
     owner: root
     group: root
     mode: "0640"
-  notify: restart compose stack
+  notify: Restart compose stack
 
 - name: Restart Redis to pick up new password
   tags: [rotate]
