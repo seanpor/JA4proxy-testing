@@ -42,7 +42,7 @@ env = Environment()
 tmpl = env.from_string(TEMPLATE.read_text())
 try:
     rendered = tmpl.render(**ctx)
-except Exception as e:  # noqa: BLE001
+except Exception as e:
     sys.exit(f"jinja2 render failed: {e}")
 
 if "{{" in rendered or "}}" in rendered:
