@@ -60,21 +60,39 @@ groups:
               docker compose logs haproxy
           runbook: "docs/phases/RUNBOOK.md"
 
+      # Redis runs as a systemd-managed Docker container. JA4proxy
+      # does not export a redis_connected gauge, so we detect Redis
+      # failure indirectly: if JA4proxy is up but its scrape shows
+      # zero ban-list entries AND connections are flowing, Redis is
+      # likely unreachable. This is a best-effort heuristic — a
+      # dedicated Redis exporter would be more precise but adds
+      # another container. The `absent()` fallback catches the case
+      # where the metric simply doesn't exist yet.
       - alert: RedisDown
-        expr: up{job="ja4proxy"} == 1 and ja4proxy_redis_connected == 0
+        expr: |
+          up{job="ja4proxy"} == 1
+          and (absent(ja4proxy_redis_connected) or ja4proxy_redis_connected == 0)
         for: 5m
         labels:
           severity: warning
           component: redis
         annotations:
-          summary: "JA4proxy reports Redis disconnected for >5m"
+          summary: "JA4proxy may have lost Redis connectivity for >5m"
           description: |
-            Ban lookups and rate-limit counters are unavailable.
+            Ban lookups and rate-limit counters may be unavailable.
             JA4proxy continues to proxy traffic but cannot enforce
-            bans.
+            bans. If ja4proxy_redis_connected is not exported by
+            your JA4proxy build, this alert fires on absent() —
+            consider adding a Redis exporter for precision.
               systemctl status ja4proxy-redis
+              docker logs ja4proxy-redis
           runbook: "docs/phases/RUNBOOK.md"
 
+      # NoTrafficLastHour fires after `for: 1h` on a 1h-window
+      # increase() == 0, meaning ~2h of actual silence before the
+      # alert fires. This is deliberate: short quiet spells are
+      # common on research honeypots; we only care about sustained
+      # silence that indicates a forwarding failure.
       - alert: NoTrafficLastHour
         expr: increase(ja4proxy_connections_total[1h]) == 0
         for: 1h
@@ -82,24 +100,33 @@ groups:
           severity: warning
           component: ja4proxy
         annotations:
-          summary: "Zero connections to JA4proxy in the last hour"
+          summary: "Zero connections to JA4proxy in the last ~2h"
           description: |
-            This may be normal during low-traffic periods, but
-            sustained silence often means HAProxy or UFW stopped
-            forwarding. Check HAProxy and UFW status.
+            increase() window (1h) + for (1h) = ~2h of silence
+            before this fires. May be normal during low-traffic
+            periods, but sustained silence often means HAProxy or
+            UFW stopped forwarding.
           runbook: "docs/phases/RUNBOOK.md"
 
+      # DiskFull: no node_exporter in the compose stack, so we use
+      # Prometheus's own TSDB metrics as a proxy for disk pressure.
+      # The default retention size is 10GB; 90% = 9GB threshold.
+      # If you change ja4proxy_prometheus_retention_size, update
+      # this threshold to match.
       - alert: DiskFull
-        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.10
+        expr: prometheus_tsdb_storage_blocks_bytes > 9e9
         for: 10m
         labels:
           severity: critical
           component: host
         annotations:
-          summary: "Root filesystem <10% free for >10m"
+          summary: "Prometheus TSDB >90% of 10GB retention cap for >10m"
           description: |
-            Loki, Prometheus, or journald may be growing past
-            retention caps. See RUNBOOK scenario 4 (Disk full).
+            TSDB is approaching the configured size retention limit
+            (default 10GB, alert at 9GB). This is a proxy for disk
+            pressure — no node_exporter in the stack. If this fires,
+            Loki or journald may also be growing.
+            See RUNBOOK scenario 4 (Disk full).
               du -sh /var/lib/docker/volumes/* /var/log/*
           runbook: "docs/phases/RUNBOOK.md"
 
