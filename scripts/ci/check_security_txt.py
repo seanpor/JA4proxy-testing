@@ -55,7 +55,7 @@ else:
         if "Expires: 2027-" not in rendered:
             errors.append(
                 f"rendered security.txt: Expires: should advance year by 1 "
-                f"(got: {[l for l in rendered.splitlines() if l.startswith('Expires:')]})"
+                f"(got: {[line for line in rendered.splitlines() if line.startswith('Expires:')]})"
             )
 
 if DEPLOY_TASK.exists() and "security.txt.j2" not in DEPLOY_TASK.read_text():

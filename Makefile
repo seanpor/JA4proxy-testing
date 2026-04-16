@@ -76,9 +76,9 @@ $(VENV)/.installed: requirements-dev.txt
 # Lint — fast static checks, ~seconds
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: lint lint-yaml lint-ansible lint-syntax lint-shell lint-jinja lint-secrets lint-markdown
+.PHONY: lint lint-yaml lint-ansible lint-syntax lint-shell lint-jinja lint-secrets lint-python lint-json lint-markdown
 
-lint: lint-yaml lint-syntax lint-ansible lint-shell lint-jinja lint-secrets
+lint: lint-yaml lint-syntax lint-ansible lint-shell lint-jinja lint-secrets lint-python lint-json lint-markdown
 	@echo
 	@echo "✅ lint: all checks passed"
 
@@ -110,7 +110,7 @@ lint-shell:
 	  echo "shellcheck not on PATH; skipping (install via your package manager)"; \
 	  exit 0; \
 	fi
-	@$(SHELLCHECK) -S warning deploy/scripts/*.sh
+	@$(SHELLCHECK) -S warning $$(find deploy -name '*.sh' -type f)
 
 lint-jinja:
 	@echo "── jinja2 template syntax ──"
@@ -119,6 +119,19 @@ lint-jinja:
 lint-secrets:
 	@echo "── secret scan ──"
 	@$(PY) scripts/ci/check_secrets.py
+
+lint-python:
+	@echo "── ruff (Python) ──"
+	@ruff check scripts/ci/ deploy/scripts/*.py
+
+lint-json:
+	@echo "── JSON syntax ──"
+	@$(PY) scripts/ci/check_json.py
+
+lint-markdown:
+	@echo "── markdown (pymarkdown) ──"
+	@find . -name '*.md' -not -path './.git/*' -not -path './.venv*' -not -path './.qwen/*' \
+	  -print0 | xargs -0 pymarkdown --config .pymarkdown.json5 scan
 
 # ─────────────────────────────────────────────────────────────
 # Test — lint + structural cross-checks, still offline

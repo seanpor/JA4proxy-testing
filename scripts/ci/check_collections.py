@@ -66,7 +66,10 @@ for base in PLAYBOOK_DIRS:
 
 # 3. Every FQCN used in task YAML must reference a declared collection
 #    (or ansible.builtin / ansible.posix-ish builtins we've pinned).
-fqcn_re = re.compile(r"^\s+(?:module|action|tasks):\s*\n?|^\s+([a-z_]+\.[a-z_]+\.[a-z_0-9]+):\s*(?=\n|\s*#)", re.MULTILINE)
+fqcn_re = re.compile(
+    r"^\s+(?:module|action|tasks):\s*\n?|^\s+([a-z_]+\.[a-z_]+\.[a-z_0-9]+):\s*(?=\n|\s*#)",
+    re.MULTILINE,
+)
 # Simpler: walk all lines and look for `ns.coll.module:` as a key.
 used_fqcns: set[str] = set()
 key_re = re.compile(r"^\s*([a-z][a-z_0-9]+\.[a-z][a-z_0-9]+\.[a-z][a-z_0-9]+):\s*(?:#.*)?$")
