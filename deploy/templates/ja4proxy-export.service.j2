@@ -1,0 +1,12 @@
+[Unit]
+# {{ ansible_managed }}
+# 12-A: weekly research data export.
+Description=JA4proxy weekly data export
+After=network.target docker.service
+
+[Service]
+Type=oneshot
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+ExecStart=/usr/local/sbin/export-week.sh

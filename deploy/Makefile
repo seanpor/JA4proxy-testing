@@ -29,7 +29,7 @@ ANSIBLE     := ansible-playbook $(INVENTORY) $(PLAYBOOK)
 # Usage: make cloud ALIYUN_ARGS="--region eu-central-1 --ssh-key-name mykey --admin-ip 1.2.3.4"
 ALIYUN_ARGS ?=
 
-.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections status destroy idempotency
+.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections status destroy idempotency rotate export-pull
 
 deploy:
 	@echo "╔══════════════════════════════════════════════════════╗"
@@ -126,6 +126,24 @@ ifndef VM_IP
 endif
 	@echo "Stopping all Docker containers on $(VM_IP)..."
 	@ssh root@$(VM_IP) "cd /opt/ja4proxy-docker && docker compose down"
+
+# ── Secrets Rotation (13-J) ─────────────────────────────────
+rotate:
+ifndef VM_IP
+	$(error VM_IP is required. Usage: make rotate VM_IP=1.2.3.4)
+endif
+	@echo "╔══════════════════════════════════════════════════════╗"
+	@echo "║   JA4proxy — Secrets Rotation                        ║"
+	@echo "╚══════════════════════════════════════════════════════╝"
+	ansible-playbook -i deploy/inventory/hosts.ini deploy/playbooks/rotate.yml \
+	  --tags rotate $(EXTRA_VARS)
+
+# ── Export Pull (12-C) ──────────────────────────────────────
+export-pull:
+ifndef VM_IP
+	$(error VM_IP is required. Usage: make export-pull VM_IP=1.2.3.4)
+endif
+	@bash deploy/scripts/export-pull.sh $(VM_IP)
 
 # ── CI/CD Friendly ──────────────────────────────────────────
 # All vars can be passed via environment or EXTRA_VARS:

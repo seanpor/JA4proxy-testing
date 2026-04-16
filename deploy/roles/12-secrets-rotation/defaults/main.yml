@@ -1,0 +1,8 @@
+---
+# 13-J: Secrets rotation defaults.
+# Rotation cadence is quarterly; the operator triggers manually via
+# `make rotate VM_IP=…`.
+
+ja4proxy_rotate_redis_password: true
+ja4proxy_rotate_grafana_password: true
+ja4proxy_rotate_haproxy_stats_password: true

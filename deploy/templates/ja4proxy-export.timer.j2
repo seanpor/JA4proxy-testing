@@ -1,0 +1,13 @@
+[Unit]
+# {{ ansible_managed }}
+# 12-A: weekly research data export.
+Description=Weekly JA4proxy data export
+
+[Timer]
+OnCalendar=Sun *-*-* 04:00:00
+Persistent=true
+RandomizedDelaySec=600
+Unit=ja4proxy-export.service
+
+[Install]
+WantedBy=timers.target

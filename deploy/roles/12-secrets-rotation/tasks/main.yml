@@ -1,0 +1,111 @@
+---
+# Role 12: Secrets Rotation (13-J)
+# ─────────────────────────────────────────────────────────────
+# Regenerates service passwords, re-templates affected configs,
+# and restarts only the services whose credentials changed.
+# Triggered manually via `make rotate VM_IP=…`.
+#
+# NOT in the default site.yml roles list — runs via rotate.yml.
+# ─────────────────────────────────────────────────────────────
+
+- name: Generate new Redis password
+  tags: [rotate]
+  ansible.builtin.set_fact:
+    redis_password: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
+  when: ja4proxy_rotate_redis_password | bool
+
+- name: Generate new Grafana admin password
+  tags: [rotate]
+  ansible.builtin.set_fact:
+    grafana_admin_password: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
+  when: ja4proxy_rotate_grafana_password | bool
+
+- name: Generate new HAProxy stats password
+  tags: [rotate]
+  ansible.builtin.set_fact:
+    haproxy_stats_password: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
+  when: ja4proxy_rotate_haproxy_stats_password | bool
+
+- name: Re-template JA4proxy proxy.yml with new Redis password
+  tags: [rotate]
+  ansible.builtin.template:
+    src: templates/proxy.yml.j2
+    dest: /opt/ja4proxy/config/proxy.yml
+    owner: root
+    group: root
+    mode: "0640"
+  when: ja4proxy_rotate_redis_password | bool
+  notify: restart ja4proxy
+
+- name: Re-template docker-compose.yml with new passwords
+  tags: [rotate]
+  ansible.builtin.template:
+    src: templates/docker-compose.yml.j2
+    dest: "{{ ja4proxy_docker_base_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0640"
+  notify: restart compose stack
+
+- name: Restart Redis to pick up new password
+  tags: [rotate]
+  ansible.builtin.systemd:
+    name: ja4proxy-redis
+    state: restarted
+  when: ja4proxy_rotate_redis_password | bool
+
+- name: Restart JA4proxy to reconnect with new Redis password
+  tags: [rotate]
+  ansible.builtin.systemd:
+    name: ja4proxy
+    state: restarted
+  when: ja4proxy_rotate_redis_password | bool
+
+- name: Restart Grafana with new admin password
+  tags: [rotate]
+  ansible.builtin.command:
+    cmd: docker compose -f {{ ja4proxy_docker_base_dir }}/docker-compose.yml restart grafana
+  when: ja4proxy_rotate_grafana_password | bool
+  changed_when: true
+
+- name: Restart HAProxy with new stats password
+  tags: [rotate]
+  ansible.builtin.command:
+    cmd: docker compose -f {{ ja4proxy_docker_base_dir }}/docker-compose.yml restart haproxy
+  when: ja4proxy_rotate_haproxy_stats_password | bool
+  changed_when: true
+
+- name: Write rotated secrets back to local vault file
+  tags: [rotate]
+  delegate_to: localhost
+  ansible.builtin.copy:
+    content: |
+      # JA4proxy Research — Rotated Secrets
+      # Rotated: {{ ansible_date_time.iso8601 | default('unknown') }}
+      redis_password: '{{ redis_password }}'
+      grafana_admin_password: '{{ grafana_admin_password }}'
+      grafana_password: '{{ grafana_admin_password }}'
+      redis_signing_key: '{{ redis_signing_key | default("") }}'
+      haproxy_stats_password: '{{ haproxy_stats_password }}'
+      haproxy_stats_user: '{{ haproxy_stats_user | default("haproxy-admin") }}'
+      smtp_password: '{{ ja4proxy_secrets.smtp_password | default("") }}'
+    dest: "{{ playbook_dir }}/../../.vault/secrets-rotated.yml"
+    mode: "0600"
+
+- name: Encrypt rotated secrets with ansible-vault
+  tags: [rotate]
+  delegate_to: localhost
+  ansible.builtin.command:
+    cmd: >-
+      ansible-vault encrypt
+      --vault-password-file {{ playbook_dir }}/../../.vault/.vault-pass
+      --output {{ playbook_dir }}/../../.vault/secrets.yml
+      {{ playbook_dir }}/../../.vault/secrets-rotated.yml
+  changed_when: true
+
+- name: Clean up plaintext rotated file
+  tags: [rotate]
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/../../.vault/secrets-rotated.yml"
+    state: absent

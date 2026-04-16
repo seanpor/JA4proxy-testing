@@ -300,6 +300,10 @@
     - role: ../roles/10-go-live
       tags: [go-live, phase10]
 
+    # Phase 11: Data Export (12-A)
+    - role: ../roles/11-data-export
+      tags: [export, phase11]
+
   post_tasks:
     - name: Deployment summary
       ansible.builtin.debug:

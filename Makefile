@@ -124,9 +124,9 @@ lint-secrets:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -250,6 +250,18 @@ test-alert-rules:
 	@echo "── alert-rules.yml has 7 required alerts (13-E + 13-F) ──"
 	@$(PY) scripts/ci/check_alert_rules.py
 
+test-secrets-rotation:
+	@echo "── secrets-rotation role + playbook + Makefile target (13-J) ──"
+	@$(PY) scripts/ci/check_secrets_rotation.py
+
+test-export-timer:
+	@echo "── export timer + script + role 11 + export-pull (12-A, 12-C) ──"
+	@$(PY) scripts/ci/check_export_timer.py
+
+test-anonymise:
+	@echo "── anonymise.py + unit tests + ANONYMISATION.md (12-B) ──"
+	@$(PY) scripts/ci/check_anonymise.py
+
 # 14-E: run Molecule tests (requires `pip install molecule molecule-plugins[docker] docker`).
 # Not yet wired into ci.yml; enable per-PR with a dedicated job later.
 .PHONY: molecule
@@ -265,9 +277,9 @@ molecule:
 # Deployment target passthrough (to deploy/Makefile)
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections verify go-live status destroy idempotency ci-deploy ci-check
+.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections verify go-live status destroy idempotency ci-deploy ci-check rotate export-pull
 
-deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections verify go-live status destroy idempotency ci-deploy ci-check:
+deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections verify go-live status destroy idempotency ci-deploy ci-check rotate export-pull:
 	@$(MAKE) -f deploy/Makefile $@ \
 	  $(if $(VM_IP),VM_IP=$(VM_IP)) \
 	  $(if $(ALIYUN_ARGS),ALIYUN_ARGS="$(ALIYUN_ARGS)") \

@@ -27,6 +27,7 @@ days old.
 | [abuse-reply-template.md](abuse-reply-template.md) | Canned reply for inbound abuse reports (15-C) |
 | [OUTBOUND_REPORTING.md](OUTBOUND_REPORTING.md) | Decision tree for LE referrals / CERT reports (15-C) |
 | [STAKEHOLDERS.yml](STAKEHOLDERS.yml) | Notification list: who to contact on which event (15-C) |
+| [ANONYMISATION.md](ANONYMISATION.md) | HMAC anonymisation method + limitations (12-B) |
 
 ## Review cadence
 

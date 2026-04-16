@@ -30,6 +30,8 @@ REQUIRED = (
     "abuse-reply-template.md",
     "OUTBOUND_REPORTING.md",
     "STAKEHOLDERS.yml",
+    # 12-B addition
+    "ANONYMISATION.md",
 )
 
 # STAKEHOLDERS.yml must also be valid YAML (15-C acceptance).
