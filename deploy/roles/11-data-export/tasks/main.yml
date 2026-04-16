@@ -1,0 +1,53 @@
+---
+# Role 11: Data Export (12-A)
+# ─────────────────────────────────────────────────────────────
+# Deploys the weekly export script + systemd timer. The export
+# produces a versioned directory under /opt/ja4proxy-export/
+# with Prometheus snapshots, Loki logs, and a manifest.yml.
+# ─────────────────────────────────────────────────────────────
+
+- name: Create export base directory
+  tags: [export, phase11]
+  ansible.builtin.file:
+    path: /opt/ja4proxy-export
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Deploy export-week.sh
+  tags: [export, phase11]
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../scripts/export-week.sh"
+    dest: /usr/local/sbin/export-week.sh
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Deploy ja4proxy-export.service
+  tags: [export, phase11]
+  ansible.builtin.template:
+    src: templates/ja4proxy-export.service.j2
+    dest: /etc/systemd/system/ja4proxy-export.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload systemd
+
+- name: Deploy ja4proxy-export.timer
+  tags: [export, phase11]
+  ansible.builtin.template:
+    src: templates/ja4proxy-export.timer.j2
+    dest: /etc/systemd/system/ja4proxy-export.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload systemd
+
+- name: Enable and start export timer
+  tags: [export, phase11]
+  ansible.builtin.systemd:
+    name: ja4proxy-export.timer
+    enabled: true
+    state: started
+    daemon_reload: true

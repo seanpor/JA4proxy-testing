@@ -1,0 +1,30 @@
+---
+# 13-J: Secrets rotation playbook.
+# Run via: make rotate VM_IP=…
+# NOT part of the normal deploy flow (site.yml).
+- name: Rotate secrets on JA4proxy honeypot
+  hosts: ja4proxy_vm
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../inventory/group_vars/all.yml
+
+  pre_tasks:
+    - name: Load existing vault secrets
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../../.vault/secrets.yml"
+        name: ja4proxy_secrets
+
+    - name: Promote existing secrets into play scope
+      ansible.builtin.set_fact:
+        redis_password: "{{ ja4proxy_secrets.redis_password }}"
+        grafana_admin_password: "{{ ja4proxy_secrets.grafana_admin_password }}"
+        grafana_password: "{{ ja4proxy_secrets.grafana_password }}"
+        redis_signing_key: "{{ ja4proxy_secrets.redis_signing_key | default('') }}"
+        haproxy_stats_password: "{{ ja4proxy_secrets.haproxy_stats_password }}"
+        haproxy_stats_user: "{{ ja4proxy_secrets.haproxy_stats_user | default('haproxy-admin') }}"
+
+  roles:
+    - role: ../roles/12-secrets-rotation
+      tags: [rotate]

@@ -1036,11 +1036,11 @@ visible.
 - [x] 13-E — alert rules (PR #35)
 - [x] 13-F — blackbox_exporter + heartbeat (PR #29)
 - [x] 13-I — AIDE timer (PR #35)
-- [ ] 13-J — secrets rotation role
+- [x] 13-J — secrets rotation role (PR #37)
 - [x] 13-K — heartbeat / cost hints (PR #26)
-- [ ] 12-A — weekly export timer
-- [ ] 12-B — anonymisation in export
-- [ ] 12-C — export-pull on control machine
+- [x] 12-A — weekly export timer (PR #37)
+- [x] 12-B — anonymisation in export (PR #37)
+- [x] 12-C — export-pull on control machine (PR #37)
 - [x] 12-D — binary provenance (PR #25)
 - [x] 15-A — preserve-evidence.sh (PR #34)
 - [x] 15-B — runbook IR scenarios (PR #33)
