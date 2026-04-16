@@ -85,4 +85,34 @@ if unknown:
         print(f"  {u}")
     sys.exit(1)
 
-print(f"✓ compose renders, valid YAML, {len(doc['services'])} services, all images pinnable")
+# Every depends_on target must name an existing service.
+service_names = set(doc["services"].keys())
+bad_deps = []
+for name, spec in doc["services"].items():
+    deps = spec.get("depends_on", {})
+    # depends_on can be a list or a dict (long form)
+    if isinstance(deps, list):
+        dep_names = deps
+    elif isinstance(deps, dict):
+        dep_names = list(deps.keys())
+    else:
+        continue
+    for dep in dep_names:
+        if dep not in service_names:
+            bad_deps.append(f"{name} depends_on '{dep}' — service does not exist")
+
+if bad_deps:
+    print("depends_on targets missing from services:")
+    for b in bad_deps:
+        print(f"  {b}")
+    sys.exit(1)
+
+deps_count = sum(
+    len(spec.get("depends_on", {}))
+    for spec in doc["services"].values()
+    if isinstance(spec, dict)
+)
+print(
+    f"✓ compose renders, valid YAML, {len(doc['services'])} services, "
+    f"all images pinnable, {deps_count} depends_on edges valid"
+)

@@ -1051,3 +1051,8 @@ visible.
 - [x] 16-B — Shellcheck for all .sh files
 - [x] 16-C — JSON validation
 - [x] 16-D — Markdown linting
+- [x] 17-A/C — Fix missing handlers + handler validation CI check
+- [x] 17-B — Remove duplicate files + duplicate detection CI check
+- [x] 17-D — Relative path validation CI check
+- [x] 17-E — Docker Compose dependency DAG validation
+- [x] 17-F — Markdown internal link validation CI check
