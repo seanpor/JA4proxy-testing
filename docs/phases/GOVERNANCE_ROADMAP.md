@@ -1042,7 +1042,7 @@ visible.
 - [ ] 12-B — anonymisation in export
 - [ ] 12-C — export-pull on control machine
 - [x] 12-D — binary provenance (PR #25)
-- [ ] 15-A — preserve-evidence.sh
+- [x] 15-A — preserve-evidence.sh (PR #34)
 - [x] 15-B — runbook IR scenarios (PR #33)
 - [ ] 15-C — governance docs body
 - [x] 15-D — README Operations (PR #28)
