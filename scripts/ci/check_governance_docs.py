@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""Governance document skeletons (11-E regression).
+"""Governance document skeletons (11-E + 15-C regression).
 
 Assertions:
-  1. All seven governance skeleton files exist under docs/governance/.
+  1. All ten governance files exist under docs/governance/.
   2. Each carries a `Last reviewed:` line parseable as YYYY-MM-DD and
-     within the last 365 days. Skeletons that rot silently are worse
-     than no skeleton at all — the operator needs a loud prompt when
-     legal assumptions drift.
-  3. docs/governance/README.md indexes the other six files by name so
-     a reader landing there can find everything.
+     within the last 365 days.
+  3. docs/governance/README.md indexes the other files by name.
+  4. STAKEHOLDERS.yml is valid YAML (15-C).
 """
 from __future__ import annotations
 
@@ -28,7 +26,14 @@ REQUIRED = (
     "LE_REQUESTS.md",
     "ETHICS.md",
     "README.md",
+    # 15-C additions
+    "abuse-reply-template.md",
+    "OUTBOUND_REPORTING.md",
+    "STAKEHOLDERS.yml",
 )
+
+# STAKEHOLDERS.yml must also be valid YAML (15-C acceptance).
+YAML_FILES = ("STAKEHOLDERS.yml",)
 
 errors: list[str] = []
 
@@ -41,7 +46,7 @@ else:
             errors.append(f"docs/governance/{name}: missing")
             continue
         text = p.read_text()
-        m = re.search(r"^Last reviewed:\s*(\d{4}-\d{2}-\d{2})", text, re.MULTILINE)
+        m = re.search(r"^#?\s*Last reviewed:\s*(\d{4}-\d{2}-\d{2})", text, re.MULTILINE)
         if not m:
             errors.append(
                 f"docs/governance/{name}: missing or malformed `Last reviewed: YYYY-MM-DD` line"
@@ -61,6 +66,20 @@ else:
             errors.append(
                 f"docs/governance/{name}: Last reviewed {last} is in the future"
             )
+
+    # 15-C: YAML files must parse.
+    try:
+        import yaml
+    except ImportError:
+        yaml = None  # type: ignore[assignment]
+    if yaml:
+        for yname in YAML_FILES:
+            yp = GDIR / yname
+            if yp.exists():
+                try:
+                    yaml.safe_load(yp.read_text())
+                except yaml.YAMLError as exc:
+                    errors.append(f"docs/governance/{yname}: invalid YAML: {exc}")
 
     readme = GDIR / "README.md"
     if readme.exists():
