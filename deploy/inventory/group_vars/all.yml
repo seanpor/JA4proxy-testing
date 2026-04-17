@@ -111,6 +111,12 @@ ja4proxy_journald_max_use: "2G"
 # GOFLAGS so the sibling repo's Makefile picks them up without edits.
 ja4proxy_go_build_flags: "-trimpath -buildvcs=true"
 
+# 18-C: Run govulncheck against the sibling Go source before build.
+# Reachable vulns abort the deploy. Set false to bypass temporarily
+# when an advisory is known-benign and not yet upstream-fixed —
+# always open a tracking issue when you flip this off.
+ja4proxy_govulncheck_enabled: true
+
 # ── Loki Retention ───────────────────────────────────────────
 
 ja4proxy_loki_retention_days: 90

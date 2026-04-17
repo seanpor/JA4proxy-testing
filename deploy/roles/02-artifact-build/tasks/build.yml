@@ -90,6 +90,47 @@
       become: false
       register: repo_check
 
+    # 18-C: govulncheck against the Go source tree before we spend
+    # time building or touching the target. Reachable vuln → task
+    # fails (govulncheck's own non-zero exit) and the play aborts
+    # before any binary reaches the target. Missing govulncheck →
+    # loud WARN and skip (air-gapped build host). Run when
+    # ja4proxy_govulncheck_enabled is true (default).
+
+    - name: Probe for govulncheck on control machine (18-C)
+      ansible.builtin.command:
+        cmd: govulncheck -version
+      delegate_to: localhost
+      become: false
+      register: _govulncheck_probe
+      changed_when: false
+      failed_when: false
+      when: ja4proxy_govulncheck_enabled | default(true) | bool
+
+    - name: Warn when govulncheck is not installed (18-C)
+      ansible.builtin.debug:
+        msg: >-
+          govulncheck not found on control machine — skipping Go source
+          vulnerability scan. Install with:
+          `go install golang.org/x/vuln/cmd/govulncheck@latest`
+      when:
+        - ja4proxy_govulncheck_enabled | default(true) | bool
+        - _govulncheck_probe.rc is defined
+        - _govulncheck_probe.rc != 0
+
+    - name: Run govulncheck against Go source tree (18-C)
+      ansible.builtin.command:
+        cmd: govulncheck ./...
+        chdir: "{{ ja4proxy_build_machine_go_path }}"
+      delegate_to: localhost
+      become: false
+      register: _govulncheck_run
+      changed_when: false
+      when:
+        - ja4proxy_govulncheck_enabled | default(true) | bool
+        - _govulncheck_probe.rc is defined
+        - _govulncheck_probe.rc == 0
+
     - name: Build JA4proxy binary (cross-compile for Linux amd64)
       ansible.builtin.command:
         cmd: >

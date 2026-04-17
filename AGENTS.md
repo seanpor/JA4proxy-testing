@@ -37,6 +37,16 @@ make lint-install   # creates .venv-dev/ with pinned ansible-lint, yamllint, jin
 
 After that, both targets are runnable from a cold shell.
 
+Two Go-side tools are also expected on `$PATH` for full build-time
+coverage — both are skip-with-warning if absent, so you can still
+deploy without them, but CI on this repo is an offline wiring check
+only (neither tool is invoked here):
+
+```
+go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest  # 18-A SBOM
+go install golang.org/x/vuln/cmd/govulncheck@latest                         # 18-C vuln scan
+```
+
 ## Order of operations for any change
 
 1. Branch off `main` (or `review-fixes` while it's still open).
