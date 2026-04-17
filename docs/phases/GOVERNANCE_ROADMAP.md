@@ -1058,3 +1058,5 @@ visible.
 - [x] 17-F — Markdown internal link validation CI check
 - [x] 18-A — SBOM for Go binary + compose stack (CycloneDX 1.5)
 - [x] 18-B — Trivy image-scan in CI (CRITICAL blocking + expiring allowlist; HIGH informational pending 18-B-2)
+- [x] 18-C — govulncheck against Go source tree at build time (soft-fail probe; opt-out flag)
+- [x] 18-F — Dependabot for pip + github-actions (weekly grouped PRs)

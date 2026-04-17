@@ -1,0 +1,47 @@
+# 18-F: Dependabot for dev-time pins. Keeps requirements-dev.txt
+# and GitHub Actions versions fresh so a dropped CVE in ansible-lint,
+# pyyaml, yamllint, ruff, etc. becomes a PR — not a surprise.
+#
+# Grouping: one PR per ecosystem per week. Keeps review noise low
+# and plays well with our offline lint-and-test gate.
+version: 2
+
+updates:
+  # Python dev tools in the lint/test venv.
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Dublin
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - dev
+    commit-message:
+      prefix: "deps(dev)"
+    groups:
+      dev-pip:
+        patterns:
+          - "*"
+
+  # Pinned action versions in CI. We already pin by tag (actions/
+  # checkout@v4 etc.); this surfaces major bumps as PRs.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Dublin
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "deps(ci)"
+    groups:
+      ci-actions:
+        patterns:
+          - "*"
