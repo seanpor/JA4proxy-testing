@@ -13,28 +13,23 @@
 # until chunk 18-B-2 tightens the gate. That's why the current
 # entries are all CRITICAL.
 
-# CVE-2023-24538 (CRITICAL) — Go html/template in redis:7-alpine.
-# The redis:7-alpine image pins Go 1.18.2 via its upstream base and
-# has not refreshed in ~2 years. Options: move to redis:7.4-alpine
-# (newer base) or redis:8-alpine. The honeypot is not a Go html/
-# template user — impact on our deployment is very low — but we
-# still want to carry a newer base. Decision by expiry.
+# CVE-2023-24540 (CRITICAL) — Go html/template JS template-literal
+# injection in redis:7-alpine. The image pins Go 1.18.2 via its
+# upstream base and has not refreshed in ~2 years. Redis itself is
+# not a Go html/template user — the vulnerable package is embedded
+# in the base image via tools we don't invoke — so impact on this
+# deployment is very low. Mitigation: move to redis:7.4-alpine or
+# redis:8-alpine once the pin + digest churn is budgeted. Decision
+# by expiry.
 # expires: 2026-05-17
-CVE-2023-24538
+CVE-2023-24540
 
-# CVE-2026-30836 (CRITICAL) — smallstep/certificates unauth'd code
-# path, vendored into caddy:2-alpine. Caddy's cert handling is not
-# on our public path (HAProxy terminates TLS as passthrough and
-# Caddy only serves the static honeypot after JA4proxy), so exposure
-# is bounded. Fix requires caddy image refresh against
-# smallstep/certificates 0.30.0.
+# CVE-2025-68121 (CRITICAL) — Go crypto/tls certificate validation
+# flaw in prom/blackbox-exporter:latest (Go 1.25.5 stdlib in the
+# shipped binary). Fixed in Go 1.24.13 / 1.25.7. Blackbox probes
+# known internal/external targets over HTTPS from the monitoring
+# network; an attacker would need MITM position on the probe path
+# to exploit — exposure is bounded but non-zero. Awaiting upstream
+# blackbox-exporter image refresh against a fixed Go.
 # expires: 2026-05-17
-CVE-2026-30836
-
-# CVE-2026-33186 (CRITICAL) — grpc-go authz bypass via HTTP/2 path
-# validation. Appears in both caddy:2-alpine and
-# prom/blackbox-exporter:latest. Neither exposes gRPC externally in
-# our deployment; impact is internal. Awaiting upstream image refresh
-# against grpc-go 1.79.3.
-# expires: 2026-05-17
-CVE-2026-33186
+CVE-2025-68121

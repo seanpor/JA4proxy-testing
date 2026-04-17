@@ -107,17 +107,15 @@ Landed with two passes:
 
 Initial allowlist (all expire 2026-05-17, ~30 days from 18-B land):
 
-- `CVE-2023-24538` — Go `html/template` in `redis:7-alpine` (upstream
-  base pins Go 1.18.2). Mitigation: move to `redis:7.4-alpine` or
-  `redis:8-alpine`.
-- `CVE-2026-30836` — `smallstep/certificates` vendored into
-  `caddy:2-alpine`. Caddy is not on the public TLS path (HAProxy
-  terminates as passthrough) so exposure is bounded; fix requires
-  upstream caddy image refresh.
-- `CVE-2026-33186` — `grpc-go` authz bypass in both `caddy:2-alpine`
-  and `prom/blackbox-exporter:latest`. Neither exposes gRPC externally
-  in this deployment; fix requires upstream image refresh against
-  grpc-go 1.79.3.
+- `CVE-2023-24540` — Go `html/template` JS template-literal injection
+  in `redis:7-alpine` (upstream base pins Go 1.18.2). Mitigation:
+  move to `redis:7.4-alpine` or `redis:8-alpine`.
+- `CVE-2025-68121` — Go `crypto/tls` certificate validation flaw in
+  `prom/blackbox-exporter:latest` (Go 1.25.5 stdlib in the shipped
+  binary). Fixed in Go 1.24.13 / 1.25.7. Blackbox probes known
+  targets over HTTPS from the monitoring network; exploit requires
+  MITM position on the probe path, so exposure is bounded but
+  non-zero. Awaiting upstream image refresh against a fixed Go.
 
 ## 18-B-2 — Tighten HIGH image-scan findings to blocking
 
