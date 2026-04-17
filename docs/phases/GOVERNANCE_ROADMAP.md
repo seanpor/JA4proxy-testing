@@ -1060,3 +1060,4 @@ visible.
 - [x] 18-B — Trivy image-scan in CI (CRITICAL blocking + expiring allowlist; HIGH informational pending 18-B-2)
 - [x] 18-C — govulncheck against Go source tree at build time (soft-fail probe; opt-out flag)
 - [x] 18-F — Dependabot for pip + github-actions (weekly grouped PRs)
+- [x] 18-E — OpenSSF Scorecard workflow + SHA-pinned actions + pin-drift CI check

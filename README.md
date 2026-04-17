@@ -1,5 +1,7 @@
 # JA4proxy Testing — Automated Research Honeypot Deployment
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/seanpor/JA4proxy-testing/badge)](https://scorecard.dev/viewer/?uri=github.com/seanpor/JA4proxy-testing)
+
 > Deploy a JA4 TLS fingerprinting proxy behind an internet-facing honeypot in one command.
 > Verify everything locally before a single port hits the public internet.
 
