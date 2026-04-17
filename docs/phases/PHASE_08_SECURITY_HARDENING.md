@@ -357,7 +357,7 @@ Replace all `image: tag` references with pinned SHA-256 digests. This prevents s
 ```bash
 # Get current digests (run on a trusted machine)
 docker pull haproxy:2.8-alpine && docker inspect --format='{{index .RepoDigests 0}}' haproxy:2.8-alpine
-docker pull redis:7-alpine && docker inspect --format='{{index .RepoDigests 0}}' redis:7-alpine
+docker pull redis:8-alpine && docker inspect --format='{{index .RepoDigests 0}}' redis:8-alpine
 docker pull caddy:2-alpine && docker inspect --format='{{index .RepoDigests 0}}' caddy:2-alpine
 docker pull prom/prometheus:latest && docker inspect --format='{{index .RepoDigests 0}}' prom/prometheus:latest
 docker pull grafana/grafana:latest && docker inspect --format='{{index .RepoDigests 0}}' grafana/grafana:latest
@@ -672,7 +672,7 @@ gpg --detach-sign --armor bin/ja4proxy.sha256
 
 # Scan all images before deployment
 trivy image --severity HIGH,CRITICAL haproxy:2.8-alpine
-trivy image --severity HIGH,CRITICAL redis:7-alpine
+trivy image --severity HIGH,CRITICAL redis:8-alpine
 trivy image --severity HIGH,CRITICAL caddy:2-alpine
 trivy image --severity HIGH,CRITICAL prom/prometheus:latest
 trivy image --severity HIGH,CRITICAL grafana/grafana:latest
@@ -681,12 +681,12 @@ trivy image --severity HIGH,CRITICAL grafana/promtail:latest
 
 # Generate SBOM
 trivy image --format spdx-json -o sbom-haproxy.json haproxy:2.8-alpine
-trivy image --format spdx-json -o sbom-redis.json redis:7-alpine
+trivy image --format spdx-json -o sbom-redis.json redis:8-alpine
 
 # Save scan results
 mkdir -p docs/phases/security-artifacts/
 trivy image --format table -o docs/phases/security-artifacts/trivy-report.md \
-  haproxy:2.8-alpine redis:7-alpine caddy:2-alpine prom/prometheus:latest \
+  haproxy:2.8-alpine redis:8-alpine caddy:2-alpine prom/prometheus:latest \
   grafana/grafana:latest grafana/loki:latest grafana/promtail:latest
 ```
 

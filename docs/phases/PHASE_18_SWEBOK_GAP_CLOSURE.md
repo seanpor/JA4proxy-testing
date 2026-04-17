@@ -105,15 +105,19 @@ Landed with two passes:
 - **HIGH** — informational. Printed by the scan but does not fail the
   build. Tightening this is chunk 18-B-2 below.
 
-Initial allowlist (all expire 2026-05-17, ~30 days from 18-B land).
-The list is the *union* of CRITICAL findings observed across CI runs
-— Trivy's DB refreshes and several of our images use floating tags
-(`:latest`, `:2-alpine`, `:7-alpine`) so the specific CVE set flaps
-day-to-day. Listing the union prevents a red-green coin flip.
+**Redis bumped from `:7-alpine` to `:8-alpine`.** The `:7-alpine`
+tag pinned Go 1.18.2 in its upstream base, and three consecutive CI
+runs surfaced three *different* Go stdlib CRITICAL CVEs from that
+same image (CVE-2023-24538, CVE-2023-24540, CVE-2024-24790) — a
+mix of `html/template` and `net/netip` flaws. Trivy's advisory DB
+refreshes between runs, so an allowlist would have been an
+unwinnable whack-a-mole against an old stdlib. Moving the pin to
+`:8-alpine` eliminates the root cause; Redis here is a basic
+bans/counters store driven by JA4proxy, so the version bump is
+functionally trivial.
 
-- `CVE-2023-24538` and `CVE-2023-24540` — Go `html/template` flaws in
-  `redis:7-alpine` (upstream base pins Go 1.18.2). Mitigation: move
-  to `redis:7.4-alpine` or `redis:8-alpine`.
+Remaining allowlist (all expire 2026-05-17, ~30 days from 18-B land):
+
 - `CVE-2026-30836` (`smallstep/certificates`) and `CVE-2026-33186`
   (`grpc-go`) — in `caddy:2-alpine`. Caddy's cert handling and gRPC
   surface are not on the public path (HAProxy terminates TLS as

@@ -10,28 +10,7 @@
 #   HIGH     → decision within 30 days, fix within 90
 #
 # Only CRITICAL is a hard merge gate today; HIGH is informational
-# until chunk 18-B-2 tightens the gate. That's why the current
-# entries are all CRITICAL.
-#
-# NOTE: this list is the UNION of CRITICAL findings observed across
-# CI runs. Results flap day-to-day because (a) Trivy's advisory DB
-# refreshes and (b) several images we scan use floating tags
-# (:latest, :2-alpine, :7-alpine) that re-resolve to different
-# digests over time. Listing every CVE we've seen in a 30-day
-# window prevents the gate from turning into a red-green coin flip.
-# All entries below share the 2026-05-17 expiry; when that date
-# arrives, each gets re-justified individually or the image moves.
-
-# --- redis:7-alpine (Go 1.18.2 stdlib in upstream base) --------------
-# Both CVEs are html/template flaws. Redis itself is not a Go
-# html/template user — the vulnerable package is embedded via tools
-# we don't invoke — so deployment impact is very low. Mitigation:
-# move to redis:7.4-alpine or redis:8-alpine once pin+digest churn
-# is budgeted.
-# expires: 2026-05-17
-CVE-2023-24538
-# expires: 2026-05-17
-CVE-2023-24540
+# until chunk 18-B-2 tightens the gate.
 
 # --- caddy:2-alpine (smallstep/certificates, grpc-go) ----------------
 # Caddy's cert handling and gRPC surface are not on our public path:

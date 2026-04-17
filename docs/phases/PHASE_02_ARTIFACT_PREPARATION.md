@@ -371,7 +371,7 @@ services:
 
   # ── Redis: State Store ──
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: ja4proxy-redis
     restart: unless-stopped
     command: >
