@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""18-B: Assert the Trivy image-scan pipeline is wired end-to-end.
+"""18-B + 18-B-2: Assert the Trivy image-scan pipeline is wired end-to-end.
 
 Does not invoke Trivy itself — the scan needs the network and runs in
 the `image-scan` GitHub Actions job (and via `make scan-images`
@@ -9,10 +9,9 @@ silently drop any link in the chain.
 What it validates:
 
   - scripts/ci/scan_images.sh exists, is executable, sets `set -e`,
-    runs Trivy with --ignore-unfixed, splits into a blocking CRITICAL
-    pass (--severity CRITICAL --exit-code 1) and an informational
-    HIGH pass (--severity HIGH --exit-code 0), and sources its image
-    list from render_compose.py --list-images.
+    runs Trivy with --ignore-unfixed, scans HIGH+CRITICAL in a single
+    blocking pass (--severity HIGH,CRITICAL --exit-code 1), and sources
+    its image list from render_compose.py --list-images.
   - render_compose.py exposes --list-images and prints one image per
     line (we actually invoke it — no network).
   - The Makefile defines a `scan-images` phony target that calls the
@@ -59,11 +58,9 @@ def check_wrapper() -> None:
         ("set -euo pipefail", "strict shell mode"),
         ("render_compose.py --list-images", "image source = render_compose"),
         ("trivy image", "invokes trivy image"),
-        ("--severity CRITICAL", "CRITICAL-only blocking pass"),
-        ("--severity HIGH", "HIGH informational pass"),
+        ("--severity HIGH,CRITICAL", "HIGH+CRITICAL blocking pass"),
         ("--ignore-unfixed", "only fail on fixable vulns"),
-        ("--exit-code 1", "CRITICAL pass returns non-zero on findings"),
-        ("--exit-code 0", "HIGH pass is informational (exit 0)"),
+        ("--exit-code 1", "returns non-zero on findings"),
         ("--ignorefile", "honours .trivyignore allowlist"),
     ]
     missing = [msg for needle, msg in required if needle not in text]
@@ -73,7 +70,16 @@ def check_wrapper() -> None:
             print(f"  - {m}")
         sys.exit(1)
 
-    print(f"✓ {WRAPPER.relative_to(ROOT)}: executable, strict mode, CRITICAL-blocks + HIGH-informational")
+    # Guard against a silent regression to the old two-pass model where
+    # HIGH was informational (`--exit-code 0`). Since 18-B-2 both
+    # severities block.
+    if "--exit-code 0" in text:
+        sys.exit(
+            f"{WRAPPER.relative_to(ROOT)}: found `--exit-code 0` — 18-B-2 merged "
+            "HIGH into the blocking pass; remove the informational pass"
+        )
+
+    print(f"✓ {WRAPPER.relative_to(ROOT)}: executable, strict mode, HIGH+CRITICAL blocking")
 
 
 def check_render_list_images() -> None:
