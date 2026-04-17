@@ -1,0 +1,31 @@
+# JA4proxy-testing — 18-B CVE allowlist
+#
+# Entries here are CVEs explicitly accepted for a bounded window. Each
+# CVE below MUST be preceded by an `# expires: YYYY-MM-DD` comment.
+# scripts/ci/check_image_scan.py fails if any entry is expired —
+# forcing a decision to fix, re-justify with a new expiry, or remove.
+#
+# Severity response times (from PHASE_18 acceptance matrix):
+#   CRITICAL → decision within 7 days, fix within 30
+#   HIGH     → decision within 30 days, fix within 90
+#
+# Only CRITICAL is a hard merge gate today; HIGH is informational
+# until chunk 18-B-2 tightens the gate.
+
+# --- caddy:2-alpine (smallstep/certificates, grpc-go) ----------------
+# Caddy's cert handling and gRPC surface are not on our public path:
+# HAProxy terminates TLS as passthrough and Caddy only serves the
+# static honeypot after JA4proxy. Fixes require upstream caddy
+# image refresh.
+# expires: 2026-05-17
+CVE-2026-30836
+# expires: 2026-05-17
+CVE-2026-33186
+
+# --- prom/blackbox-exporter:latest (Go stdlib crypto/tls) ------------
+# Blackbox probes known internal/external targets over HTTPS from
+# the monitoring network. Exploit requires MITM position on the
+# probe path, so exposure is bounded but non-zero. Awaiting
+# upstream image refresh against a fixed Go.
+# expires: 2026-05-17
+CVE-2025-68121

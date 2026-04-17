@@ -39,3 +39,37 @@ jobs:
 
       - name: make test
         run: make test
+
+  image-scan:
+    # 18-B: Trivy scan of every compose image for fixable HIGH/CRITICAL
+    # vulns. Runs in parallel with lint-and-test. Not required to merge
+    # while the Trivy DB churns, but a red run is a merge-blocker
+    # signal in PR review.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install jinja2 + pyyaml (for render_compose.py)
+        run: python -m pip install --upgrade pip jinja2 pyyaml
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: trivy-db-
+
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sudo sh -s -- -b /usr/local/bin
+
+      - name: make scan-images
+        run: make scan-images

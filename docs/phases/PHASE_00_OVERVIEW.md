@@ -133,7 +133,7 @@ sequenceDiagram
 |-----------|------|--------|-----------------|-------------|------|
 | **JA4proxy Go** | Binary (cross-compiled) | Build locally, SCP | 8080 (proxy), 9090 (metrics) | 8080, 9090 | `ja4proxy` (dedicated) |
 | **HAProxy** | Docker container | `haproxy:2.8-alpine` | 443, 8404 (stats) | 443, 8404 | root (container) |
-| **Redis** | Docker container | `redis:7-alpine` | 6379 | none (internal network) | redis (container) |
+| **Redis** | Docker container | `redis:8-alpine` | 6379 | none (internal network) | redis (container) |
 | **Caddy** | Docker container | `caddy:2-alpine` | 8081 | none (internal network) | caddy (container) |
 | **Prometheus** | Docker container | `prom/prometheus:latest` | 9090 | 9091 (host) | nobody (container) |
 | **Grafana** | Docker container | `grafana/grafana:latest` | 3000 | 3000 (host) | grafana (container) |

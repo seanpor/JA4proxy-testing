@@ -199,10 +199,28 @@ def main() -> int:
         metavar="PATH",
         help="Also emit a CycloneDX 1.5 JSON SBOM to PATH.",
     )
+    ap.add_argument(
+        "--list-images",
+        action="store_true",
+        help=(
+            "Print unique image strings (one per line) to stdout and exit. "
+            "Used by scripts/ci/scan_images.sh (18-B) to drive Trivy."
+        ),
+    )
     args = ap.parse_args()
 
     doc = render()
     validate(doc)
+
+    if args.list_images:
+        seen = []
+        for spec in doc["services"].values():
+            img = spec["image"]
+            if img not in seen:
+                seen.append(img)
+        for img in seen:
+            print(img)
+        return 0
 
     deps_count = sum(
         len(spec.get("depends_on", {}))

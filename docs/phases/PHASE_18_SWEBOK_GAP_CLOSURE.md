@@ -93,6 +93,72 @@ Trivy is the tool.
 **Not in scope.** OS-package scanning on the VM itself (that's 18-J).
 Scanning the Go binary for embedded CVEs (`govulncheck` — see 18-G).
 
+### 18-B landing notes (2026-04)
+
+Landed with two passes:
+
+- **CRITICAL** — blocking. `.trivyignore` at the repo root acts as a
+  short-lived allowlist. Every entry is gated by a
+  `# expires: YYYY-MM-DD` comment; `scripts/ci/check_image_scan.py`
+  fails the offline check if any entry is expired or lacks an expiry,
+  forcing a re-decision at each deadline.
+- **HIGH** — informational. Printed by the scan but does not fail the
+  build. Tightening this is chunk 18-B-2 below.
+
+**Redis bumped from `:7-alpine` to `:8-alpine`.** The `:7-alpine`
+tag pinned Go 1.18.2 in its upstream base, and three consecutive CI
+runs surfaced three *different* Go stdlib CRITICAL CVEs from that
+same image (CVE-2023-24538, CVE-2023-24540, CVE-2024-24790) — a
+mix of `html/template` and `net/netip` flaws. Trivy's advisory DB
+refreshes between runs, so an allowlist would have been an
+unwinnable whack-a-mole against an old stdlib. Moving the pin to
+`:8-alpine` eliminates the root cause; Redis here is a basic
+bans/counters store driven by JA4proxy, so the version bump is
+functionally trivial.
+
+Remaining allowlist (all expire 2026-05-17, ~30 days from 18-B land):
+
+- `CVE-2026-30836` (`smallstep/certificates`) and `CVE-2026-33186`
+  (`grpc-go`) — in `caddy:2-alpine`. Caddy's cert handling and gRPC
+  surface are not on the public path (HAProxy terminates TLS as
+  passthrough; Caddy only serves the static honeypot after
+  JA4proxy). Fixes require upstream caddy image refresh.
+- `CVE-2025-68121` — Go `crypto/tls` certificate validation flaw in
+  `prom/blackbox-exporter:latest` (Go 1.25.5 stdlib in the shipped
+  binary, fixed in 1.24.13 / 1.25.7). Blackbox probes known targets
+  over HTTPS from the monitoring network; exploit requires MITM
+  position on the probe path. Awaiting upstream image refresh.
+
+## 18-B-2 — Tighten HIGH image-scan findings to blocking
+
+**Scope.** Flip the HIGH Trivy pass from `--exit-code 0` (informational)
+to `--exit-code 1` (blocking) once the current backlog of upstream
+image refreshes has landed and `.trivyignore` covers any residual
+HIGHs with justified expiries.
+
+**Why.** The PHASE_18 acceptance matrix treats HIGH as a 30-day
+decision window. An advisory gate that nothing enforces silently
+decays; the two-pass split is a staging area, not a permanent
+posture.
+
+**Files.**
+- `scripts/ci/scan_images.sh` — change the HIGH pass to
+  `--exit-code 1` and merge it with the CRITICAL pass (one loop,
+  `--severity HIGH,CRITICAL`) once the backlog clears.
+- `scripts/ci/check_image_scan.py` — assert the wrapper blocks on
+  HIGH; remove the `HIGH informational` check line.
+- `.trivyignore` — audit remaining entries; drop any that are fixed
+  upstream, refresh expiries on the rest.
+
+**Acceptance.** CI's `image-scan` job fails on a fixable HIGH
+against any pinned image unless it's explicitly allowlisted with a
+valid future expiry.
+
+**Depends on.** 18-B (this section).
+
+**Not in scope.** Changing the severity model itself — we stay on
+HIGH/CRITICAL with `--ignore-unfixed`.
+
 ---
 
 ## 18-C — govulncheck in CI against the Go source
