@@ -105,17 +105,25 @@ Landed with two passes:
 - **HIGH** — informational. Printed by the scan but does not fail the
   build. Tightening this is chunk 18-B-2 below.
 
-Initial allowlist (all expire 2026-05-17, ~30 days from 18-B land):
+Initial allowlist (all expire 2026-05-17, ~30 days from 18-B land).
+The list is the *union* of CRITICAL findings observed across CI runs
+— Trivy's DB refreshes and several of our images use floating tags
+(`:latest`, `:2-alpine`, `:7-alpine`) so the specific CVE set flaps
+day-to-day. Listing the union prevents a red-green coin flip.
 
-- `CVE-2023-24540` — Go `html/template` JS template-literal injection
-  in `redis:7-alpine` (upstream base pins Go 1.18.2). Mitigation:
-  move to `redis:7.4-alpine` or `redis:8-alpine`.
+- `CVE-2023-24538` and `CVE-2023-24540` — Go `html/template` flaws in
+  `redis:7-alpine` (upstream base pins Go 1.18.2). Mitigation: move
+  to `redis:7.4-alpine` or `redis:8-alpine`.
+- `CVE-2026-30836` (`smallstep/certificates`) and `CVE-2026-33186`
+  (`grpc-go`) — in `caddy:2-alpine`. Caddy's cert handling and gRPC
+  surface are not on the public path (HAProxy terminates TLS as
+  passthrough; Caddy only serves the static honeypot after
+  JA4proxy). Fixes require upstream caddy image refresh.
 - `CVE-2025-68121` — Go `crypto/tls` certificate validation flaw in
   `prom/blackbox-exporter:latest` (Go 1.25.5 stdlib in the shipped
-  binary). Fixed in Go 1.24.13 / 1.25.7. Blackbox probes known
-  targets over HTTPS from the monitoring network; exploit requires
-  MITM position on the probe path, so exposure is bounded but
-  non-zero. Awaiting upstream image refresh against a fixed Go.
+  binary, fixed in 1.24.13 / 1.25.7). Blackbox probes known targets
+  over HTTPS from the monitoring network; exploit requires MITM
+  position on the probe path. Awaiting upstream image refresh.
 
 ## 18-B-2 — Tighten HIGH image-scan findings to blocking
 
