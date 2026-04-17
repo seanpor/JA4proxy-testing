@@ -1,31 +1,82 @@
-# JA4proxy-testing — 18-B CVE allowlist
+# JA4proxy-testing — 18-B / 18-B-2 CVE allowlist
 #
-# Entries here are CVEs explicitly accepted for a bounded window. Each
-# CVE below MUST be preceded by an `# expires: YYYY-MM-DD` comment.
-# scripts/ci/check_image_scan.py fails if any entry is expired —
-# forcing a decision to fix, re-justify with a new expiry, or remove.
+# Every non-comment line is a CVE accepted for a bounded window. Each
+# CVE MUST be preceded by an `# expires: YYYY-MM-DD` comment (blank
+# lines reset the block). scripts/ci/check_image_scan.py fails if any
+# entry is expired — forcing a decision to fix, re-justify with a new
+# expiry, or remove.
 #
-# Severity response times (from PHASE_18 acceptance matrix):
-#   CRITICAL → decision within 7 days, fix within 30
+# Severity response times (PHASE_18 acceptance matrix):
+#   CRITICAL → decision within 7 days,  fix within 30
 #   HIGH     → decision within 30 days, fix within 90
 #
-# Only CRITICAL is a hard merge gate today; HIGH is informational
-# until chunk 18-B-2 tightens the gate.
+# Since 18-B-2, HIGH is a hard merge gate (same as CRITICAL). Anything
+# here is opted-in *explicitly*; new HIGHs against pinned images will
+# fail CI until they are either fixed upstream, allowlisted here with
+# justification, or removed.
 
-# --- caddy:2-alpine (smallstep/certificates, grpc-go) ----------------
-# Caddy's cert handling and gRPC surface are not on our public path:
-# HAProxy terminates TLS as passthrough and Caddy only serves the
-# static honeypot after JA4proxy. Fixes require upstream caddy
-# image refresh.
+# === CRITICALs ========================================================
+# caddy:2-alpine — smallstep/certificates + grpc-go. Caddy's cert
+# handling and gRPC surface are not on our public path (HAProxy
+# terminates TLS as passthrough; Caddy only serves the static honeypot
+# after JA4proxy). Fixes require upstream caddy image refresh.
 # expires: 2026-05-17
 CVE-2026-30836
 # expires: 2026-05-17
 CVE-2026-33186
 
-# --- prom/blackbox-exporter:latest (Go stdlib crypto/tls) ------------
-# Blackbox probes known internal/external targets over HTTPS from
-# the monitoring network. Exploit requires MITM position on the
-# probe path, so exposure is bounded but non-zero. Awaiting
-# upstream image refresh against a fixed Go.
+# prom/blackbox-exporter:latest — Go 1.25.5 crypto/tls cert-validation
+# flaw (fixed in 1.24.13 / 1.25.7). Blackbox probes known targets over
+# HTTPS from the monitoring network; exploit requires MITM position on
+# the probe path. Awaiting upstream image refresh.
 # expires: 2026-05-17
 CVE-2025-68121
+
+# === HIGHs: Go stdlib 2026 series =====================================
+# Span caddy, grafana, loki, promtail, blackbox. Fixes land only when
+# each upstream rebases its image onto Go 1.25.9 / 1.26.2. Five stdlib
+# CVEs, mostly DoS / edge-case validation — none reachable from our
+# honeypot path as configured.
+# expires: 2026-05-17
+CVE-2026-25679
+# expires: 2026-05-17
+CVE-2026-27137
+# expires: 2026-05-17
+CVE-2026-32280
+# expires: 2026-05-17
+CVE-2026-32282
+# expires: 2026-05-17
+CVE-2026-33810
+
+# === HIGHs: Go stdlib 2025 series (blackbox on 1.25.5) ===============
+# Same exposure argument as CVE-2025-68121 above.
+# expires: 2026-05-17
+CVE-2025-61726
+# expires: 2026-05-17
+CVE-2025-61728
+
+# === HIGHs: embedded Go deps ==========================================
+# go-jose (caddy, loki): JWE/JWT parsing flaw. Not on our public path.
+# expires: 2026-05-17
+CVE-2026-34986
+# opentelemetry-go otel/sdk: BSD-only kenv absolute-path issue. Not BSD.
+# expires: 2026-05-17
+CVE-2026-39883
+# buger/jsonparser (prometheus): stack overflow on crafted JSON from
+# scrape targets. Our scrape targets are internal + pinned.
+# expires: 2026-05-17
+CVE-2026-32285
+# docker/moby authz bypass (prometheus, grafana, promtail service
+# discovery): requires docker socket access, which these containers do
+# not have (we do not mount /var/run/docker.sock into any of them).
+# expires: 2026-05-17
+CVE-2026-34040
+
+# === HIGHs: Alpine base packages in grafana/grafana ===================
+# Fixed upstream in Alpine; grafana:latest needs a rebuild cycle.
+# expires: 2026-05-17
+CVE-2026-28390
+# expires: 2026-05-17
+CVE-2026-40200
+# expires: 2026-05-17
+CVE-2026-22184

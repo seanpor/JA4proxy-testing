@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
-# 18-B: Scan every image referenced by the rendered compose template
-# for fixable HIGH/CRITICAL vulnerabilities.
+# 18-B + 18-B-2: Scan every image referenced by the rendered compose
+# template for fixable HIGH/CRITICAL vulnerabilities.
 #
-# Two passes:
-#   1. CRITICAL  — blocking. Honours `.trivyignore` (allowlist with
-#                  mandatory `# expires: YYYY-MM-DD` comments, enforced
-#                  separately by scripts/ci/check_image_scan.py).
-#   2. HIGH      — informational for now (exit 0 regardless). Chunk
-#                  18-B-2 will flip this to blocking once base-image
-#                  refresh lands.
+# Single blocking pass: HIGH and CRITICAL together, `--ignore-unfixed`
+# (no point failing on a CVE that has no fix yet), `--exit-code 1`.
+# Both severities honour `.trivyignore` — the repo-root allowlist with
+# mandatory `# expires: YYYY-MM-DD` comments, enforced separately by
+# scripts/ci/check_image_scan.py so that every entry is periodically
+# re-decided.
 #
 # Exit codes:
-#   0 — all images clean on CRITICAL (HIGH may still be present)
-#   1 — one or more images have fixable, un-allowlisted CRITICAL vulns
+#   0 — all images clean on HIGH + CRITICAL after allowlist
+#   1 — one or more images have fixable, un-allowlisted HIGH/CRITICAL
 #   2 — prerequisite missing (trivy or python3 not on PATH)
 #
 # Runnable locally (`make scan-images`) and from CI. Trivy DB is cached
@@ -52,13 +51,13 @@ if [[ -f "${IGNOREFILE}" ]]; then
   echo "── using allowlist: ${IGNOREFILE#"${ROOT}/"} ──"
 fi
 
-echo "── Trivy pass 1/2: CRITICAL (blocking), ${#images[@]} images, fixed-only ──"
+echo "── Trivy: HIGH+CRITICAL blocking pass, ${#images[@]} images, fixed-only ──"
 
 fail=0
 for img in "${images[@]}"; do
-  printf "\n── CRITICAL: %s ──\n" "${img}"
+  printf "\n── %s ──\n" "${img}"
   if ! trivy image \
-      --severity CRITICAL \
+      --severity HIGH,CRITICAL \
       --ignore-unfixed \
       --exit-code 1 \
       --no-progress \
@@ -70,28 +69,11 @@ for img in "${images[@]}"; do
   fi
 done
 
-echo
-echo "── Trivy pass 2/2: HIGH (informational), ${#images[@]} images, fixed-only ──"
-
-for img in "${images[@]}"; do
-  printf "\n── HIGH: %s ──\n" "${img}"
-  # --exit-code 0: HIGH findings are reported but do not fail the scan.
-  # 18-B-2 will tighten this.
-  trivy image \
-      --severity HIGH \
-      --ignore-unfixed \
-      --exit-code 0 \
-      --no-progress \
-      --scanners vuln \
-      --timeout 5m \
-      "${img}" || true
-done
-
 if [[ ${fail} -ne 0 ]]; then
   echo
-  echo "❌ one or more images have fixable, un-allowlisted CRITICAL vulnerabilities" >&2
+  echo "❌ one or more images have fixable, un-allowlisted HIGH/CRITICAL vulnerabilities" >&2
   exit 1
 fi
 
 echo
-echo "✓ all ${#images[@]} images clean on CRITICAL (HIGH is informational until 18-B-2)"
+echo "✓ all ${#images[@]} images clean on HIGH+CRITICAL (after .trivyignore allowlist)"
