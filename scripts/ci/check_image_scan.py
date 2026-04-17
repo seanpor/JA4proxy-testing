@@ -9,17 +9,23 @@ silently drop any link in the chain.
 What it validates:
 
   - scripts/ci/scan_images.sh exists, is executable, sets `set -e`,
-    runs Trivy with --severity HIGH,CRITICAL and --ignore-unfixed,
-    and sources its image list from render_compose.py --list-images.
+    runs Trivy with --ignore-unfixed, splits into a blocking CRITICAL
+    pass (--severity CRITICAL --exit-code 1) and an informational
+    HIGH pass (--severity HIGH --exit-code 0), and sources its image
+    list from render_compose.py --list-images.
   - render_compose.py exposes --list-images and prints one image per
     line (we actually invoke it — no network).
   - The Makefile defines a `scan-images` phony target that calls the
     wrapper.
   - .github/workflows/ci.yml has an `image-scan` job that installs
     Trivy, caches the DB, and invokes `make scan-images`.
+  - .trivyignore (if present) has a `# expires: YYYY-MM-DD` comment
+    immediately preceding every CVE line, and no entry is expired.
+    This forces a periodic decision on each allowlisted finding.
 """
 from __future__ import annotations
 
+import datetime as dt
 import os
 import re
 import subprocess
@@ -36,6 +42,10 @@ WRAPPER = ROOT / "scripts" / "ci" / "scan_images.sh"
 RENDER = ROOT / "scripts" / "ci" / "render_compose.py"
 MAKEFILE = ROOT / "Makefile"
 WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
+IGNOREFILE = ROOT / ".trivyignore"
+
+CVE_RE = re.compile(r"^(CVE-\d{4}-\d{4,})\s*$")
+EXPIRES_RE = re.compile(r"^#\s*expires:\s*(\d{4}-\d{2}-\d{2})\s*$")
 
 
 def check_wrapper() -> None:
@@ -49,9 +59,12 @@ def check_wrapper() -> None:
         ("set -euo pipefail", "strict shell mode"),
         ("render_compose.py --list-images", "image source = render_compose"),
         ("trivy image", "invokes trivy image"),
-        ("--severity HIGH,CRITICAL", "HIGH/CRITICAL severity filter"),
+        ("--severity CRITICAL", "CRITICAL-only blocking pass"),
+        ("--severity HIGH", "HIGH informational pass"),
         ("--ignore-unfixed", "only fail on fixable vulns"),
-        ("--exit-code 1", "trivy returns non-zero on findings"),
+        ("--exit-code 1", "CRITICAL pass returns non-zero on findings"),
+        ("--exit-code 0", "HIGH pass is informational (exit 0)"),
+        ("--ignorefile", "honours .trivyignore allowlist"),
     ]
     missing = [msg for needle, msg in required if needle not in text]
     if missing:
@@ -60,7 +73,7 @@ def check_wrapper() -> None:
             print(f"  - {m}")
         sys.exit(1)
 
-    print(f"✓ {WRAPPER.relative_to(ROOT)}: executable, strict mode, correct trivy flags")
+    print(f"✓ {WRAPPER.relative_to(ROOT)}: executable, strict mode, CRITICAL-blocks + HIGH-informational")
 
 
 def check_render_list_images() -> None:
@@ -129,11 +142,85 @@ def check_workflow() -> None:
     print("✓ workflow image-scan job: checkout + python + trivy-cache + trivy-install + make scan-images")
 
 
+def check_trivyignore() -> None:
+    """Enforce the `# expires: YYYY-MM-DD` convention on .trivyignore.
+
+    Rule: every non-comment, non-blank line (the CVE itself) must be
+    immediately preceded — ignoring blank lines only — by at least one
+    `# expires: YYYY-MM-DD` comment within the same paragraph-block.
+    No entry may be expired as of today.
+    """
+    if not IGNOREFILE.exists():
+        print("✓ .trivyignore: absent (no allowlist — strictest posture)")
+        return
+
+    today = dt.date.today()
+    errors: list[str] = []
+    entries: list[tuple[int, str, dt.date | None]] = []
+    pending_expiry: dt.date | None = None
+    pending_expiry_line: int | None = None
+
+    for lineno, raw in enumerate(IGNOREFILE.read_text().splitlines(), start=1):
+        line = raw.strip()
+        if not line:
+            # Blank line resets the block — any pending expiry dies here.
+            pending_expiry = None
+            pending_expiry_line = None
+            continue
+        if line.startswith("#"):
+            m = EXPIRES_RE.match(line)
+            if m:
+                try:
+                    pending_expiry = dt.date.fromisoformat(m.group(1))
+                except ValueError:
+                    errors.append(
+                        f"{IGNOREFILE.name}:{lineno}: malformed expiry date {m.group(1)!r}"
+                    )
+                    pending_expiry = None
+                else:
+                    pending_expiry_line = lineno
+            continue
+        m = CVE_RE.match(line)
+        if not m:
+            errors.append(f"{IGNOREFILE.name}:{lineno}: unrecognised entry {line!r}")
+            continue
+        cve = m.group(1)
+        entries.append((lineno, cve, pending_expiry))
+        if pending_expiry is None:
+            errors.append(
+                f"{IGNOREFILE.name}:{lineno}: {cve} has no `# expires: YYYY-MM-DD` comment in its block"
+            )
+        elif pending_expiry < today:
+            errors.append(
+                f"{IGNOREFILE.name}:{lineno}: {cve} expired on {pending_expiry.isoformat()} "
+                f"(today is {today.isoformat()}) — fix, re-justify with a new expiry, or remove"
+            )
+        # Don't consume the expiry — multiple CVEs in one block can share it
+        # as long as there are no blank lines between them.
+        _ = pending_expiry_line
+
+    if errors:
+        print(".trivyignore validation failed:")
+        for e in errors:
+            print(f"  - {e}")
+        sys.exit(1)
+
+    if not entries:
+        print("✓ .trivyignore: present, no active entries")
+        return
+
+    soonest = min((exp for _, _, exp in entries if exp is not None), default=None)
+    days = (soonest - today).days if soonest else None
+    tail = f"soonest expiry {soonest.isoformat()} ({days}d)" if soonest else ""
+    print(f"✓ .trivyignore: {len(entries)} active entries, all with valid non-expired expiries {tail}".rstrip())
+
+
 def main() -> int:
     check_wrapper()
     check_render_list_images()
     check_makefile_target()
     check_workflow()
+    check_trivyignore()
     return 0
 
 

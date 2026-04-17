@@ -1,0 +1,40 @@
+# JA4proxy-testing — 18-B CVE allowlist
+#
+# Entries here are CVEs explicitly accepted for a bounded window. Each
+# CVE below MUST be preceded by an `# expires: YYYY-MM-DD` comment.
+# scripts/ci/check_image_scan.py fails if any entry is expired —
+# forcing a decision to fix, re-justify with a new expiry, or remove.
+#
+# Severity response times (from PHASE_18 acceptance matrix):
+#   CRITICAL → decision within 7 days, fix within 30
+#   HIGH     → decision within 30 days, fix within 90
+#
+# Only CRITICAL is a hard merge gate today; HIGH is informational
+# until chunk 18-B-2 tightens the gate. That's why the current
+# entries are all CRITICAL.
+
+# CVE-2023-24538 (CRITICAL) — Go html/template in redis:7-alpine.
+# The redis:7-alpine image pins Go 1.18.2 via its upstream base and
+# has not refreshed in ~2 years. Options: move to redis:7.4-alpine
+# (newer base) or redis:8-alpine. The honeypot is not a Go html/
+# template user — impact on our deployment is very low — but we
+# still want to carry a newer base. Decision by expiry.
+# expires: 2026-05-17
+CVE-2023-24538
+
+# CVE-2026-30836 (CRITICAL) — smallstep/certificates unauth'd code
+# path, vendored into caddy:2-alpine. Caddy's cert handling is not
+# on our public path (HAProxy terminates TLS as passthrough and
+# Caddy only serves the static honeypot after JA4proxy), so exposure
+# is bounded. Fix requires caddy image refresh against
+# smallstep/certificates 0.30.0.
+# expires: 2026-05-17
+CVE-2026-30836
+
+# CVE-2026-33186 (CRITICAL) — grpc-go authz bypass via HTTP/2 path
+# validation. Appears in both caddy:2-alpine and
+# prom/blackbox-exporter:latest. Neither exposes gRPC externally in
+# our deployment; impact is internal. Awaiting upstream image refresh
+# against grpc-go 1.79.3.
+# expires: 2026-05-17
+CVE-2026-33186

@@ -1057,3 +1057,4 @@ visible.
 - [x] 17-E — Docker Compose dependency DAG validation
 - [x] 17-F — Markdown internal link validation CI check
 - [x] 18-A — SBOM for Go binary + compose stack (CycloneDX 1.5)
+- [x] 18-B — Trivy image-scan in CI (CRITICAL blocking + expiring allowlist; HIGH informational pending 18-B-2)
