@@ -372,7 +372,7 @@ short-names — three independent maps that must stay in sync.
 
 ---
 
-## 18-H — Requirements & traceability document
+## 18-H — Requirements & traceability document — **landed 2026-04-19**
 
 **Scope.** Add `docs/REQUIREMENTS.md` with numbered functional (F-*)
 and non-functional (NF-*) requirements, each tagged with the phase
@@ -402,6 +402,22 @@ table causes `make test` to fail. Every F-* and NF-* has a satisfier.
 
 **Not in scope.** Upstream capture of stakeholder needs (out of
 scope for a single-person research project).
+
+### 18-H landing notes (2026-04)
+
+- `docs/REQUIREMENTS.md` lists **21** requirements (10 F-\* + 11 NF-\*),
+  covering dial default, monitor-first, no-PII, retention, staged
+  go-live, binary provenance, image-digest pinning + scan, ACME
+  staging default, SSH hardening, governance + threat-model freshness,
+  idempotent secrets, and dependency hygiene.
+- The check parses every backticked path (containing `/`) in each row's
+  satisfier cell and asserts it resolves under repo root. Inline code
+  like `` `SIGHUP` `` is ignored. Duplicate IDs and an empty satisfier
+  cell are also errors.
+- Wired as `make test-requirements`; rolled into `make test` so CI
+  catches a broken cite on the same run that breaks it.
+- The doc also carries the `Last reviewed: YYYY-MM-DD` freshness gate
+  (≤ 365d) used by `THREAT_MODEL.md` and `docs/governance/`.
 
 ---
 
@@ -550,3 +566,9 @@ human).
 ## Status
 
 <!-- Append as chunks land. -->
+
+- 18-A landed in PR #?? (CycloneDX SBOM emission).
+- 18-B landed in PR #44; 18-B-2 in PR #50 (Trivy CRITICAL+HIGH blocking).
+- 18-C + 18-F landed in PR #45 (govulncheck at build, Dependabot).
+- 18-E landed in PR #48 (OpenSSF Scorecard + SHA-pinned actions).
+- 18-H landed 2026-04-19 (`docs/REQUIREMENTS.md` + traceability check).
