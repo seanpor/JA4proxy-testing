@@ -320,6 +320,13 @@ test-workflow-pins:
 scan-images:
 	@scripts/ci/scan_images.sh
 
+# 18-G: refresh deploy/expected-image-digests.yml against Docker Hub.
+# Hits the network; not in `make test`. The weekly digest-update
+# workflow runs this and opens a PR if anything changed.
+.PHONY: update-digests
+update-digests:
+	@$(PY) scripts/ci/update_digests.py
+
 # 14-E: run Molecule tests (requires `pip install molecule molecule-plugins[docker] docker`).
 # Not yet wired into ci.yml; enable per-PR with a dedicated job later.
 .PHONY: molecule

@@ -298,7 +298,7 @@ goes green).
 
 ---
 
-## 18-G — Automated container digest updates
+## 18-G — Automated container digest updates — **landed 2026-04-19**
 
 **Scope.** Script that, for each image in `docker-compose.yml.j2`,
 queries the registry for the latest tag-within-series digest and
@@ -328,6 +328,47 @@ digest before a human reviews it).
 
 **Not in scope.** Auto-merging digest bumps. Human review stays in
 the loop.
+
+### 18-G landing notes (2026-04)
+
+The compose template under version control uses tag refs sourced
+from `group_vars/all.yml` (e.g. `haproxy:2.8-alpine`); digest
+pinning happens at deploy time inside role 09 by inspecting pulled
+images. There was no in-repo digest pin to bump. 18-G introduces
+one — `deploy/expected-image-digests.yml`, mirror of the
+`expected-binary-sha256.txt` precedent — with one entry per
+`ja4proxy_docker_image_*`, sentinel-seeded as
+`<image>:<tag>@sha256:<64 zeros>`, then refreshed against the
+registry.
+
+`scripts/ci/update_digests.py` is pure stdlib (urllib only) and
+talks to the Docker Hub Registry v2 API anonymously — all 9 images
+live there, so no token plumbing. `--check` returns non-zero
+(don't touch the file) if any pin is stale; the default mode
+rewrites in place and reports what moved. Soft-fails to exit-2 on
+any registry/network error so a flaky Hub doesn't burn a green
+build into a red one.
+
+`.github/workflows/digest-update.yml` runs Tuesdays 07:23 UTC,
+calls `make update-digests`, and uses
+`peter-evans/create-pull-request@v8.1.1` (SHA-pinned per 18-E) to
+open one PR if anything changed. The PR runs the same
+`lint-and-test` gate as a human PR; auto-merge stays off.
+
+The pin file is currently *advisory*: role 09 still resolves
+digests at deploy time and rewrites the deployed compose. Wiring
+role 09 to enforce against the pin (refuse deploy when pulled
+digest != pinned digest) would catch tag-mutation attacks in the
+wild and is a natural follow-up — left out of this PR to keep the
+diff focused and the deploy-time behaviour unchanged. The vuln
+scan dependency on 18-B happens automatically: the bump-PR's
+`lint-and-test` includes the Trivy job.
+
+`scripts/ci/check_digest_regex.py` was extended (per the chunk's
+CI-hook line) to also parse the new pin file, assert its short-
+names match role 09's `digest_image_short` map exactly, and assert
+`update_digests.py`'s `SHORT_TO_REPO` agrees on the same set of
+short-names — three independent maps that must stay in sync.
 
 ---
 
