@@ -342,3 +342,114 @@
   when:
     - _cyclonedx_probe.rc == 0
     - _sbom_src is defined
+
+# 18-D: cosign sign-blob the binary + SBOM on the control machine,
+# ship the .sig files to the target, and verify in role 03 before
+# the systemd unit starts. Gated on cosign being installed AND the
+# private key path being set — either missing = WARN + skip so a
+# fresh checkout still deploys (opt-in while bootstrapping). The
+# matching public key path is consumed in role 03 to verify.
+
+- name: Probe for cosign on control machine (18-D)
+  tags: [artifacts, phase2, cosign]
+  ansible.builtin.command:
+    cmd: cosign version
+  delegate_to: localhost
+  become: false
+  register: _cosign_probe
+  changed_when: false
+  failed_when: false
+
+- name: Warn when cosign is not installed (18-D)
+  tags: [artifacts, phase2, cosign]
+  ansible.builtin.debug:
+    msg: >-
+      cosign not found on control machine — skipping signed-blob
+      provenance for binary + SBOM. Install with:
+      `go install github.com/sigstore/cosign/v2/cmd/cosign@latest`
+      (or your distro's package).
+  when: _cosign_probe.rc != 0
+
+- name: Warn when ja4proxy_cosign_private_key_path is unset (18-D)
+  tags: [artifacts, phase2, cosign]
+  ansible.builtin.debug:
+    msg: >-
+      ja4proxy_cosign_private_key_path is unset — skipping signing.
+      Set it in group_vars or via -e to enable signed-blob provenance.
+      Generate a keypair with: `cosign generate-key-pair`.
+  when:
+    - _cosign_probe.rc == 0
+    - (ja4proxy_cosign_private_key_path | default('')) | length == 0
+
+- name: Resolve binary source path on control machine (18-D)
+  tags: [artifacts, phase2, cosign]
+  ansible.builtin.set_fact:
+    _binary_src: >-
+      {{ (ja4proxy_build_machine_go_path ~ '/bin/proxy')
+         if _provenance_source == 'from-source'
+         else ja4proxy_prebuilt_binary_path }}
+  when:
+    - _cosign_probe.rc == 0
+    - (ja4proxy_cosign_private_key_path | default('')) | length > 0
+
+- name: Sign binary with cosign sign-blob (18-D)
+  tags: [artifacts, phase2, cosign]
+  ansible.builtin.command:
+    cmd: >-
+      cosign sign-blob
+      --yes
+      --key {{ ja4proxy_cosign_private_key_path | quote }}
+      --output-signature {{ (_binary_src ~ '.sig') | quote }}
+      {{ _binary_src | quote }}
+  delegate_to: localhost
+  become: false
+  register: _cosign_sign_binary
+  changed_when: _cosign_sign_binary.rc == 0
+  when:
+    - _cosign_probe.rc == 0
+    - (ja4proxy_cosign_private_key_path | default('')) | length > 0
+    - _binary_src is defined
+
+- name: Sign SBOM with cosign sign-blob (18-D)
+  tags: [artifacts, phase2, cosign]
+  ansible.builtin.command:
+    cmd: >-
+      cosign sign-blob
+      --yes
+      --key {{ ja4proxy_cosign_private_key_path | quote }}
+      --output-signature {{ (_sbom_src ~ '.sig') | quote }}
+      {{ _sbom_src | quote }}
+  delegate_to: localhost
+  become: false
+  register: _cosign_sign_sbom
+  changed_when: _cosign_sign_sbom.rc == 0
+  when:
+    - _cosign_probe.rc == 0
+    - (ja4proxy_cosign_private_key_path | default('')) | length > 0
+    - _sbom_src is defined
+
+- name: Copy binary signature to target (18-D)
+  tags: [artifacts, phase2, cosign]
+  ansible.builtin.copy:
+    src: "{{ _binary_src }}.sig"
+    dest: "{{ ja4proxy_bin_dir }}/ja4proxy.sig"
+    owner: "{{ ja4proxy_system_user }}"
+    group: "{{ ja4proxy_system_group }}"
+    mode: "0640"
+  when:
+    - _cosign_probe.rc == 0
+    - (ja4proxy_cosign_private_key_path | default('')) | length > 0
+    - _binary_src is defined
+
+- name: Copy SBOM signature to target (18-D)
+  tags: [artifacts, phase2, cosign]
+  ansible.builtin.copy:
+    src: "{{ _sbom_src }}.sig"
+    dest: "{{ ja4proxy_config_dir }}/ja4proxy.cdx.json.sig"
+    owner: "{{ ja4proxy_system_user }}"
+    group: "{{ ja4proxy_system_group }}"
+    mode: "0640"
+  when:
+    - _cosign_probe.rc == 0
+    - (ja4proxy_cosign_private_key_path | default('')) | length > 0
+    - _sbom_src is defined

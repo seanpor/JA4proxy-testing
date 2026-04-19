@@ -138,9 +138,9 @@ lint-markdown:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-dependabot test-workflow-pins
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-cosign-wired test-dependabot test-workflow-pins
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-dependabot test-workflow-pins
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-cosign-wired test-dependabot test-workflow-pins
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -303,6 +303,10 @@ test-image-scan-wired:
 test-govulncheck-wired:
 	@echo "── govulncheck wired into role 02 (18-C) ──"
 	@$(PY) scripts/ci/check_govulncheck_wired.py
+
+test-cosign-wired:
+	@echo "── cosign sign-blob wired in role 02, verify-blob in role 03 (18-D) ──"
+	@$(PY) scripts/ci/check_cosign_wired.py
 
 test-dependabot:
 	@echo "── dependabot config present + covers pip + github-actions (18-F) ──"

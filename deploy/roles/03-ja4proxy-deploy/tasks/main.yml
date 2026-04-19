@@ -16,6 +16,89 @@
 #   - Health check verification
 # ─────────────────────────────────────────────────────────────
 
+# 18-D: cosign verify-blob the binary BEFORE the systemd unit starts.
+# Runs delegate_to: localhost against the source-side binary + .sig
+# (role 02's source-vs-target sha256 assertion already proved the
+# target bytes are identical). When ja4proxy_cosign_public_key_path
+# is unset → WARN + continue (opt-in while bootstrapping). When set
+# → cosign verify-blob must succeed; a tampered binary, a wrong key,
+# or a missing .sig will abort the deploy before any service starts.
+
+- name: Probe for cosign on control machine (18-D)
+  tags: [deploy, phase3, cosign]
+  ansible.builtin.command:
+    cmd: cosign version
+  delegate_to: localhost
+  become: false
+  register: _cosign_verify_probe
+  changed_when: false
+  failed_when: false
+
+- name: Warn when ja4proxy_cosign_public_key_path is unset (18-D)
+  tags: [deploy, phase3, cosign]
+  ansible.builtin.debug:
+    msg: >-
+      ja4proxy_cosign_public_key_path is unset — skipping signed-blob
+      verification. Set it in group_vars or via -e to enforce
+      provenance on every deploy.
+  when: (ja4proxy_cosign_public_key_path | default('')) | length == 0
+
+- name: Warn when cosign is not installed (18-D)
+  tags: [deploy, phase3, cosign]
+  ansible.builtin.debug:
+    msg: >-
+      cosign not found on control machine — cannot verify signed-blob
+      provenance. Install cosign and re-deploy to enforce.
+  when:
+    - (ja4proxy_cosign_public_key_path | default('')) | length > 0
+    - _cosign_verify_probe.rc != 0
+
+- name: Resolve binary source path on control machine (18-D)
+  tags: [deploy, phase3, cosign]
+  ansible.builtin.set_fact:
+    _verify_binary_src: >-
+      {{ (ja4proxy_build_machine_go_path ~ '/bin/proxy')
+         if (_provenance_source | default('')) == 'from-source'
+         else ja4proxy_prebuilt_binary_path }}
+  when:
+    - (ja4proxy_cosign_public_key_path | default('')) | length > 0
+    - _cosign_verify_probe.rc == 0
+
+- name: Verify binary signature with cosign verify-blob (18-D)
+  tags: [deploy, phase3, cosign]
+  ansible.builtin.command:
+    cmd: >-
+      cosign verify-blob
+      --key {{ ja4proxy_cosign_public_key_path | quote }}
+      --signature {{ (_verify_binary_src ~ '.sig') | quote }}
+      {{ _verify_binary_src | quote }}
+  delegate_to: localhost
+  become: false
+  register: _cosign_verify_binary
+  changed_when: false
+  when:
+    - (ja4proxy_cosign_public_key_path | default('')) | length > 0
+    - _cosign_verify_probe.rc == 0
+    - _verify_binary_src is defined
+
+- name: Assert binary signature verified (18-D)
+  tags: [deploy, phase3, cosign]
+  ansible.builtin.assert:
+    that:
+      - _cosign_verify_binary.rc == 0
+    fail_msg: >-
+      cosign verify-blob FAILED for the binary.
+      The bytes about to be deployed do not match the signature
+      produced at build time, OR the public key
+      ({{ ja4proxy_cosign_public_key_path }}) is wrong.
+      Refusing to start ja4proxy.
+    success_msg: "Binary signature verified against {{ ja4proxy_cosign_public_key_path }}"
+  when:
+    - (ja4proxy_cosign_public_key_path | default('')) | length > 0
+    - _cosign_verify_probe.rc == 0
+    - _cosign_verify_binary is defined
+    - _cosign_verify_binary.rc is defined
+
 - name: Deploy JA4proxy using upstream Ansible role
   tags: [deploy, phase3]
   ansible.builtin.debug:
