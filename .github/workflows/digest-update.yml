@@ -1,0 +1,56 @@
+# 18-G: weekly digest refresh.
+#
+# Runs scripts/ci/update_digests.py against Docker Hub for every
+# image in deploy/expected-image-digests.yml, opens a PR if any
+# digest moved. Human review stays in the loop — this workflow
+# never auto-merges. Actions SHA-pinned per 18-E.
+
+name: digest-update
+
+on:
+  schedule:
+    - cron: "23 7 * * 2"  # Tuesday 07:23 UTC
+  workflow_dispatch:        # so a maintainer can trigger ad-hoc
+
+permissions: read-all
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write          # let create-pull-request branch + commit
+      pull-requests: write     # let create-pull-request open the PR
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Refresh image digests against Docker Hub
+        run: python3 scripts/ci/update_digests.py
+
+      - name: Open PR if digests changed
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          commit-message: "18-G: refresh image digests against Docker Hub"
+          title: "18-G: weekly image-digest refresh"
+          body: |
+            Automated weekly refresh of `deploy/expected-image-digests.yml`
+            against Docker Hub. The full diff shows which images moved
+            since last week.
+
+            Acceptance gate: this PR runs the same `lint-and-test` CI
+            workflow as a human PR. Review the diff, confirm the new
+            digests look reasonable (no surprise repo names), and merge.
+
+            Triggered by `.github/workflows/digest-update.yml`.
+          branch: digest-update/weekly
+          delete-branch: true
+          add-paths: deploy/expected-image-digests.yml
+          labels: dependencies, automated
