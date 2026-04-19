@@ -117,6 +117,16 @@ ja4proxy_go_build_flags: "-trimpath -buildvcs=true"
 # always open a tracking issue when you flip this off.
 ja4proxy_govulncheck_enabled: true
 
+# 18-D: cosign signed-blob provenance for the binary + SBOM.
+# Both vars nullable — when both are unset, 18-D is a no-op (warn +
+# continue) so a fresh checkout still deploys without ceremony. Set
+# the private key path on the build machine to enable signing in
+# role 02; set the public key path on the deploy controller to
+# enforce verify in role 03. Convention: cosign keypair generated
+# with `cosign generate-key-pair` produces cosign.key + cosign.pub.
+ja4proxy_cosign_private_key_path: ""
+ja4proxy_cosign_public_key_path: ""
+
 # ── Loki Retention ───────────────────────────────────────────
 
 ja4proxy_loki_retention_days: 90

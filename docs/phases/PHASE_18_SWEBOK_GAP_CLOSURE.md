@@ -179,7 +179,7 @@ happens outside CI; CI only renders Ansible).
 
 ---
 
-## 18-D — Signed SLSA provenance for the binary
+## 18-D — Signed SLSA provenance for the binary — **landed 2026-04-19**
 
 **Scope.** After 18-A, sign the emitted SBOM and a SLSA v1.0
 provenance statement with `cosign sign-blob` (keyless via OIDC when
@@ -211,6 +211,32 @@ reference cosign and both honour the nullable var consistently.
 
 **Not in scope.** Keyless signing via GitHub OIDC (requires moving
 the build into CI — separate phase).
+
+### 18-D landing notes (2026-04)
+
+Landed key-based signing only — keyless OIDC stays out of scope as
+the spec promises. Two vars in `group_vars/all.yml` rather than the
+single `ja4proxy_cosign_public_key_path` the original chunk
+listed: `ja4proxy_cosign_private_key_path` (consumed in role 02 to
+sign) + `ja4proxy_cosign_public_key_path` (consumed in role 03 to
+verify). The split keeps the deploy controller from needing the
+private key and lets a build host run with sign-only credentials.
+Both vars default to `""` so a fresh checkout still deploys without
+ceremony — 18-D is opt-in.
+
+The verify step runs `delegate_to: localhost` against the source-
+side binary + `.sig`. Role 02's existing source-vs-target sha256
+assertion already proves the bytes on the target are byte-identical
+to what was signed, so we don't need cosign on the target VM
+(scope creep avoided). The assertion runs BEFORE
+`Enable and start JA4proxy service`, so a tampered binary or wrong
+public key aborts the play before any service touches it.
+
+The `.pem` artefact the original chunk mentioned only makes sense
+in keyless mode (Fulcio-issued cert). For the key-based path we
+emit `.sig` only; the public key travels via the var, not next to
+the artefact. If keyless lands later, the `.pem` step slots in
+alongside `--output-certificate`.
 
 ---
 
