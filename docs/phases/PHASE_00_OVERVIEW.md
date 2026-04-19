@@ -10,15 +10,23 @@ This machine is **unattached to anything of importance**. It exists purely as a 
 
 ## Design Decisions
 
-| Decision | Rationale |
-|----------|-----------|
-| **No build tools on the server** | Internet-facing machine must have minimal attack surface. All artifacts are pre-built and transferred as deployable units only. |
-| **Go binary for JA4proxy** | ~15,000+ conn/s, no GIL contention, production-grade. Cross-compiled locally, SCP'd to VM. |
-| **Docker Compose for supporting services** | Official pre-built images from Docker Hub. No compilers, no build chains. Just `docker compose up`. |
-| **No container registry** | We use only official Docker Hub images (HAProxy, Redis, Caddy, Prometheus, Grafana, Loki). The Go binary is transferred via SCP. |
-| **Static HTML + Caddy for honeypot** | Caddy auto-manages HTTPS behind the TLS passthrough proxy. Zero-config, minimal moving parts. |
-| **Dial = 0 at start** | Monitor-only mode. Log everything, block nothing. Escalate only after validating data quality. |
-| **No external threat intel feeds initially** | Start with JA4 fingerprinting, GeoIP, ASN, and TCP signals. Add Spamhaus/AbuseIPDB later when baseline is solid. |
+The foundational design decisions for this system live as numbered,
+append-only Architecture Decision Records under [`docs/adr/`](../adr/).
+Start with [`docs/adr/README.md`](../adr/README.md) for the index.
+
+The seven decisions that shaped the initial deployment are:
+
+- [ADR 0001 — No build tools on the server](../adr/0001-no-build-tools-on-server.md)
+- [ADR 0002 — Go binary for JA4proxy](../adr/0002-go-binary-for-ja4proxy.md)
+- [ADR 0003 — Docker Compose for supporting services](../adr/0003-docker-compose-for-supporting-services.md)
+- [ADR 0004 — No private container registry](../adr/0004-no-container-registry.md)
+- [ADR 0005 — Static HTML plus Caddy for the honeypot](../adr/0005-static-html-and-caddy-for-honeypot.md)
+- [ADR 0006 — Dial = 0 at initial deployment](../adr/0006-dial-zero-at-start.md)
+- [ADR 0007 — No external threat-intel feeds initially](../adr/0007-no-external-threat-intel.md)
+
+New design decisions go in a new ADR (`docs/adr/0008-*.md`, etc.),
+not as edits to this table or to accepted ADRs — see the README for
+the workflow.
 
 ---
 
