@@ -421,7 +421,7 @@ scope for a single-person research project).
 
 ---
 
-## 18-I — Architecture Decision Record (ADR) log
+## 18-I — Architecture Decision Record (ADR) log — **landed 2026-04-19**
 
 **Scope.** Convert `PHASE_00_OVERVIEW.md`'s "Design Decisions" table
 into numbered ADRs under `docs/adr/`, Nygard-style (Title / Status /
@@ -450,6 +450,19 @@ known value.
 
 **Not in scope.** Retro-writing ADRs for decisions *not* already in
 the overview table.
+
+**Landed.** Seven ADRs written (`0001` through `0007`) in Nygard
+format — one per row of the original table. Each cites the roles or
+templates that encode the decision (for instance, ADR 0001 names
+roles 01 and 02 and the `ja4proxy_build_machine_go_path` variable;
+ADR 0006 names the `ja4proxy_dial` default in `group_vars/all.yml`).
+`docs/adr/README.md` is the index, `0000-template.md` is the copy
+target. `PHASE_00_OVERVIEW.md`'s table is replaced with a short
+bulleted pointer list. `scripts/ci/check_adr_format.py` validates
+filename shape (`NNNN-slug.md`), numeric titles, the five Nygard
+headings *in order*, and a `Status:` first word drawn from
+{Accepted, Proposed, Deprecated, Superseded}. Wired as
+`make test-adr-format`, rolled into `make test`.
 
 ---
 
