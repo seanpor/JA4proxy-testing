@@ -1,4 +1,7 @@
 {
+  "extensions": {
+    "front-matter": { "enabled": true }
+  },
   "plugins": {
     "MD004": { "enabled": false },
     "MD007": { "enabled": false },

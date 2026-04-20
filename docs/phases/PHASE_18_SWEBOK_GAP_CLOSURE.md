@@ -529,7 +529,7 @@ needed.
 
 ---
 
-## 18-L — Runbook drill cadence
+## 18-L — Runbook drill cadence — **landed 2026-04-20**
 
 **Scope.** Add a `runbook-drill` checklist item to
 `docs/phases/RUNBOOK.md` with a 6-monthly cadence, plus a recurring
@@ -558,6 +558,35 @@ the runbook without updating the template fails `make test`.
 **Not in scope.** Automating the drills (they are deliberately
 human).
 
+### 18-L landing notes (2026-04)
+
+- **Cadence.** Twice-yearly, April (H1) and October (H2). Chosen
+  because that keeps drills at least a quarter away from the
+  ~30-day Trivy-allowlist re-decision cycle (18-B-2) and the
+  annual `Last reviewed:` refresh wave (threat model + governance +
+  requirements + SSDF map), so no one month gets hit with every
+  compliance task at once.
+- **Issue template.** `.github/ISSUE_TEMPLATE/runbook-drill.md`
+  pre-fills one checkbox per IR scenario plus metadata slots for VM
+  IP, starting commit SHA, start/end timestamps, and a "Findings"
+  block for drift notes. Scenario 7 (law-enforcement request) is
+  explicitly a paper-only walkthrough of
+  `docs/governance/LE_REQUESTS.md`; every other scenario must be
+  executed on a disposable VM.
+- **Check extension.** `check_runbook_scenarios.py` now also
+  asserts:
+    1. RUNBOOK.md has a `## Drill cadence` section.
+    2. That section names the issue template path verbatim.
+    3. The issue template exists with YAML front-matter.
+    4. The template names every one of the eight scenarios by the
+       same keyword set used for the scenarios-existence check —
+       so adding a new IR scenario to the runbook without updating
+       the template is a `make test` failure.
+- **Why a separate cadence from `make verify`.** Verify is a
+  read-only health check; drills deliberately break the VM to
+  exercise the rollback path. Keeping them separate keeps the
+  pre-merge loop fast (verify stays SSH-only, drills stay human).
+
 ---
 
 ## Deferred (noted, not in this phase)
@@ -585,3 +614,4 @@ human).
 - 18-C + 18-F landed in PR #45 (govulncheck at build, Dependabot).
 - 18-E landed in PR #48 (OpenSSF Scorecard + SHA-pinned actions).
 - 18-H landed 2026-04-19 (`docs/REQUIREMENTS.md` + traceability check).
+- 18-L landed 2026-04-20 (`.github/ISSUE_TEMPLATE/runbook-drill.md` + drill cadence section).
