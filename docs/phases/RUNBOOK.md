@@ -343,6 +343,39 @@ honeypot is absent, or abuse reports go to Alibaba instead of us.
 closed is safe — the honeypot is simply invisible until DNS and UFW
 agree.
 
+## Drill cadence
+
+The eight Incident Response scenarios above exist so that a real
+incident can be handled from muscle memory rather than improvisation.
+That only works if the runbook has been rehearsed recently. Every six
+months, walk through each scenario end-to-end on a disposable VM
+(ideally a fresh `make cloud` run, teardown with `make destroy` after)
+and note anything that has drifted from reality.
+
+- **Cadence.** Twice a year — one drill ~April, one ~October. The
+  GitHub issue template `.github/ISSUE_TEMPLATE/runbook-drill.md`
+  pre-fills a checklist of all eight scenarios; open a new issue from
+  that template to start a drill.
+- **What "done" looks like.** Each scenario's procedure ran to
+  completion *and* its rollback was exercised on the same VM. If a
+  step failed or was ambiguous, fix the runbook in the same PR that
+  closes the drill issue.
+- **Why this is a separate cadence from `make verify`.** Verify is a
+  read-only health check of a live deployment; drills deliberately
+  *break* a disposable VM to confirm the recovery path still works.
+  The two are complementary — don't fold one into the other.
+- **Scope of a drill.** The eight scenarios in the section above:
+  SSH lockout, Caddy ACME rate-limit, Redis corruption, Disk full,
+  Grafana password reset, VM compromise, Law-enforcement request,
+  DNS misconfig opened UFW. The law-enforcement scenario is a
+  paper-only walkthrough of `docs/governance/LE_REQUESTS.md`; every
+  other scenario must be executed on the VM.
+
+Logged evidence from the most recent drill (screenshots of recovered
+state, `journalctl` excerpts, any runbook edits) attaches to the
+closing issue so a future maintainer can see what "working" looked
+like last time.
+
 ## Monitoring Schedule
 
 | Frequency | Action | Duration |
