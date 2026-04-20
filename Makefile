@@ -138,9 +138,9 @@ lint-markdown:
 # Test — lint + structural cross-checks, still offline
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-cosign-wired test-dependabot test-workflow-pins test-requirements test-adr-format
+.PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-cosign-wired test-dependabot test-workflow-pins test-requirements test-adr-format test-compliance-ssdf
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-cosign-wired test-dependabot test-workflow-pins test-requirements test-adr-format
+test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-cosign-wired test-dependabot test-workflow-pins test-requirements test-adr-format test-compliance-ssdf
 	@echo
 	@echo "✅ test: all checks passed"
 
@@ -323,6 +323,10 @@ test-requirements:
 test-adr-format:
 	@echo "── ADR log format + Nygard headings (18-I) ──"
 	@$(PY) scripts/ci/check_adr_format.py
+
+test-compliance-ssdf:
+	@echo "── docs/COMPLIANCE_SSDF.md SSDF task mapping resolves (18-K) ──"
+	@$(PY) scripts/ci/check_compliance_ssdf.py
 
 .PHONY: scan-images
 scan-images:
