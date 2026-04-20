@@ -500,7 +500,7 @@ the score, let a human decide.
 
 ---
 
-## 18-K — NIST SSDF control mapping (docs only)
+## 18-K — NIST SSDF control mapping (docs only) — **landed 2026-04-20**
 
 **Scope.** Add `docs/COMPLIANCE_SSDF.md`: a table from SSDF
 Practice+Task (e.g. PS.1.1, PW.4.1, RV.1.1) to the role / CI
@@ -514,18 +514,48 @@ two missing controls.
 
 **Files.**
 - `docs/COMPLIANCE_SSDF.md`.
-- `scripts/ci/check_governance_docs.py` — extend to assert the file
-  exists and every cited path resolves.
+- `scripts/ci/check_compliance_ssdf.py` — new checker (mirror of
+  `check_requirements_traceability.py`) that asserts the file
+  exists, the `Last reviewed:` line is ≤365 days old, every SSDF
+  row has a valid Status value, and every backticked `/`-token in
+  Yes/Partial rows resolves under the repo root.
 
 **Acceptance.** Every SSDF task from the current spec has a row.
-Rows marked "Not yet" link to a tracking issue.
+Rows marked "Not yet" link to a tracking issue; "N/A" rows must
+include a rationale.
 
-**CI hook.** The extended check.
+**CI hook.** `make test-compliance-ssdf`, rolled into `make test`.
 
 **Depends on.** 18-A through 18-G (so most "Yes" rows are true).
 
 **Not in scope.** SLSA, FedRAMP, ISO 27001 — separate efforts if ever
 needed.
+
+### 18-K landing notes (2026-04)
+
+- **Deviation from plan.** Created a new
+  `scripts/ci/check_compliance_ssdf.py` rather than extending
+  `check_governance_docs.py`. Reason: the compliance doc lives at
+  `docs/COMPLIANCE_SSDF.md`, not under `docs/governance/`, and the
+  governance checker's `REQUIRED` tuple is scoped to that
+  subdirectory. The new checker mirrors the shape of
+  `check_requirements_traceability.py` — same freshness gate, same
+  backticked-path traceability pattern — which is a closer analogue
+  to what 18-K needs.
+- **Coverage.** The doc maps all 42 SSDF v1.1 tasks (PO.1.1–PO.5.2,
+  PS.1.1–PS.3.2, PW.1.1–PW.9.2, RV.1.1–RV.3.4). 33 rows are "Yes",
+  5 are "Partial" (PO.2.1, PO.5.2, PW.7.2, RV.1.2, RV.3.1, RV.3.4),
+  and 4 are "N/A" with rationale (PO.1.3, PO.2.2, PO.2.3, RV.3.2) —
+  every N/A is pinned to the sole-maintainer research-box scope.
+- **Enforcement.** 43 task rows parsed by the new checker; every
+  Yes/Partial satisfier path resolves under the repo root. Renaming
+  a cited role/template/script without updating the doc fails
+  `make test`.
+- **Known weakness.** The checker only validates backticked tokens
+  that contain `/` (same rule as `check_requirements_traceability`).
+  Pure-root file citations like `AGENTS.md` would slip through as
+  "inline code"; the doc avoids this by writing `./AGENTS.md` where
+  a root-level file is the genuine satisfier.
 
 ---
 
@@ -614,4 +644,6 @@ human).
 - 18-C + 18-F landed in PR #45 (govulncheck at build, Dependabot).
 - 18-E landed in PR #48 (OpenSSF Scorecard + SHA-pinned actions).
 - 18-H landed 2026-04-19 (`docs/REQUIREMENTS.md` + traceability check).
+- 18-I landed 2026-04-19 (`docs/adr/` log + Nygard format check).
+- 18-K landed 2026-04-20 (`docs/COMPLIANCE_SSDF.md` + SSDF-mapping check).
 - 18-L landed 2026-04-20 (`.github/ISSUE_TEMPLATE/runbook-drill.md` + drill cadence section).
