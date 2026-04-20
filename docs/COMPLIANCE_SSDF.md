@@ -53,7 +53,7 @@ Status values:
 
 | Task | Summary | Status | Satisfier / rationale |
 |------|---------|--------|-----------------------|
-| PS.1.1 | Store all forms of code securely | Yes | Git + GitHub; `.github/workflows/scorecard.yml` runs OpenSSF Scorecard (Phase 18-E); secrets never committed — the `deploy/.vault/` directory is gitignored (see repo-root `./.gitignore`) and re-rendered from `deploy/scripts/generate-secrets.sh` |
+| PS.1.1 | Store all forms of code securely | Yes | Git + GitHub; `.github/workflows/scorecard.yml` runs OpenSSF Scorecard (Phase 18-E); secrets never committed — the deploy/.vault/ directory is gitignored (see repo-root `./.gitignore`) and re-rendered from `deploy/scripts/generate-secrets.sh` |
 | PS.2.1 | Provide integrity verification for releases | Yes | cosign sign-blob signs the binary and SBOM in `deploy/roles/02-artifact-build/tasks/build.yml`; verify happens before systemd start in `deploy/roles/03-ja4proxy-deploy/tasks/main.yml`. See Phase 18-D |
 | PS.3.1 | Archive each software release | Yes | Immutable git tags + sha256-pinned `expected-binary-sha256.txt` (`scripts/ci/check_pinned_artifacts.py`) |
 | PS.3.2 | Collect provenance data for each release | Yes | CycloneDX SBOM (`scripts/ci/check_sbom.py`, Phase 18-A) + `deploy/templates/binary-provenance.yml.j2` emitting commit/build-host facts alongside the binary |
