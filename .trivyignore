@@ -25,6 +25,14 @@ CVE-2026-30836
 # expires: 2026-05-17
 CVE-2026-33186
 
+# grafana/grafana:latest — jackc/pgx/v5 Postgres-driver memory-safety
+# flaw (fixed in v5.9.0). Exploit requires Grafana to connect to an
+# attacker-controlled Postgres server; this deployment only configures
+# Prometheus + Loki data sources (see deploy/roles/06-monitoring/),
+# not Postgres. Awaiting upstream grafana image refresh.
+# expires: 2026-05-17
+CVE-2026-33816
+
 # prom/blackbox-exporter:latest — Go 1.25.5 crypto/tls cert-validation
 # flaw (fixed in 1.24.13 / 1.25.7). Blackbox probes known targets over
 # HTTPS from the monitoring network; exploit requires MITM position on
@@ -54,6 +62,14 @@ CVE-2026-33810
 CVE-2025-61726
 # expires: 2026-05-17
 CVE-2025-61728
+
+# === HIGHs: Go stdlib 2026 series on blackbox (1.25.5) ===============
+# crypto/x509 cert-chain DoS and TLS key-update handling, fixed in
+# 1.25.9 / 1.26.2. Same probes-only exposure argument as above.
+# expires: 2026-05-17
+CVE-2026-32281
+# expires: 2026-05-17
+CVE-2026-32283
 
 # === HIGHs: embedded Go deps ==========================================
 # go-jose (caddy, loki): JWE/JWT parsing flaw. Not on our public path.
