@@ -1062,3 +1062,9 @@ visible.
 - [x] 18-C — govulncheck against Go source tree at build time (soft-fail probe; opt-out flag)
 - [x] 18-F — Dependabot for pip + github-actions (weekly grouped PRs)
 - [x] 18-E — OpenSSF Scorecard workflow + SHA-pinned actions + pin-drift CI check
+- [x] 18-D — cosign sign-blob provenance for binary + SBOM (PR #52)
+- [x] 18-G — weekly Docker Hub digest refresh workflow + pin file (PR #53)
+- [x] 18-H — `docs/REQUIREMENTS.md` + traceability check (PR #51)
+- [x] 18-I — append-only ADR log under `docs/adr/` + Nygard-format check (PR #54)
+- [x] 18-K — `docs/COMPLIANCE_SSDF.md` NIST SSDF v1.1 mapping + traceability check (PR #55)
+- [x] 18-L — runbook drill cadence + `.github/ISSUE_TEMPLATE/runbook-drill.md` (PR #56)
