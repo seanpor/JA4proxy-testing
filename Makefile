@@ -7,11 +7,13 @@
 #
 # Pre-merge / pre-push contract:
 #
-#     make lint   — fast static checks (seconds)
-#     make test   — lint + structural cross-checks (still no VM needed)
+#     make lint     — fast static checks (seconds)
+#     make test     — lint + structural cross-checks (still no VM needed)
+#     make lint-all — lint + test + Trivy image scan (matches CI end-to-end)
 #
-# Neither target touches the network or a target VM. Both are safe to
-# wire into CI and pre-commit hooks.
+# `lint` and `test` are network-free and safe for pre-commit hooks.
+# `lint-all` adds the network-dependent Trivy scan so local runs match
+# what CI checks end-to-end.
 # ─────────────────────────────────────────────────────────────
 
 SHELL := /bin/bash
@@ -42,6 +44,7 @@ help:
 	@echo "  Pre-merge / pre-push:"
 	@echo "    make lint           — fast static checks (yamllint, ansible-lint, shellcheck, ruff, json, markdown)"
 	@echo "    make test           — lint + structural cross-checks"
+	@echo "    make lint-all       — lint + test + Trivy image scan (matches CI end-to-end; needs network + trivy)"
 	@echo "    make lint-install   — create .venv-dev/ and install ansible-lint + yamllint"
 	@echo "    make scan-images    — Trivy scan of compose images (needs trivy on PATH; 18-B)"
 	@echo
@@ -331,6 +334,13 @@ test-compliance-ssdf:
 .PHONY: scan-images
 scan-images:
 	@scripts/ci/scan_images.sh
+
+# Convenience umbrella: matches what CI runs end-to-end in one command.
+# Kept separate from `lint`/`test` so the fast offline loop stays fast.
+.PHONY: lint-all
+lint-all: lint test scan-images
+	@echo
+	@echo "✅ lint-all: offline checks + Trivy image scan all passed"
 
 # 18-G: refresh deploy/expected-image-digests.yml against Docker Hub.
 # Hits the network; not in `make test`. The weekly digest-update
