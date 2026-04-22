@@ -158,12 +158,14 @@ pass has been removed; `scripts/ci/scan_images.sh` runs a single
 `--exit-code 0` in the wrapper.
 
 **Scope note (2026-04-22, Phase 20 truth-up).** "Blocking" here means
-the `image-scan` job itself exits non-zero on a new HIGH or CRITICAL;
-it does **not** mean the finding blocks a merge to `main`. `image-scan`
-is not (yet) in `required_status_checks.contexts` on `main` — only
-`lint-and-test` is. A red scan is a merge-blocker signal in PR review,
-not a mechanical gate. See Phase 20 P0-1 for the options (promote to
-required, or keep advisory).
+the `image-scan` job itself exits non-zero on a new HIGH or CRITICAL.
+
+**Phase 20 follow-up (2026-04-22).** `image-scan` has been added to
+`required_status_checks.contexts` on `main` alongside `lint-and-test`,
+so a red scan now mechanically blocks merge — not just a PR-review
+signal. The P0-1 tradeoff in Phase 20 was resolved by picking option
+(A) promote-to-required (via `PATCH /repos/:o/:r/branches/main/
+protection/required_status_checks`) rather than (B) keep-advisory.
 
 ---
 

@@ -2,7 +2,9 @@
 
 **Author:** angry reviewer, 2026-04-21
 **Scope:** defects in merged Phase 18 work (PRs #44–#60) that claim a control is in place while the mechanism is cosmetic, broken, or actively contradicted by config.
-**Status (2026-04-22):** 13 of 13 remediation items landed on local branch (uncommitted). P1-9's ecosystem-expansion half was withdrawn on inspection (see below) and the comment-refresh half landed. `make lint` and `make test` both green.
+**Status (2026-04-22):** 13 of 13 remediation items merged in PR #61 (commit `ab110f5`). P1-9's ecosystem-expansion half was withdrawn on inspection (see below) and the comment-refresh half landed. `make lint` and `make test` green locally and on post-merge `main` CI.
+
+**Follow-up (2026-04-22).** P0-1 initially took option (B) "honest advisory" in PR #61. Post-merge the branch-protection flip was executed and `image-scan` is now a required status check alongside `lint-and-test`. Docs reverted to reflect the mechanical gate. See P0-1's Resolution block below.
 
 **P1-9 scoping update (2026-04-22).** The original defect proposed adding `docker` and `gomod` Dependabot ecosystems. On inspection, this repo has no `Dockerfile` and no `go.mod` (the Go source lives in the sibling `JA4proxy4` checkout; Docker base images are referenced via Jinja-templated compose and tracked by the separate `digest-update.yml` weekly workflow against Docker Hub). Ansible collections have no Dependabot ecosystem. So the only applicable part of P1-9 was the stale comment refresh, which landed; the ecosystem-expansion half is formally withdrawn.
 
@@ -40,6 +42,8 @@ Fixing these restores the story to reality. Many fixes are one-line.
 - **(B, honest fallback)** Delete every "hard merge gate" phrase (`.trivyignore:14`, `PHASE_18…md:141-147`, `REQUIREMENTS.md:45` NF-05), downgrade SSDF rows that cite it (RV.1.2, RV.3.1, PW.7.2 as applicable) from Yes→Partial, and call it advisory.
 
 Owner: whoever owns branch protection. Effort: 10 min for (A), 20 min for (B).
+
+**Resolution (2026-04-22, Phase 20 follow-up).** Initially landed as (B) in PR #61 (honest advisory language). Post-merge the branch-protection flip was executed: `PATCH /repos/seanpor/JA4proxy-testing/branches/main/protection/required_status_checks` now lists both `lint-and-test` and `image-scan` with `strict: true`. The advisory language in `.trivyignore`, `REQUIREMENTS.md` NF-05, `ci.yml:43-47`, and `PHASE_18…md` §18-B-2 was reverted to reflect the mechanical gate. Option (A) is now the live state; (B) is history.
 
 ### P0-2. `deploy/expected-image-digests.yml` is never consumed
 
