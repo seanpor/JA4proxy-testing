@@ -49,9 +49,9 @@ jobs:
 
   image-scan:
     # 18-B: Trivy scan of every compose image for fixable HIGH/CRITICAL
-    # vulns. Runs in parallel with lint-and-test. Not required to merge
-    # while the Trivy DB churns, but a red run is a merge-blocker
-    # signal in PR review.
+    # vulns. Runs in parallel with lint-and-test. **Required** status
+    # check on `main` (Phase 20 follow-up) — a red scan mechanically
+    # blocks merge, same as `lint-and-test`.
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

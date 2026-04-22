@@ -12,11 +12,10 @@
 #
 # Since 18-B-2, `scripts/ci/scan_images.sh` runs a single
 # `--severity HIGH,CRITICAL --exit-code 1` pass, so a new HIGH reddens
-# the `image-scan` job the same way a CRITICAL does. The job is
-# advisory on `main` (not a required status check — see the comment
-# at `.github/workflows/ci.yml:43-47`); a red run is a merge-blocker
-# signal in PR review, not a mechanical gate. Anything here is
-# opted-in *explicitly* with a bounded expiry.
+# the `image-scan` job the same way a CRITICAL does. As of the Phase
+# 20 follow-up, `image-scan` is a **required** status check on `main`
+# (alongside `lint-and-test`), so a red scan mechanically blocks
+# merge. Anything here is opted-in *explicitly* with a bounded expiry.
 
 # Phase 20 P2-11: expiries staggered across 2026-05-05 → 2026-05-19 by
 # upstream image so that one big-bang red day becomes five spaced
