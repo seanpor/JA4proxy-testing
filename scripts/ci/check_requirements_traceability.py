@@ -12,9 +12,18 @@ Assertions:
      without updating the table fails this check (the 18-H acceptance).
   5. Requirement IDs are unique within their family (no duplicate
      F-01s, no duplicate NF-03s).
+  6. Phase 20 P0-3 hardening: selected requirements also get a
+     *behaviour* assertion — a required substring must be found in a
+     named satisfier file, so that a cosmetic "the file exists but
+     does nothing" satisfier fails the check. See BEHAVIOUR_ASSERTS.
 
 Backticked tokens without a `/` are treated as inline code (e.g.
 `SIGHUP`, `make test`) and ignored.
+
+Run with `--self-test` to execute a negative regression: each
+BEHAVIOUR_ASSERTS entry is re-run against a synthetically emptied
+copy of the cited file and must fail. This guards against the
+checker silently regressing back to pure existence checks.
 """
 from __future__ import annotations
 
@@ -30,8 +39,93 @@ ID_RE = re.compile(r"^\s*\|\s*(F-\d{2}|NF-\d{2})\s*\|", re.MULTILINE)
 ROW_RE = re.compile(r"^\s*\|\s*(F-\d{2}|NF-\d{2})\s*\|(.*)$", re.MULTILINE)
 BACKTICK_RE = re.compile(r"`([^`]+)`")
 
+# Phase 20 P0-3: per-requirement behavioural assertions. Each tuple is
+# (req_id, repo-relative file, required substring, human-readable why).
+# A missing substring fails the check — proof that the satisfier's
+# mechanism, not just its filename, is present.
+BEHAVIOUR_ASSERTS: list[tuple[str, str, str, str]] = [
+    (
+        "NF-04",
+        "deploy/roles/03-ja4proxy-deploy/tasks/main.yml",
+        "cosign verify-blob",
+        "NF-04 claims cosign-verified provenance; the deploy role must "
+        "invoke `cosign verify-blob` before starting the service.",
+    ),
+    (
+        "NF-04",
+        "deploy/inventory/group_vars/all.yml",
+        "-trimpath",
+        "NF-04 claims reproducible build flags; "
+        "`ja4proxy_go_build_flags` in group_vars must contain "
+        "`-trimpath` (it is injected via GOFLAGS by role 02).",
+    ),
+    (
+        "NF-05",
+        "scripts/ci/scan_images.sh",
+        "--exit-code 1",
+        "NF-05 claims the Trivy scan fails on HIGH/CRITICAL; the "
+        "wrapper must invoke Trivy with `--exit-code 1`.",
+    ),
+    (
+        "NF-05",
+        "deploy/roles/09-image-digests/tasks/main.yml",
+        "expected-image-digests.yml",
+        "NF-05 claims pin-file enforcement; role 09 must load "
+        "`deploy/expected-image-digests.yml` and assert the live "
+        "pulled digest matches.",
+    ),
+]
+
+
+def _run_behaviour_asserts(overrides: dict[str, str] | None = None) -> list[str]:
+    """Check each BEHAVIOUR_ASSERTS entry. `overrides` lets --self-test
+    inject a synthetic empty body for a given path without touching
+    the working tree."""
+    errors: list[str] = []
+    for req_id, rel, needle, why in BEHAVIOUR_ASSERTS:
+        target = ROOT / rel
+        if overrides and rel in overrides:
+            body = overrides[rel]
+        elif not target.exists():
+            errors.append(f"{req_id}: behaviour satisfier `{rel}` is missing")
+            continue
+        else:
+            body = target.read_text()
+        if needle not in body:
+            errors.append(
+                f"{req_id}: behaviour assertion failed — `{needle}` not "
+                f"found in `{rel}`. {why}"
+            )
+    return errors
+
+
+def _self_test() -> int:
+    """Negative regression: emptying each cited file must trip the
+    corresponding behaviour assertion."""
+    failures: list[str] = []
+    for _req_id, rel, needle, _why in BEHAVIOUR_ASSERTS:
+        errs = _run_behaviour_asserts(overrides={rel: ""})
+        if not any(needle in e and rel in e for e in errs):
+            failures.append(
+                f"self-test: emptying `{rel}` did not trip the `{needle}` "
+                f"assertion — checker is too permissive"
+            )
+    if failures:
+        print(f"{len(failures)} self-test failure(s):")
+        for f in failures:
+            print(f"  {f}")
+        return 1
+    print(
+        f"✓ self-test: all {len(BEHAVIOUR_ASSERTS)} behaviour assertion(s) "
+        f"trip when their satisfier is emptied"
+    )
+    return 0
+
 
 def main() -> int:
+    if "--self-test" in sys.argv[1:]:
+        return _self_test()
+
     errors: list[str] = []
 
     if not DOC.exists():
@@ -97,6 +191,8 @@ def main() -> int:
     if rows_found == 0:
         errors.append("no F-NN or NF-NN rows parsed — table format broken?")
 
+    errors.extend(_run_behaviour_asserts())
+
     if errors:
         print(f"{len(errors)} requirements-traceability issue(s):")
         for e in errors:
@@ -105,7 +201,8 @@ def main() -> int:
 
     print(
         f"✓ docs/REQUIREMENTS.md: {rows_found} requirements, all satisfier "
-        f"paths resolve, fresh (<365d)"
+        f"paths resolve, fresh (<365d), {len(BEHAVIOUR_ASSERTS)} behaviour "
+        f"assertion(s) pass"
     )
     return 0
 

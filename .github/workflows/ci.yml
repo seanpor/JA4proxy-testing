@@ -73,3 +73,30 @@ jobs:
 
       - name: make scan-images
         run: make scan-images
+
+      # Phase 20 P1-8: give the shipped compose SBOM a consumer.
+      # Render the same SBOM that role 02 ships, run `trivy sbom`
+      # over it with the same severity / allowlist flags as the
+      # image scan, and fail if the two disagree (SBOM must surface
+      # the same HIGH/CRITICAL findings the image scan did). Before
+      # Phase 20, the SBOM was shipped but never scanned — an audit
+      # artifact nothing validated.
+      - name: Generate compose SBOM
+        run: python3 scripts/ci/render_compose.py --sbom /tmp/compose.cdx.json
+
+      - name: Scan compose SBOM with Trivy
+        run: |
+          trivy sbom \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --ignorefile .trivyignore \
+            --exit-code 1 \
+            /tmp/compose.cdx.json
+
+      - name: Upload compose SBOM as artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        if: always()
+        with:
+          name: compose-sbom
+          path: /tmp/compose.cdx.json
+          retention-days: 30

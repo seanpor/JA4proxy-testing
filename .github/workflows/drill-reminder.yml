@@ -1,0 +1,62 @@
+# Phase 20 P1-5: semi-annual runbook drill reminder.
+#
+# Fires on April 1 and October 1 at 09:00 UTC and opens an issue from
+# `.github/ISSUE_TEMPLATE/runbook-drill.md`. Before Phase 20 the drill
+# cadence was a markdown paragraph with no scheduler, so a missed drill
+# was silent. This workflow makes a missed drill visibly overdue.
+#
+# Uses the GitHub-provided `gh` CLI directly — no third-party action,
+# no SHA pin beyond actions/checkout.
+
+name: drill-reminder
+
+on:
+  schedule:
+    - cron: "0 9 1 4,10 *"   # 09:00 UTC, April 1 and October 1
+  workflow_dispatch:           # allow manual fire for testing
+
+permissions: read-all
+
+jobs:
+  open-drill-issue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write            # gh issue create
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Open drill issue from template
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          year=$(date -u +%Y)
+          month=$(date -u +%m)
+          case "$month" in
+            04) half="H1" ;;
+            10) half="H2" ;;
+            *)  half="ad-hoc" ;;
+          esac
+          title="Runbook drill — ${year}-${half}"
+
+          # Strip the Jekyll front-matter so the body renders plainly.
+          body=$(awk 'BEGIN{fm=0} /^---$/{fm++; next} fm==2 || fm==0' \
+                 .github/ISSUE_TEMPLATE/runbook-drill.md)
+
+          # Idempotency: if an open drill issue already exists for this
+          # half-year, skip (manual re-runs shouldn't duplicate).
+          existing=$(gh issue list \
+            --state open --label drill --search "$title in:title" \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Drill issue #$existing already open for ${year}-${half}; skipping."
+            exit 0
+          fi
+
+          gh issue create \
+            --title "$title" \
+            --label "drill,runbook" \
+            --body "$body"

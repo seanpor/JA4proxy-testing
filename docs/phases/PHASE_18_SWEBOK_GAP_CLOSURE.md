@@ -55,6 +55,14 @@ us* without re-deriving the list.
 against fixtures, assert schema validity (CycloneDX 1.5) and
 non-empty component list.
 
+**Phase 20 P1-8 hardening (2026-04-22).** The `image-scan` CI job
+now also runs `trivy sbom --severity HIGH,CRITICAL --exit-code 1`
+over the rendered `compose.cdx.json` and uploads the SBOM as a
+build artifact (30-day retention). Before Phase 20 the SBOM was
+shipped but no scanner consumed it — an audit artifact nothing
+validated. The Go-binary SBOM is already covered by govulncheck at
+build time (18-C).
+
 **Depends on.** Nothing (14-A/B/C already nail the inputs).
 
 **Not in scope.** Signing the SBOM (that's 18-D). Publishing SBOM to
@@ -111,7 +119,9 @@ share a single `--severity HIGH,CRITICAL --exit-code 1` pass. 14 new
 HIGH entries were added to `.trivyignore` in the same land, grouped by
 root-cause package (Go stdlib 2026, Go stdlib 2025, embedded Go deps
 `go-jose` / `otel/sdk` / `jsonparser` / `moby`, Alpine base packages in
-`grafana/grafana`). All expire 2026-05-17, forcing the first
+`grafana/grafana`). Originally all 2026-05-17, staggered across
+2026-05-05 → 2026-05-19 by upstream image in Phase 20 P2-11 to
+avoid one big-bang red day. Forces the first
 30-day re-decision cycle one month after the 18-B-2 land.
 
 **Redis bumped from `:7-alpine` to `:8-alpine`.** The `:7-alpine`
@@ -125,7 +135,8 @@ unwinnable whack-a-mole against an old stdlib. Moving the pin to
 bans/counters store driven by JA4proxy, so the version bump is
 functionally trivial.
 
-Remaining allowlist (all expire 2026-05-17, ~30 days from 18-B land):
+Remaining allowlist (expiries staggered in Phase 20 P2-11 across
+2026-05-05 → 2026-05-19 by upstream image; see `.trivyignore`):
 
 - `CVE-2026-30836` (`smallstep/certificates`) and `CVE-2026-33186`
   (`grpc-go`) — in `caddy:2-alpine`. Caddy's cert handling and gRPC
@@ -145,6 +156,14 @@ pass has been removed; `scripts/ci/scan_images.sh` runs a single
 `--severity HIGH,CRITICAL --exit-code 1` pass and
 `scripts/ci/check_image_scan.py` now rejects any reappearance of
 `--exit-code 0` in the wrapper.
+
+**Scope note (2026-04-22, Phase 20 truth-up).** "Blocking" here means
+the `image-scan` job itself exits non-zero on a new HIGH or CRITICAL;
+it does **not** mean the finding blocks a merge to `main`. `image-scan`
+is not (yet) in `required_status_checks.contexts` on `main` — only
+`lint-and-test` is. A red scan is a merge-blocker signal in PR review,
+not a mechanical gate. See Phase 20 P0-1 for the options (promote to
+required, or keep advisory).
 
 ---
 
@@ -350,18 +369,21 @@ any registry/network error so a flaky Hub doesn't burn a green
 build into a red one.
 
 `.github/workflows/digest-update.yml` runs Tuesdays 07:23 UTC,
-calls `make update-digests`, and uses
+runs `python3 scripts/ci/update_digests.py` (equivalent to
+`make update-digests`), and uses
 `peter-evans/create-pull-request@v8.1.1` (SHA-pinned per 18-E) to
 open one PR if anything changed. The PR runs the same
 `lint-and-test` gate as a human PR; auto-merge stays off.
 
-The pin file is currently *advisory*: role 09 still resolves
-digests at deploy time and rewrites the deployed compose. Wiring
-role 09 to enforce against the pin (refuse deploy when pulled
-digest != pinned digest) would catch tag-mutation attacks in the
-wild and is a natural follow-up — left out of this PR to keep the
-diff focused and the deploy-time behaviour unchanged. The vuln
-scan dependency on 18-B happens automatically: the bump-PR's
+**Phase 20 P0-2 (2026-04-22): pin file is now enforced.** Role 09
+loads `deploy/expected-image-digests.yml` and asserts the live
+`docker pull` digest equals the pinned digest for every service,
+aborting the deploy on mismatch. This catches tag-mutation attacks
+(pulled digest != pinned digest) in the wild. Sentinel zero-hash
+entries are skipped. Operators can set
+`ja4proxy_digest_pin_enforced=false` for air-gapped / local testing
+where Docker Hub returns a different digest than CI last saw. The
+vuln-scan dependency on 18-B happens automatically: the bump-PR's
 `lint-and-test` includes the Trivy job.
 
 `scripts/ci/check_digest_regex.py` was extended (per the chunk's
@@ -542,11 +564,14 @@ needed.
   `check_requirements_traceability.py` — same freshness gate, same
   backticked-path traceability pattern — which is a closer analogue
   to what 18-K needs.
-- **Coverage.** The doc maps all 42 SSDF v1.1 tasks (PO.1.1–PO.5.2,
-  PS.1.1–PS.3.2, PW.1.1–PW.9.2, RV.1.1–RV.3.4). 33 rows are "Yes",
-  5 are "Partial" (PO.2.1, PO.5.2, PW.7.2, RV.1.2, RV.3.1, RV.3.4),
-  and 4 are "N/A" with rationale (PO.1.3, PO.2.2, PO.2.3, RV.3.2) —
-  every N/A is pinned to the sole-maintainer research-box scope.
+- **Coverage.** The doc maps all 43 SSDF v1.1 tasks (PO.1.1–PO.5.2,
+  PS.1.1–PS.3.2, PW.1.1–PW.9.2, RV.1.1–RV.3.4). 32 rows are "Yes",
+  7 are "Partial" (PO.2.1, PO.5.2, PS.2.1, PW.7.2, RV.1.2, RV.3.1,
+  RV.3.4), and 4 are "N/A" with rationale (PO.1.3, PO.2.2, PO.2.3,
+  RV.3.2) — every N/A is pinned to the sole-maintainer research-box
+  scope. PS.2.1 was downgraded Yes→Partial in Phase 20 P1-6
+  (cosign is opt-in; unsigned deploy permitted when key paths are
+  empty).
 - **Enforcement.** 43 task rows parsed by the new checker; every
   Yes/Partial satisfier path resolves under the repo root. Renaming
   a cited role/template/script without updating the doc fails
@@ -596,6 +621,12 @@ human).
   annual `Last reviewed:` refresh wave (threat model + governance +
   requirements + SSDF map), so no one month gets hit with every
   compliance task at once.
+- **Enforcement (Phase 20 P1-5, 2026-04-22).** Cadence is now
+  mechanical: `.github/workflows/drill-reminder.yml` fires on
+  cron `0 9 1 4,10 *` and opens an issue from the template via
+  `gh issue create`. Idempotent — re-runs on the same half-year
+  skip if a matching open issue already exists. A missed drill is
+  therefore a visible overdue issue instead of a silent gap.
 - **Issue template.** `.github/ISSUE_TEMPLATE/runbook-drill.md`
   pre-fills one checkbox per IR scenario plus metadata slots for VM
   IP, starting commit SHA, start/end timestamps, and a "Findings"

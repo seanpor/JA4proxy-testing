@@ -3,15 +3,17 @@
 **Reviewer:** expert pass, 2026-04-15
 **Scope reviewed:** `README.md`, `QWEN.md`, `deploy/` (all 10 roles, templates, scripts, playbook), `docs/phases/PHASE_00`–`PHASE_08`, `ANSIBLE_BUILD_PLAN.md`, `DEPLOYMENT_ANALYSIS.md`, `RUNBOOK.md`.
 
-> **Status, 2026-04-21 — remediation complete.** Every A-series code
-> bug and every C-series missing-phase gap identified below has been
-> addressed. The mapping in §G names the doc/PR for each; the
-> `Status` block in `GOVERNANCE_ROADMAP.md` is the authoritative
-> landing log. This document is kept as a **historical snapshot** of
-> what the repo looked like on 2026-04-15 — do not "fix" the findings
-> here by editing them; track any *new* defects in a fresh PR or
-> issue. If you are reading this because something broke, the fix is
-> almost certainly in Phases 11 – 18.
+> **Status, 2026-04-22 — remediation complete (A/C series).** Every
+> A-series code bug and every C-series missing-phase gap identified
+> below has been addressed. The mapping in §G names the doc/PR for
+> each; the `Status` block in `GOVERNANCE_ROADMAP.md` is the
+> authoritative landing log (now including the Phase 18-J deferral
+> entry added 2026-04-22 under Phase 20 P2-12). This document is kept
+> as a **historical snapshot** of what the repo looked like on
+> 2026-04-15 — do not "fix" the findings here by editing them; track
+> any *new* defects in a fresh PR or issue. For currently-open
+> governance-theatre follow-ups, see
+> `docs/phases/PHASE_20_PHASE_18_REMEDIATION.md`.
 
 This document is deliberately blunt. It identifies defects in the code, gaps between what the docs claim and what the Ansible actually does, and whole areas of work that are missing for an internet-facing research honeypot. Each finding names a file:line or role where possible, and each maps to a remediation in a new or updated phase document.
 

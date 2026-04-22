@@ -322,6 +322,7 @@ test-workflow-pins:
 test-requirements:
 	@echo "── docs/REQUIREMENTS.md satisfier paths all resolve (18-H) ──"
 	@$(PY) scripts/ci/check_requirements_traceability.py
+	@$(PY) scripts/ci/check_requirements_traceability.py --self-test
 
 test-adr-format:
 	@echo "── ADR log format + Nygard headings (18-I) ──"

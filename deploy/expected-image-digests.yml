@@ -10,10 +10,12 @@
 # pinned yet" — the slot is reserved but the script hasn't run.
 # Real digests overwrite the sentinel on the first refresh.
 #
-# This file is currently *advisory*: role 09 still resolves digests
-# at deploy time and pins the deployed compose. Wiring role 09 to
-# enforce against this file is a follow-up (would catch tag-mutation
-# attacks: pulled digest != pinned digest → abort).
+# Phase 20 P0-2 (2026-04-22): this file is now enforced by role 09.
+# After `docker pull`, role 09 asserts the pulled digest equals the
+# pinned value below, aborting deploy on mismatch. Sentinel zero-hash
+# entries are skipped ("not pinned yet"). Set
+# `ja4proxy_digest_pin_enforced=false` to bypass for local / air-gapped
+# testing.
 haproxy: "haproxy:2.8-alpine@sha256:b6c7693f0fdab1d6d8695270212b82826c1d424c87a550d05525f1ac82f91937"
 redis: "redis:8-alpine@sha256:c5e375abb885e6b2021c0377879e4890bf76f9065b8922ffc113f2b226b9fc17"
 caddy: "caddy:2-alpine@sha256:834468128c7696cec0ceea6172f7d692daf645ae51983ca76e39da54a97c570d"
