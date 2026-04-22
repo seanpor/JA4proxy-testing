@@ -38,6 +38,13 @@ jobs:
         run: make lint
 
       - name: make test
+        env:
+          # Phase 20 P1-7: check_workflow_pins.py resolves each pinned
+          # SHA against `gh api repos/<o>/<r>/git/ref/tags/<tag>`. The
+          # runner ships `gh` but does not auto-wire a token, so the
+          # unauthenticated rate limit (60/h shared per IP) trips the
+          # checker. Passing the workflow token keeps it strict.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make test
 
   image-scan:
