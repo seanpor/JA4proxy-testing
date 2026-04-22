@@ -6,6 +6,17 @@ Asserts that every `docs/adr/*.md` file (except the README and the
 required H1/H2 headings in order, and a Status line with a known
 value.
 
+Phase 20 P1-10 hardening:
+  * Require at least `MIN_SECTION_CHARS` of non-whitespace content
+    under each of Context / Decision / Consequences. A 1-char body
+    used to pass.
+  * If Status is Deprecated or Superseded, require an explicit
+    `Superseded by NNNN-slug.md` pointer that resolves to a sibling
+    ADR file.
+  * Verify `docs/adr/README.md`'s index table lists exactly the set
+    of numbered ADR files on disk (no silent drift between filesystem
+    and index).
+
 Exit 0 = all ADRs valid. Exit 1 = one or more problems printed to
 stderr. The CI workflow runs this on every PR so the log cannot
 decay.
@@ -21,7 +32,13 @@ ADR_DIR = ROOT / "docs" / "adr"
 
 FILENAME_RE = re.compile(r"^(\d{4})-[a-z0-9][a-z0-9-]*\.md$")
 REQUIRED_SECTIONS = ("Status", "Context", "Decision", "Consequences")
+SUBSTANTIVE_SECTIONS = ("Context", "Decision", "Consequences")
 VALID_STATUSES = {"Accepted", "Proposed", "Deprecated", "Superseded"}
+MIN_SECTION_CHARS = 100
+SUPERSEDED_RE = re.compile(
+    r"Superseded by\s+(?P<slug>\d{4}-[a-z0-9][a-z0-9-]*\.md)"
+)
+INDEX_ROW_RE = re.compile(r"^\|\s*\[(\d{4})\]\(([^)]+)\)\s*\|")
 
 
 def check_file(path: Path) -> list[str]:
@@ -71,11 +88,50 @@ def check_file(path: Path) -> list[str]:
     else:
         first_word = status_body.split()[0]
         if first_word not in VALID_STATUSES:
-            # Accepts pipe-separated values in the template; reject here.
             problems.append(
                 f"Status line {status_body!r} does not start with one of "
                 f"{sorted(VALID_STATUSES)}"
             )
+        # Phase 20 P1-10: Deprecated / Superseded require a pointer.
+        if first_word in {"Deprecated", "Superseded"}:
+            m = SUPERSEDED_RE.search(status_body)
+            if not m:
+                problems.append(
+                    f"Status is {first_word!r} but no "
+                    f"`Superseded by NNNN-slug.md` pointer found in status body"
+                )
+            else:
+                target = path.parent / m.group("slug")
+                if not target.is_file():
+                    problems.append(
+                        f"Status points to `{m.group('slug')}` but that "
+                        f"ADR file does not exist"
+                    )
+
+    # Phase 20 P1-10: substantive-section word count. Extract the body
+    # between `## X` and the next `## ` heading, strip whitespace, and
+    # enforce a floor.
+    def section_body(heading: str) -> str:
+        try:
+            start = lines.index(f"## {heading}")
+        except ValueError:
+            return ""
+        body: list[str] = []
+        for ln in lines[start + 1 :]:
+            if ln.startswith("## "):
+                break
+            body.append(ln)
+        return "\n".join(body).strip()
+
+    for sec in SUBSTANTIVE_SECTIONS:
+        body = section_body(sec)
+        compact = re.sub(r"\s+", "", body)
+        if len(compact) < MIN_SECTION_CHARS:
+            problems.append(
+                f"'## {sec}' has only {len(compact)} non-whitespace chars "
+                f"(< {MIN_SECTION_CHARS}) — too thin to be a real ADR section"
+            )
+
     return problems
 
 
@@ -110,6 +166,31 @@ def main() -> int:
         problems = check_file(adr)
         if problems:
             failures.append((adr, problems))
+
+    # Phase 20 P1-10: cross-check README.md index against the filesystem.
+    readme = ADR_DIR / "README.md"
+    if readme.is_file():
+        indexed: set[str] = set()
+        for ln in readme.read_text().splitlines():
+            m = INDEX_ROW_RE.match(ln)
+            if m:
+                indexed.add(m.group(2).lstrip("./"))
+        on_disk = {adr.name for adr in adr_files}
+        missing_from_index = sorted(on_disk - indexed)
+        orphan_rows = sorted(indexed - on_disk)
+        if missing_from_index:
+            failures.append(
+                (readme, [
+                    f"index missing row(s) for ADR file(s): "
+                    f"{missing_from_index}"
+                ])
+            )
+        if orphan_rows:
+            failures.append(
+                (readme, [
+                    f"index has row(s) with no matching file: {orphan_rows}"
+                ])
+            )
 
     if failures:
         for adr, problems in failures:

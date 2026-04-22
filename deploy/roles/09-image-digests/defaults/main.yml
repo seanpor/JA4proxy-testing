@@ -1,1 +1,5 @@
 ---
+# Phase 20 P0-2: enforce that pulled digests equal the values pinned in
+# deploy/expected-image-digests.yml. Set to false for local/air-gapped
+# testing where Docker Hub returns a different digest than CI last saw.
+ja4proxy_digest_pin_enforced: true

@@ -56,6 +56,48 @@
         | zip(digest_results.results | map(attribute='stdout'))
       ) }}
 
+# Phase 20 P0-2: enforce deploy/expected-image-digests.yml. The weekly
+# digest-update workflow queries Docker Hub and refreshes that file.
+# If the digest the VM just pulled disagrees, that is the tag-mutation
+# attack signal the pin file was created to catch. Toggle via
+# `ja4proxy_digest_pin_enforced` (default true); sentinel zero-hash
+# entries (`@sha256:000…0`) mean "not pinned yet" and are skipped.
+- name: Load expected image digests (Phase 20 P0-2)
+  tags: [digests, phase9]
+  when: ja4proxy_digest_pin_enforced | default(true) | bool
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/../expected-image-digests.yml"
+    name: ja4proxy_expected_digests
+
+- name: Assert pulled digests match expected-image-digests.yml (Phase 20 P0-2)
+  tags: [digests, phase9]
+  when: ja4proxy_digest_pin_enforced | default(true) | bool
+  vars:
+    sentinel: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    pulled_suffix: "{{ (resolved_digests[item] | default('')).split('@') | last }}"
+    expected_suffix: "{{ (ja4proxy_expected_digests[item] | default('')).split('@') | last }}"
+  ansible.builtin.assert:
+    that:
+      - expected_suffix == sentinel or pulled_suffix == expected_suffix
+    fail_msg: >-
+      Image `{{ item }}` digest mismatch. Pulled `{{ pulled_suffix }}`
+      but `deploy/expected-image-digests.yml` pins `{{ expected_suffix }}`.
+      This is the tag-mutation signal the pin file guards against. Refresh
+      the pin file (`make update-digests` or wait for the weekly workflow
+      PR) if this is a legitimate upstream rebuild, or investigate if not.
+      Set `ja4proxy_digest_pin_enforced=false` to bypass for local testing.
+    success_msg: "{{ item }} pulled digest matches pinned digest."
+  loop:
+    - haproxy
+    - redis
+    - caddy
+    - prometheus
+    - grafana
+    - loki
+    - promtail
+    - blackbox_exporter
+    - alertmanager
+
 - name: Save digests to file for future reference
   tags: [digests, phase9]
   ansible.builtin.copy:

@@ -10,19 +10,26 @@
 #   CRITICAL → decision within 7 days,  fix within 30
 #   HIGH     → decision within 30 days, fix within 90
 #
-# Since 18-B-2, HIGH is a hard merge gate (same as CRITICAL). Anything
-# here is opted-in *explicitly*; new HIGHs against pinned images will
-# fail CI until they are either fixed upstream, allowlisted here with
-# justification, or removed.
+# Since 18-B-2, `scripts/ci/scan_images.sh` runs a single
+# `--severity HIGH,CRITICAL --exit-code 1` pass, so a new HIGH reddens
+# the `image-scan` job the same way a CRITICAL does. The job is
+# advisory on `main` (not a required status check — see the comment
+# at `.github/workflows/ci.yml:43-47`); a red run is a merge-blocker
+# signal in PR review, not a mechanical gate. Anything here is
+# opted-in *explicitly* with a bounded expiry.
+
+# Phase 20 P2-11: expiries staggered across 2026-05-05 → 2026-05-19 by
+# upstream image so that one big-bang red day becomes five spaced
+# decisions. All justifications are unchanged; only the dates moved.
 
 # === CRITICALs ========================================================
 # caddy:2-alpine — smallstep/certificates + grpc-go. Caddy's cert
 # handling and gRPC surface are not on our public path (HAProxy
 # terminates TLS as passthrough; Caddy only serves the static honeypot
 # after JA4proxy). Fixes require upstream caddy image refresh.
-# expires: 2026-05-17
+# expires: 2026-05-05
 CVE-2026-30836
-# expires: 2026-05-17
+# expires: 2026-05-05
 CVE-2026-33186
 
 # grafana/grafana:latest — jackc/pgx/v5 Postgres-driver memory-safety
@@ -30,69 +37,70 @@ CVE-2026-33186
 # attacker-controlled Postgres server; this deployment only configures
 # Prometheus + Loki data sources (see deploy/roles/06-monitoring/),
 # not Postgres. Awaiting upstream grafana image refresh.
-# expires: 2026-05-17
+# expires: 2026-05-12
 CVE-2026-33816
 
 # prom/blackbox-exporter:latest — Go 1.25.5 crypto/tls cert-validation
 # flaw (fixed in 1.24.13 / 1.25.7). Blackbox probes known targets over
 # HTTPS from the monitoring network; exploit requires MITM position on
 # the probe path. Awaiting upstream image refresh.
-# expires: 2026-05-17
+# expires: 2026-05-19
 CVE-2025-68121
 
 # === HIGHs: Go stdlib 2026 series =====================================
 # Span caddy, grafana, loki, promtail, blackbox. Fixes land only when
 # each upstream rebases its image onto Go 1.25.9 / 1.26.2. Five stdlib
 # CVEs, mostly DoS / edge-case validation — none reachable from our
-# honeypot path as configured.
-# expires: 2026-05-17
+# honeypot path as configured. (Fate-shared: all five clear together
+# when the toolchain bump lands.)
+# expires: 2026-05-07
 CVE-2026-25679
-# expires: 2026-05-17
+# expires: 2026-05-07
 CVE-2026-27137
-# expires: 2026-05-17
+# expires: 2026-05-07
 CVE-2026-32280
-# expires: 2026-05-17
+# expires: 2026-05-07
 CVE-2026-32282
-# expires: 2026-05-17
+# expires: 2026-05-07
 CVE-2026-33810
 
 # === HIGHs: Go stdlib 2025 series (blackbox on 1.25.5) ===============
 # Same exposure argument as CVE-2025-68121 above.
-# expires: 2026-05-17
+# expires: 2026-05-19
 CVE-2025-61726
-# expires: 2026-05-17
+# expires: 2026-05-19
 CVE-2025-61728
 
 # === HIGHs: Go stdlib 2026 series on blackbox (1.25.5) ===============
 # crypto/x509 cert-chain DoS and TLS key-update handling, fixed in
 # 1.25.9 / 1.26.2. Same probes-only exposure argument as above.
-# expires: 2026-05-17
+# expires: 2026-05-19
 CVE-2026-32281
-# expires: 2026-05-17
+# expires: 2026-05-19
 CVE-2026-32283
 
 # === HIGHs: embedded Go deps ==========================================
 # go-jose (caddy, loki): JWE/JWT parsing flaw. Not on our public path.
-# expires: 2026-05-17
+# expires: 2026-05-14
 CVE-2026-34986
 # opentelemetry-go otel/sdk: BSD-only kenv absolute-path issue. Not BSD.
-# expires: 2026-05-17
+# expires: 2026-05-14
 CVE-2026-39883
 # buger/jsonparser (prometheus): stack overflow on crafted JSON from
 # scrape targets. Our scrape targets are internal + pinned.
-# expires: 2026-05-17
+# expires: 2026-05-14
 CVE-2026-32285
 # docker/moby authz bypass (prometheus, grafana, promtail service
 # discovery): requires docker socket access, which these containers do
 # not have (we do not mount /var/run/docker.sock into any of them).
-# expires: 2026-05-17
+# expires: 2026-05-14
 CVE-2026-34040
 
 # === HIGHs: Alpine base packages in grafana/grafana ===================
 # Fixed upstream in Alpine; grafana:latest needs a rebuild cycle.
-# expires: 2026-05-17
+# expires: 2026-05-12
 CVE-2026-28390
-# expires: 2026-05-17
+# expires: 2026-05-12
 CVE-2026-40200
-# expires: 2026-05-17
+# expires: 2026-05-12
 CVE-2026-22184

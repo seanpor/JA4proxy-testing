@@ -26,8 +26,11 @@ updates:
         patterns:
           - "*"
 
-  # Pinned action versions in CI. We already pin by tag (actions/
-  # checkout@v4 etc.); this surfaces major bumps as PRs.
+  # Pinned action versions in CI. All `uses:` refs are SHA-pinned with
+  # trailing `# v<version>` comments per 18-E; Dependabot rewrites both
+  # the SHA and the comment when it opens a bump PR, so the
+  # `check_workflow_pins.py` gate (Phase 20 P1-7 verifies SHA↔tag) keeps
+  # holding post-merge.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
