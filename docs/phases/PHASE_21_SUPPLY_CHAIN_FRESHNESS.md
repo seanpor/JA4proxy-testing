@@ -59,6 +59,55 @@ P0-2 (which made the pin file load-bearing).
 a privileged action and belongs to a human response. The check's job
 is to *surface* the gap, not paper over it.
 
+## 21-D — Scheduled-workflow enabled-state gate
+
+**Scope.** New offline CI check `scripts/ci/check_workflow_enabled.py`.
+Enumerates every workflow under `.github/workflows/` that contains a
+top-level `schedule:` key and fails `make test` if any has
+`state != "active"` in the GitHub Actions API.
+
+**Why.** 21-B catches the case where a scheduled workflow fires but
+produces no successful run in 14 days. It cannot catch two other
+silent-failure modes:
+
+1. **GitHub auto-disables scheduled workflows after 60 days of repo
+   inactivity** (`state = "disabled_inactivity"`). A workflow whose
+   last successful run happened 61 days ago, then got auto-disabled,
+   still *reports* a prior success — the freshness gate stays green
+   right up until the ceiling bites, by which point the cron hasn't
+   fired for two full ceilings.
+2. **Semi-annual workflows legitimately have long silent windows.**
+   `drill-reminder.yml` is scheduled for April 1 and October 1; a
+   180-day ceiling is the earliest the freshness gate could catch a
+   problem, and by then the drill has already been missed. The
+   enabled-state gate catches a disabled semi-annual workflow the
+   moment CI next runs, not after the window lapses.
+
+Together, 21-B and 21-D make the scheduled-workflow layer
+load-bearing rather than ceremonial.
+
+**Files.**
+- `scripts/ci/check_workflow_enabled.py` — the new check.
+- `Makefile` — new `test-workflow-enabled` target; added to the
+  `test` prerequisite list.
+- `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md` — this section.
+
+**Acceptance.**
+- All scheduled workflows active: prints `✓ N scheduled workflow(s)
+  all active` and exits 0.
+- Any workflow disabled (manually or by inactivity): prints the
+  workflow name + observed state and exits 1 — `make test` goes red.
+- Offline / no `gh` on PATH / no repo-slug: check warns and exits 0
+  (same pattern as `check_digest_freshness.py`).
+
+**Depends on.** Phase 20 P0-1 (branch protection) so a red check
+mechanically blocks merge; 18-G, 18-L, 18-E (the three scheduled
+workflows this guards).
+
+**Not in scope.** Auto-re-enabling a disabled workflow — that's a
+privileged operator action and a defensible escalation gate. The
+check's job is to surface the problem, not silently paper over it.
+
 ## 21-A — Reachability-tested CVE justifications (proposed, not started)
 
 **Scope.** Each `.trivyignore` entry carries a prose justification
@@ -87,6 +136,7 @@ green; the live rehearsal is operator work.
 
 ## Tracking
 
-- [x] 21-B — digest-pin workflow freshness monitor (PR #TBD)
+- [x] 21-B — digest-pin workflow freshness monitor (PR #68)
+- [x] 21-D — scheduled-workflow enabled-state gate (PR #TBD)
 - [ ] 21-A — reachability-tested CVE justifications (proposed)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)
