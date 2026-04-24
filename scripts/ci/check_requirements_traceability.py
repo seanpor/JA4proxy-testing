@@ -74,6 +74,36 @@ BEHAVIOUR_ASSERTS: list[tuple[str, str, str, str]] = [
         "`deploy/expected-image-digests.yml` and assert the live "
         "pulled digest matches.",
     ),
+    # The three checks below together prove the Phase 20 P0-2 assertion
+    # block is actually wired — not just that the filename appears in a
+    # comment. Loading via include_vars + indexing both sides of the
+    # comparison + calling `ansible.builtin.assert` are each necessary;
+    # dropping any of them silently neuters the gate.
+    (
+        "NF-05",
+        "deploy/roles/09-image-digests/tasks/main.yml",
+        "ja4proxy_expected_digests",
+        "NF-05 P0-2: role 09 must load the pin file into the "
+        "`ja4proxy_expected_digests` fact (via include_vars) so the "
+        "assertion has both sides to compare.",
+    ),
+    (
+        "NF-05",
+        "deploy/roles/09-image-digests/tasks/main.yml",
+        "resolved_digests[item]",
+        "NF-05 P0-2: the assertion must index the live `resolved_digests` "
+        "dict per-image. Without this, the gate does not compare the "
+        "*pulled* digest against the pin.",
+    ),
+    (
+        "NF-05",
+        "deploy/roles/09-image-digests/tasks/main.yml",
+        "ansible.builtin.assert",
+        "NF-05 P0-2: the digest-match check must use "
+        "`ansible.builtin.assert` so a mismatch aborts the play. A "
+        "`debug` or conditional log would allow tag-mutation to slip "
+        "through silently.",
+    ),
 ]
 
 
