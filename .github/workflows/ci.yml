@@ -78,27 +78,15 @@ jobs:
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
             | sudo sh -s -- -b /usr/local/bin
 
+      # `make scan-images` runs `scripts/ci/scan_images.sh`, which
+      # since 21-E scans both every compose image (HIGH+CRITICAL,
+      # fixed-only, `.trivyignore`-aware) *and* the rendered compose
+      # SBOM at `/tmp/compose.cdx.json` (Phase 20 P1-8 — giving the
+      # shipped SBOM a consumer). Keeping the SBOM scan inside the
+      # wrapper means `make lint-all` locally exercises the same
+      # gates as this job. `check_local_ci_parity.py` enforces.
       - name: make scan-images
         run: make scan-images
-
-      # Phase 20 P1-8: give the shipped compose SBOM a consumer.
-      # Render the same SBOM that role 02 ships, run `trivy sbom`
-      # over it with the same severity / allowlist flags as the
-      # image scan, and fail if the two disagree (SBOM must surface
-      # the same HIGH/CRITICAL findings the image scan did). Before
-      # Phase 20, the SBOM was shipped but never scanned — an audit
-      # artifact nothing validated.
-      - name: Generate compose SBOM
-        run: python3 scripts/ci/render_compose.py --sbom /tmp/compose.cdx.json
-
-      - name: Scan compose SBOM with Trivy
-        run: |
-          trivy sbom \
-            --severity HIGH,CRITICAL \
-            --ignore-unfixed \
-            --ignorefile .trivyignore \
-            --exit-code 1 \
-            /tmp/compose.cdx.json
 
       - name: Upload compose SBOM as artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

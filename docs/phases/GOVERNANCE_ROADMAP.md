@@ -1071,4 +1071,5 @@ visible.
 - [ ] 18-J — CIS/Lynis benchmark scoring (**deferred** — runtime-telemetry feature, not a Phase-18 governance gap. Scope stays as written in `PHASE_18_SWEBOK_GAP_CLOSURE.md` §18-J; land alongside the first post-go-live observability push, not now.)
 - [x] 20 — Phase-18 governance-theatre remediation (13 defects; PRs #61, #64, #66, #67) — see `docs/phases/PHASE_20_PHASE_18_REMEDIATION.md`
 - [x] 21-B — digest-pin workflow freshness monitor (PR #68) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
-- [x] 21-D — scheduled-workflow enabled-state gate (PR #TBD) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
+- [x] 21-D — scheduled-workflow enabled-state gate (PR #69) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
+- [x] 21-E — local-vs-CI parity gate (PR #TBD) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`

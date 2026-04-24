@@ -108,6 +108,57 @@ workflows this guards).
 privileged operator action and a defensible escalation gate. The
 check's job is to surface the problem, not silently paper over it.
 
+## 21-E — Local-vs-CI parity gate
+
+**Scope.** New offline CI check `scripts/ci/check_local_ci_parity.py`.
+Parses `.github/workflows/ci.yml` and `Makefile` + `deploy/Makefile`
++ `scripts/ci/scan_images.sh`; flags any `scripts/ci/*.py` or `trivy
+<subcmd>` invocation present in CI but unreachable from `make lint`
+/ `make test` / `make scan-images`. Fails `make test` on mismatch.
+
+**Why.** `AGENTS.md` and the `Makefile` header claim `make lint &&
+make test` locally is the pre-push contract, and `make lint-all`
+"matches CI end-to-end". Before 21-E that was untrue: the `image-scan`
+job in `ci.yml` inlined a "Generate compose SBOM" step
+(`python3 scripts/ci/render_compose.py --sbom /tmp/…`) and a "Scan
+compose SBOM with Trivy" step (`trivy sbom …`), neither of which any
+Makefile target invoked. A developer running `make lint-all` locally
+passed while CI could still legitimately turn red on the same commit.
+
+This is exactly the Phase-20 defect pattern (shipped gate, no local
+parity). 21-E converts the parity claim from aspirational to
+mechanical.
+
+**Files.**
+- `scripts/ci/check_local_ci_parity.py` — the parity checker.
+- `scripts/ci/scan_images.sh` — extended to render the compose SBOM
+  and run `trivy sbom` over it with the same severity + allowlist
+  rules as the image scan. This restores parity so `make scan-images`
+  locally is the same gate as the CI `image-scan` job.
+- `.github/workflows/ci.yml` — two inline steps collapsed into the
+  single `make scan-images` call. The artifact-upload step remains.
+- `Makefile` — new `test-local-ci-parity` target; added to `test`
+  prereqs.
+- `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md` — this section.
+
+**Acceptance.**
+- Any `python3 scripts/ci/X.py` in `ci.yml` that isn't invoked from
+  a Makefile recipe: the check fails with the specific script name.
+- Any `trivy <subcmd>` in `ci.yml` whose subcmd doesn't also appear
+  in the Makefile / `scan_images.sh`: fails with the specific subcmd.
+- Clean state (all CI invocations reachable locally): exits 0.
+
+**CI hook.** The check itself; 100% offline (pure text parsing of
+two repo files).
+
+**Depends on.** Phase 20 P1-8 (the compose-SBOM scan is what 21-E's
+first fix absorbs).
+
+**Not in scope.** The reverse direction (Makefile invocations absent
+from CI) — that's a different trade-off and would constrain CI from
+legitimately pruning flaky checks. If worth gating, own it as a
+separate check.
+
 ## 21-A — Reachability-tested CVE justifications (proposed, not started)
 
 **Scope.** Each `.trivyignore` entry carries a prose justification
@@ -137,6 +188,7 @@ green; the live rehearsal is operator work.
 ## Tracking
 
 - [x] 21-B — digest-pin workflow freshness monitor (PR #68)
-- [x] 21-D — scheduled-workflow enabled-state gate (PR #TBD)
+- [x] 21-D — scheduled-workflow enabled-state gate (PR #69)
+- [x] 21-E — local-vs-CI parity gate (PR #TBD)
 - [ ] 21-A — reachability-tested CVE justifications (proposed)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)
