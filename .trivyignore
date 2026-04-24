@@ -103,3 +103,32 @@ CVE-2026-28390
 CVE-2026-40200
 # expires: 2026-05-12
 CVE-2026-22184
+
+# === CRITICAL + HIGHs: OpenSSL in grafana/grafana (surfaced 2026-04-24)
+# libcrypto3/libssl3 3.5.5-r0 → fix in 3.5.6-r0. Grafana image needs
+# rebuild onto newer Alpine. Decision window respected: CRITICAL
+# expires within 30d (policy: fix within 30), HIGHs within ~8 weeks
+# (policy: fix within 90). Justifications:
+#
+#   CVE-2026-31789 (CRITICAL) — heap buffer overflow on 32-bit systems.
+#     Our Grafana deploys to amd64 only (Alibaba ECS instance family);
+#     the 32-bit code path is not reachable. Still allowlisted with a
+#     tight expiry because "32-bit only" is an upstream advisory claim,
+#     not something we verify mechanically.
+#   CVE-2026-28387 (HIGH) — OpenSSL arbitrary code execution (CMS path).
+#     Grafana's public surface binds 127.0.0.1 pre-go-live and is behind
+#     admin-IP UFW post-go-live (see role 10 + PHASE_08); attacker must
+#     already be inside the research VM's admin path to reach the CMS
+#     code path.
+#   CVE-2026-28388 (HIGH) — OpenSSL DoS via NULL pointer deref. Same
+#     admin-only exposure argument.
+#   CVE-2026-28389 (HIGH) — OpenSSL DoS in CMS. Same argument.
+#
+# expires: 2026-05-22
+CVE-2026-31789
+# expires: 2026-06-19
+CVE-2026-28387
+# expires: 2026-06-19
+CVE-2026-28388
+# expires: 2026-06-19
+CVE-2026-28389
