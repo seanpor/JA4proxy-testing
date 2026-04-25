@@ -215,6 +215,50 @@ gate". Future tightening should follow the same pattern: each finding
 gets verified against the actual code before any change lands —
 "the agent said so" is not enough.
 
+## 21-G — Probe-coverage invariant for CRITICAL `.trivyignore` entries
+
+**Scope.** A new gate inside `check_cve_reachability.py` that fails
+`make test` if any CRITICAL `.trivyignore` entry has no probe in the
+registry. Today the linkage between an entry and its probe is by
+convention; 21-G makes it a mechanical invariant.
+
+**Why.** With 21-A's four probes shipped (PRs #72-#75), the registry
+covers every CRITICAL entry that exists *today*. But "today" is
+brittle: if a new CRITICAL CVE is added to the allowlist next month
+and no one remembers to register a probe, the allowlist regrows the
+exact governance-theatre defect 21-A was meant to close — a
+shipped justification that nothing tests. 21-G turns "remember to
+add a probe" from a checklist item into a CI failure.
+
+**Files.**
+- `scripts/ci/check_cve_reachability.py`:
+  - new `_critical_cves_in_trivyignore()` parser. Severity is
+    determined by (1) explicit `(CRITICAL)` annotation in any
+    preceding comment (handles the `=== CRITICAL + HIGHs ===`
+    mixed-severity OpenSSL block), or (2) the most recent
+    `=== CRITICALs ===` section header.
+  - new `_registry_coverage()` that introspects each probe's
+    docstring lead-in for declared CVE IDs.
+  - `main()` runs the coverage check before any individual probe,
+    so a missing probe surfaces even when every existing probe is
+    green.
+- `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md` — this section.
+
+**Acceptance.**
+- Current good tree: `✓ 5 CVE reachability claim(s) still hold
+  (covers all 5 CRITICAL .trivyignore entries): …`. Exit 0.
+- A new uncovered CRITICAL CVE added to `.trivyignore`: probe
+  registry fails with "CVE-XXXX-YYY: CRITICAL .trivyignore entry
+  has no reachability probe in this registry. Add a probe…". Exit 1.
+- Smoke-tested: removing the caddy probe surfaces both
+  CVE-2026-30836 and CVE-2026-33186 as uncovered.
+
+**Not in scope.** HIGH-severity entries. The response-time policy
+(decision in 30 days, fix in 90) and the much higher volume of
+HIGHs make probe-per-HIGH a poor cost trade. If a HIGH ever needs
+the same treatment it can declare itself CRITICAL via an explicit
+annotation, or 21-G's classifier can be extended.
+
 ## 21-A — Reachability-tested CVE justifications (pilot landed)
 
 **Scope.** Each `.trivyignore` entry carries a prose justification
@@ -296,5 +340,6 @@ green; the live rehearsal is operator work.
 - [x] 21-A — reachability-tested CVE justifications, pilot probe (PR #72)
 - [x] 21-A — probe for CVE-2026-31789 (Grafana OpenSSL 32-bit) (PR #73)
 - [x] 21-A — probe for CVE-2025-68121 (blackbox MITM-on-probe-path) (PR #74)
-- [x] 21-A — probe for CVE-2026-30836/33186 (caddy not on public path) (PR #TBD)
+- [x] 21-A — probe for CVE-2026-30836/33186 (caddy not on public path) (PR #75)
+- [x] 21-G — probe-coverage invariant for CRITICAL .trivyignore (PR #TBD)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)
