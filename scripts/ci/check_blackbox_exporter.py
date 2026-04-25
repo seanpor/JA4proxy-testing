@@ -84,13 +84,24 @@ else:
         errors.append(f"{RULES.relative_to(ROOT)}: not valid YAML: {exc}")
         doc = None
     if isinstance(doc, dict):
-        rules_text = RULES.read_text()
-        if "CertExpiringSoon" not in rules_text:
-            errors.append(f"{RULES.relative_to(ROOT)}: no CertExpiringSoon alert")
-        if "probe_ssl_earliest_cert_expiry" not in rules_text:
+        # 21-F: walk the parsed structure rather than substring-matching
+        # the raw text. A previous version passed if the strings appeared
+        # anywhere — including in a comment or a different rule's expr —
+        # which made the assertion much weaker than its docstring claimed.
+        cert_alert = None
+        for group in doc.get("groups") or []:
+            for rule in group.get("rules") or []:
+                if rule.get("alert") == "CertExpiringSoon":
+                    cert_alert = rule
+                    break
+            if cert_alert is not None:
+                break
+        if cert_alert is None:
+            errors.append(f"{RULES.relative_to(ROOT)}: no CertExpiringSoon alert rule")
+        elif "probe_ssl_earliest_cert_expiry" not in (cert_alert.get("expr") or ""):
             errors.append(
-                f"{RULES.relative_to(ROOT)}: CertExpiringSoon does not reference "
-                "probe_ssl_earliest_cert_expiry"
+                f"{RULES.relative_to(ROOT)}: CertExpiringSoon.expr does not "
+                "reference probe_ssl_earliest_cert_expiry"
             )
 
 if errors:

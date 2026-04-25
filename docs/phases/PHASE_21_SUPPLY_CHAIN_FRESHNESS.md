@@ -159,6 +159,62 @@ from CI) — that's a different trade-off and would constrain CI from
 legitimately pruning flaky checks. If worth gating, own it as a
 separate check.
 
+## 21-F — Tighten existence-only gates in `scripts/ci/check_*.py`
+
+**Scope.** A meta-audit pass over the 51 `scripts/ci/check_*.py`
+checkers, looking for the same governance-theatre pattern Phase 20
+attacked at the policy layer: a checker whose docstring claims to
+verify *behaviour* but whose body only verifies *presence of a string
+or file*. This first PR tightens the two clearest offenders.
+
+**Why.** The repo's CI gate is only as load-bearing as its weakest
+checker. If `check_blackbox_exporter.py` claims "CertExpiringSoon
+rule declared" but actually only confirms the substring appears
+*anywhere* in the rules file (including a comment or a different
+rule's `expr`), then renaming or deleting the alert leaves the gate
+green. Same shape as Phase 20: shipped policy, no enforcement.
+
+**Findings (verified).**
+- `check_heartbeat_timer.py:79` — gate detection used
+  `"ja4proxy_heartbeat_url" in txt and "length" in txt`. Two
+  unrelated substrings would satisfy it (e.g. a `# length: 32`
+  comment + an unrelated `ja4proxy_heartbeat_url:` line). Tightened
+  to a regex that requires `when: … ja4proxy_heartbeat_url … |
+  length` on the same line — the actual gate shape role 06 uses.
+- `check_blackbox_exporter.py:88-94` — parsed the rules YAML for
+  syntax then fell back to substring matching the raw text for
+  `CertExpiringSoon` and `probe_ssl_earliest_cert_expiry`. Tightened
+  to walk the parsed `groups → rules` tree, find the alert by
+  `alert: CertExpiringSoon`, and confirm `probe_ssl_earliest_cert_
+  expiry` is in *that rule's* `expr`.
+
+**Findings considered and rejected.**
+- `check_digest_regex.py:75` accepts `0{64}` as a valid hash. This
+  is the documented "not pinned yet" sentinel, supported end-to-end
+  by role 09's assert (`expected_suffix == sentinel or pulled_suffix
+  == expected_suffix`). Allowing it is correct.
+- `check_digest_freshness.py:132` (claimed "silent on zero runs"):
+  read the code — the `run is None` branch explicitly returns 1 with
+  a clear error. The claim was wrong.
+- `check_molecule_scenarios.py`, `check_export_timer.py` etc. —
+  documented as structural-only or content-trivial. No defect.
+
+**Acceptance.**
+- Before this PR: a no-op rename of the heartbeat `when:` clause to
+  drop `| length`, or deletion of the CertExpiringSoon alert leaving
+  the substring in a comment, would not fail CI. After: both
+  perturbations fail. Verified by an in-memory smoke test.
+- Current good tree: both checkers still print their success line
+  (no false positive introduced).
+
+**CI hook.** None new — same `make test` targets, just stricter.
+
+**Not in scope.** The remaining 47+ checkers were surveyed by an
+Explore agent; no other findings rose to "shipped gate that doesn't
+gate". Future tightening should follow the same pattern: each finding
+gets verified against the actual code before any change lands —
+"the agent said so" is not enough.
+
 ## 21-A — Reachability-tested CVE justifications (proposed, not started)
 
 **Scope.** Each `.trivyignore` entry carries a prose justification
@@ -189,6 +245,7 @@ green; the live rehearsal is operator work.
 
 - [x] 21-B — digest-pin workflow freshness monitor (PR #68)
 - [x] 21-D — scheduled-workflow enabled-state gate (PR #69)
-- [x] 21-E — local-vs-CI parity gate (PR #TBD)
+- [x] 21-E — local-vs-CI parity gate (PR #70)
+- [x] 21-F — tighten existence-only gates in scripts/ci/check_*.py (PR #TBD)
 - [ ] 21-A — reachability-tested CVE justifications (proposed)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)
