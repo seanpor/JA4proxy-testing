@@ -70,13 +70,23 @@ if GV.exists():
     if not re.search(r"^ja4proxy_heartbeat_url\s*:", gv, re.MULTILINE):
         errors.append(f"{GV.relative_to(ROOT)}: missing ja4proxy_heartbeat_url default")
 
+# 21-F: the gate must be a real `when:` clause on the heartbeat task,
+# not just incidental `length` text elsewhere in the file. We require
+# `ja4proxy_heartbeat_url` and `length` (the `| length` filter) to
+# co-occur on the same line — that's the actual gate shape used by
+# role 06 (`when: ja4proxy_heartbeat_url | default('') | length > 0`).
+GATE_RE = re.compile(
+    r"^\s*when:.*ja4proxy_heartbeat_url.*\|\s*length",
+    re.MULTILINE,
+)
+
 deployer_found = False
 gate_found = False
 for tasks in ROLES_DIR.rglob("tasks/*.yml"):
     txt = tasks.read_text()
     if "heartbeat.timer.j2" in txt and "heartbeat.service.j2" in txt:
         deployer_found = True
-        if "ja4proxy_heartbeat_url" in txt and "length" in txt:
+        if GATE_RE.search(txt):
             gate_found = True
         break
 
@@ -86,7 +96,7 @@ if not deployer_found:
     )
 elif not gate_found:
     errors.append(
-        "heartbeat deployment not gated on ja4proxy_heartbeat_url being non-empty"
+        "heartbeat deployment not gated on `when: ja4proxy_heartbeat_url | … | length`"
     )
 
 if errors:
