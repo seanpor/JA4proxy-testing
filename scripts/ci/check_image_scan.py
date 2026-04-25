@@ -31,10 +31,23 @@ import subprocess
 import sys
 from pathlib import Path
 
+# 21-H: severity classifier shared with check_cve_reachability.py so
+# the two gates can't disagree on a borderline severity call.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _trivyignore import classify as _classify_trivyignore
+
 try:
     import yaml
 except ImportError:
     sys.exit("pyyaml not installed. Run: make lint-install")
+
+# 21-H severity-response ceilings, codifying the .trivyignore header:
+#   CRITICAL → fix within 30 days
+#   HIGH     → fix within 90 days
+# An entry whose `# expires:` is further out than the ceiling
+# silently widens the policy. We refuse — re-justify on the policy
+# cadence or get the upstream fix.
+SEVERITY_MAX_DAYS = {"CRITICAL": 30, "HIGH": 90}
 
 ROOT = Path(__file__).resolve().parents[2]
 WRAPPER = ROOT / "scripts" / "ci" / "scan_images.sh"
@@ -166,6 +179,10 @@ def check_trivyignore() -> None:
     pending_expiry: dt.date | None = None
     pending_expiry_line: int | None = None
 
+    # 21-H: severity classification of every uncommented CVE so we can
+    # apply the policy ceiling per entry below.
+    classification = _classify_trivyignore(IGNOREFILE.read_text())
+
     for lineno, raw in enumerate(IGNOREFILE.read_text().splitlines(), start=1):
         line = raw.strip()
         if not line:
@@ -201,6 +218,26 @@ def check_trivyignore() -> None:
                 f"{IGNOREFILE.name}:{lineno}: {cve} expired on {pending_expiry.isoformat()} "
                 f"(today is {today.isoformat()}) — fix, re-justify with a new expiry, or remove"
             )
+        else:
+            # 21-H severity-ceiling: CRITICAL fix-within-30, HIGH within-90.
+            # Skip UNKNOWN-severity entries; the classifier returns UNKNOWN
+            # only for CVEs in mixed-severity sections without an explicit
+            # `(SEV)` annotation, which is itself a documentation defect
+            # but not the one this gate targets.
+            severity = classification.get(cve, "UNKNOWN")
+            ceiling = SEVERITY_MAX_DAYS.get(severity)
+            if ceiling is not None:
+                window = (pending_expiry - today).days
+                if window > ceiling:
+                    errors.append(
+                        f"{IGNOREFILE.name}:{lineno}: {cve} ({severity}) "
+                        f"expires {pending_expiry.isoformat()} — {window}d "
+                        f"away, beyond the {ceiling}d {severity} ceiling. "
+                        "The .trivyignore header policy is "
+                        "'CRITICAL → fix within 30 days, HIGH → fix within "
+                        "90 days'; tighten the expiry, fix the CVE, or "
+                        "amend the policy."
+                    )
         # Don't consume the expiry — multiple CVEs in one block can share it
         # as long as there are no blank lines between them.
         _ = pending_expiry_line
