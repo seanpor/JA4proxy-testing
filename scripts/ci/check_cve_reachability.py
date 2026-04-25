@@ -39,6 +39,7 @@ land as small follow-up PRs, each adding one function.
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -114,7 +115,59 @@ def probe_cve_2026_33816() -> str | None:
     return None
 
 
-PROBES = [probe_cve_2026_33816]
+def probe_cve_2026_31789() -> str | None:
+    """CVE-2026-31789 — Grafana OpenSSL libcrypto3/libssl3 heap buffer
+    overflow on 32-bit systems. Allowlist prose: "Our Grafana deploys
+    to amd64 only (Alibaba ECS instance family); the 32-bit code path
+    is not reachable".
+
+    Reachability assertion: walk `docker-compose.yml.j2` and confirm no
+    service pins a 32-bit Docker platform. Default Docker behaviour
+    matches the host architecture, and every Alibaba ECS family this
+    deployment targets (the provisioning script's default and the
+    families the README mentions) is 64-bit. Pinning `linux/386`,
+    `linux/arm/v6` or `linux/arm/v7` on any service would override
+    that and pull a 32-bit Grafana — re-enabling the OpenSSL 32-bit
+    code path. We allowlist *no* `platform:` directive at all rather
+    than blocklist 32-bit values, so any future pin (even a 64-bit
+    one) forces a deliberate decision rather than silently widening
+    the surface."""
+    cve = "CVE-2026-31789"
+    if not _trivyignore_has(cve):
+        return None
+
+    compose = ROOT / "deploy" / "templates" / "docker-compose.yml.j2"
+    if not compose.exists():
+        return f"{cve}: {compose.relative_to(ROOT)} missing — cannot verify claim"
+
+    # We don't try to YAML-parse the template (it has Jinja directives
+    # the loader would choke on). A regex over `platform:` lines is
+    # sufficient: the compose grammar only uses that key at the
+    # service level, so any match means a service-level platform
+    # override.
+    platform_lines = []
+    for lineno, raw in enumerate(compose.read_text().splitlines(), start=1):
+        stripped = raw.strip()
+        if stripped.startswith("#") or not stripped:
+            continue
+        # `platform:` at any indent — service-level only key in compose.
+        if re.match(r"platform\s*:", stripped):
+            platform_lines.append((lineno, stripped))
+
+    if platform_lines:
+        joined = "; ".join(f"line {ln}: `{txt}`" for ln, txt in platform_lines)
+        return (
+            f"{cve}: docker-compose.yml.j2 declares platform override(s) "
+            f"({joined}). The 'amd64 only / 32-bit code path unreachable' "
+            "reachability argument depends on Docker pulling host-arch "
+            "images by default. Remove the platform pin, drop the CVE, "
+            "or extend this probe to allowlist a known-64-bit value."
+        )
+
+    return None
+
+
+PROBES = [probe_cve_2026_33816, probe_cve_2026_31789]
 
 
 def main() -> int:
