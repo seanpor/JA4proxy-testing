@@ -431,6 +431,47 @@ territory 21-I targets.
 
 **Depends on.** 21-E (sibling concept; this is the reverse arrow).
 
+## 21-J — Refuse UNKNOWN-severity .trivyignore entries
+
+**Scope.** Fail `check_trivyignore` if any active CVE classifies as
+`UNKNOWN` under `_trivyignore.classify()`.
+
+**Why.** 21-G's coverage gate (CRITICAL must have a probe) and 21-H's
+ceiling gate (CRITICAL≤30d, HIGH≤90d) both filter on severity. An
+entry that the classifier returns `UNKNOWN` for — i.e. a CVE that
+sits outside any `=== CRITICALs ===` / `=== HIGHs ===` header AND
+without an inline `(CRITICAL)` / `(HIGH)` annotation — silently
+bypasses both gates. Verified in-session: a CVE pasted at the top of
+`.trivyignore` (before any header) classifies UNKNOWN, ships into
+the allowlist, and neither 21-G nor 21-H complains.
+
+The classifier deliberately returns UNKNOWN as a "caller decides how
+strict to be" signal. 21-H chose to skip; 21-J chooses to refuse.
+With both gates in place, "UNKNOWN" stops being an escape hatch.
+
+**Files.**
+- `scripts/ci/check_image_scan.py` — extends `check_trivyignore()`
+  to error out when `severity == "UNKNOWN"` for an active entry,
+  with a remediation hint pointing the contributor at the right
+  section header or the inline `(SEV)` annotation.
+- `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md` — this section.
+
+**Acceptance.**
+- Current good tree (24 active entries, 0 UNKNOWN): unchanged. Same
+  success line.
+- Synthetic drift: a CVE inserted before any section header (no
+  annotation) trips the gate with the file:line, the CVE ID, and
+  the explicit "place under right section header or annotate inline"
+  remediation. Verified in-session.
+
+**Not in scope.** Extending the classifier with more severity tiers
+(MEDIUM, LOW). Trivy's image scan only blocks on HIGH+CRITICAL today;
+adding more tiers would require a policy decision about whether to
+track them at all.
+
+**Depends on.** 21-G (introduced the classifier) and 21-H
+(extracted it into `_trivyignore.py`).
+
 ## 21-C — End-to-end VM verify pass (blocked)
 
 **Scope.** Run `make deploy` + `make verify` + `make go-live` against
@@ -453,5 +494,6 @@ green; the live rehearsal is operator work.
 - [x] 21-A — probe for CVE-2026-30836/33186 (caddy not on public path) (PR #75)
 - [x] 21-G — probe-coverage invariant for CRITICAL .trivyignore (PR #76)
 - [x] 21-H — severity-aware expiry-ceiling gate (PR #77)
-- [x] 21-I — orphan-check gate for scripts/ci/check_*.py (PR #TBD)
+- [x] 21-I — orphan-check gate for scripts/ci/check_*.py (PR #79)
+- [x] 21-J — refuse UNKNOWN-severity .trivyignore entries (PR #TBD)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)
