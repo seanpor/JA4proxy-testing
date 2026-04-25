@@ -215,21 +215,67 @@ gate". Future tightening should follow the same pattern: each finding
 gets verified against the actual code before any change lands —
 "the agent said so" is not enough.
 
-## 21-A — Reachability-tested CVE justifications (proposed, not started)
+## 21-A — Reachability-tested CVE justifications (pilot landed)
 
 **Scope.** Each `.trivyignore` entry carries a prose justification
-(e.g. "Caddy's cert-handling path is not on our public path"). Today
-those justifications are asserted, not tested. 21-A would add a
-smoke-test job that, for each CRITICAL entry, attempts the exploit
-path from an external position and asserts it fails — turning the
-prose into an automated claim.
+(e.g. "this deployment only configures Prometheus + Loki data
+sources, not Postgres"). Today those justifications are asserted,
+not tested. 21-A turns them, one CVE at a time, from human prose
+into static checks against the configuration that backs them.
 
 **Why.** Post-Phase-20, every allowlist entry has a bounded expiry
 and a written reachability argument. The argument is still human-
-authored; a CI proof for the CRITICAL-class entries would close the
-remaining gap between "we said it's unreachable" and "we show it is".
+authored; a CI proof — even a static one — closes the gap between
+"we said it's unreachable" and "we show it is", and catches
+configuration drift before the prose silently goes stale.
 
-**Status.** Not started. Scoped here so it isn't lost.
+**Static, not live.** The original phase language said "attempt the
+exploit path from an external position". That implementation needs
+the deployed VM, network access from CI, and per-CVE exploit
+machinery — heavy, flaky, VM-coupled. The pilot instead tests the
+*configuration that enables reachability*: if the configuration
+forbids the precondition, the prose claim survives; if it permits
+it, the claim is dead. Cheaper, runs offline, lives in `make test`.
+Live probing remains a separate effort if it ever becomes
+load-bearing.
+
+**Pilot.** One probe — CVE-2026-33816 (Grafana jackc/pgx Postgres-
+driver memory-safety flaw). Allowlist prose claim: "this deployment
+only configures Prometheus + Loki data sources … not Postgres". The
+probe parses `deploy/templates/grafana-datasources.yml.j2`, walks the
+declared datasources, and asserts each one's `type` is in the
+expected `{prometheus, loki}` set. Any datasource of type `postgres`
+— or *any* type outside the allowlist — fails the check, forcing a
+deliberate decision (remove the datasource, drop the CVE from
+`.trivyignore`, or extend the probe to re-justify).
+
+**Files.**
+- `scripts/ci/check_cve_reachability.py` — the probe registry. One
+  function per CVE; the pilot ships with `probe_cve_2026_33816`.
+  Structured so additional CVEs land as one-function PRs.
+- `Makefile` — new `test-cve-reachability` target; added to `test`
+  prereqs.
+- `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md` — this section.
+
+**Acceptance.**
+- Current good tree: probe prints `✓ 1 CVE reachability claim(s)
+  still hold: CVE-2026-33816` and exits 0.
+- A drifted Grafana provisioning that adds a `postgres` datasource:
+  probe fails with the specific CVE ID and the new datasource type.
+  Verified by an in-memory smoke test.
+- A drifted provisioning with an unrelated new datasource (`mysql`):
+  probe fails on the allowlist-semantics check, surfacing that the
+  claim now needs re-justification.
+
+**Not in scope (this PR).**
+- The other three CRITICAL entries (CVE-2026-30836 / 33186 caddy
+  cert path; CVE-2025-68121 blackbox MITM-on-probe-path;
+  CVE-2026-31789 OpenSSL 32-bit overflow). Each gets its own one-
+  function follow-up — the framework is the load-bearing part of
+  the pilot, not the count of CVEs covered.
+- Live network probes. See "Static, not live" above.
+
+**Depends on.** None — pure offline static check.
 
 ## 21-C — End-to-end VM verify pass (blocked)
 
@@ -246,6 +292,7 @@ green; the live rehearsal is operator work.
 - [x] 21-B — digest-pin workflow freshness monitor (PR #68)
 - [x] 21-D — scheduled-workflow enabled-state gate (PR #69)
 - [x] 21-E — local-vs-CI parity gate (PR #70)
-- [x] 21-F — tighten existence-only gates in scripts/ci/check_*.py (PR #TBD)
-- [ ] 21-A — reachability-tested CVE justifications (proposed)
+- [x] 21-F — tighten existence-only gates in scripts/ci/check_*.py (PR #71)
+- [x] 21-A — reachability-tested CVE justifications, pilot probe (PR #TBD)
+- [ ] 21-A — extend probes to remaining 3 CRITICAL `.trivyignore` entries
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)
