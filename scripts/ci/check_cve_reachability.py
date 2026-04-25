@@ -167,7 +167,97 @@ def probe_cve_2026_31789() -> str | None:
     return None
 
 
-PROBES = [probe_cve_2026_33816, probe_cve_2026_31789]
+def probe_cve_2025_68121() -> str | None:
+    """CVE-2025-68121 — Go 1.25.5 crypto/tls cert-validation flaw in
+    `prom/blackbox-exporter:latest`. Allowlist prose: "Blackbox probes
+    known targets over HTTPS from the monitoring network; exploit
+    requires MITM position on the probe path".
+
+    Reachability assertion (two halves):
+      1. `blackbox.yml.j2` declares only the `https_2xx` probe module —
+         no `tcp` / `icmp` / `dns` / additional `http` modules that
+         could be aimed at attacker-controlled hosts. Allowlist-strict.
+      2. The blackbox scrape job in `prometheus.yml.j2` uses
+         `static_configs` only — no `file_sd_configs`, `http_sd_configs`,
+         `dns_sd_configs`, `consul_sd_configs`, `kubernetes_sd_configs`
+         etc. Dynamic discovery would let an attacker who can write to
+         the discovery source (file, HTTP endpoint, DNS) feed the
+         exporter an attacker-controlled URL — turning "MITM required"
+         into "any control of the discovery source"."""
+    cve = "CVE-2025-68121"
+    if not _trivyignore_has(cve):
+        return None
+
+    blackbox = ROOT / "deploy" / "templates" / "blackbox.yml.j2"
+    prometheus = ROOT / "deploy" / "templates" / "prometheus.yml.j2"
+
+    if not blackbox.exists():
+        return f"{cve}: {blackbox.relative_to(ROOT)} missing — cannot verify claim"
+    if not prometheus.exists():
+        return f"{cve}: {prometheus.relative_to(ROOT)} missing — cannot verify claim"
+
+    # Blackbox modules: parse and walk.
+    try:
+        bdoc = yaml.safe_load(blackbox.read_text())
+    except yaml.YAMLError as exc:
+        return f"{cve}: {blackbox.relative_to(ROOT)} not valid YAML: {exc}"
+    if not isinstance(bdoc, dict):
+        return f"{cve}: {blackbox.relative_to(ROOT)} did not parse as a mapping"
+    modules = list((bdoc.get("modules") or {}).keys())
+    expected = {"https_2xx"}
+    extra = sorted(set(modules) - expected)
+    if extra:
+        return (
+            f"{cve}: blackbox.yml.j2 declares probe module(s) {extra} "
+            f"outside the {sorted(expected)} allowlist — broadening "
+            "the surface beyond 'known HTTPS targets'. Either remove "
+            "the new module(s), drop the CVE, or extend this probe."
+        )
+
+    # Prometheus blackbox scrape job: regex on the rendered template.
+    # Jinja directives prevent a clean YAML parse; a regex over the
+    # raw text is sufficient because we're checking the *absence* of
+    # service-discovery keys, not the structure of any present.
+    text = prometheus.read_text()
+    blackbox_block = re.search(
+        r"(- job_name:\s*['\"]?blackbox[-_a-z]*['\"]?[\s\S]*?)(?=\n\s*- job_name:|\Z)",
+        text,
+    )
+    if not blackbox_block:
+        return (
+            f"{cve}: prometheus.yml.j2 has no `blackbox*` job_name — "
+            "the reachability claim depends on a known scrape config; "
+            "if the job is gone the claim should be re-justified."
+        )
+    block_text = blackbox_block.group(1)
+    forbidden_sd = (
+        "file_sd_configs", "http_sd_configs", "dns_sd_configs",
+        "consul_sd_configs", "kubernetes_sd_configs", "ec2_sd_configs",
+        "gce_sd_configs", "azure_sd_configs",
+    )
+    found_sd = [k for k in forbidden_sd if k in block_text]
+    if found_sd:
+        return (
+            f"{cve}: prometheus.yml.j2 blackbox job uses "
+            f"{found_sd} — dynamic service discovery breaks the "
+            "'known targets' premise of the MITM-only argument. "
+            "Pin targets in static_configs, drop the CVE, or extend "
+            "this probe to bound the discovery source."
+        )
+    if "static_configs" not in block_text:
+        return (
+            f"{cve}: prometheus.yml.j2 blackbox job has no "
+            "static_configs — cannot verify targets are pinned."
+        )
+
+    return None
+
+
+PROBES = [
+    probe_cve_2026_33816,
+    probe_cve_2026_31789,
+    probe_cve_2025_68121,
+]
 
 
 def main() -> int:
