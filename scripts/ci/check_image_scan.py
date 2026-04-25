@@ -220,11 +220,23 @@ def check_trivyignore() -> None:
             )
         else:
             # 21-H severity-ceiling: CRITICAL fix-within-30, HIGH within-90.
-            # Skip UNKNOWN-severity entries; the classifier returns UNKNOWN
-            # only for CVEs in mixed-severity sections without an explicit
-            # `(SEV)` annotation, which is itself a documentation defect
-            # but not the one this gate targets.
+            # 21-J: an UNKNOWN classification is itself a defect — a CVE
+            # outside any `=== {CRITICAL,HIGH}s ===` section AND without
+            # an explicit `(SEV)` annotation silently bypasses both 21-G
+            # coverage enforcement and the 21-H ceiling enforcement.
+            # Refuse so the gate's coverage matches its claim.
             severity = classification.get(cve, "UNKNOWN")
+            if severity == "UNKNOWN":
+                errors.append(
+                    f"{IGNOREFILE.name}:{lineno}: {cve} has no severity "
+                    "classification (no preceding `=== CRITICALs ===` or "
+                    "`=== HIGHs ===` section header, and no inline "
+                    "`(CRITICAL)` / `(HIGH)` annotation). Without one, "
+                    "21-G coverage and 21-H ceiling enforcement both "
+                    "silently skip this entry. Place it under the right "
+                    "section header or annotate it inline."
+                )
+                continue
             ceiling = SEVERITY_MAX_DAYS.get(severity)
             if ceiling is not None:
                 window = (pending_expiry - today).days
