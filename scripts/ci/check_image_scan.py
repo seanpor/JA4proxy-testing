@@ -35,6 +35,7 @@ from pathlib import Path
 # the two gates can't disagree on a borderline severity call.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _trivyignore import classify as _classify_trivyignore
+from _trivyignore import parse_policy_ceilings as _parse_policy_ceilings
 
 try:
     import yaml
@@ -181,9 +182,32 @@ def check_trivyignore() -> None:
 
     # 21-H: severity classification of every uncommented CVE so we can
     # apply the policy ceiling per entry below.
-    classification = _classify_trivyignore(IGNOREFILE.read_text())
+    text = IGNOREFILE.read_text()
+    classification = _classify_trivyignore(text)
 
-    for lineno, raw in enumerate(IGNOREFILE.read_text().splitlines(), start=1):
+    # 21-K: cross-check the SEVERITY_MAX_DAYS constant against the
+    # `.trivyignore` policy header. The constant is the runtime value
+    # (no init-time work in the hot path); this assertion is the
+    # drift-killer that catches the case where the header is edited
+    # but the constant is stale (or vice versa).
+    parsed = _parse_policy_ceilings(text)
+    if not parsed:
+        sys.exit(
+            f"{IGNOREFILE.name}: policy header missing or malformed "
+            "— expected lines like `#   CRITICAL → … fix within 30` "
+            "and `#   HIGH → … fix within 90`. Restore the header so "
+            "the 21-H ceiling constant has a documented source."
+        )
+    if parsed != SEVERITY_MAX_DAYS:
+        sys.exit(
+            f"{IGNOREFILE.name}: policy header says "
+            f"{parsed!r} but check_image_scan.py SEVERITY_MAX_DAYS "
+            f"is {SEVERITY_MAX_DAYS!r}. The two must agree — edit "
+            "one to match the other so the documented policy and the "
+            "enforced ceiling are the same number."
+        )
+
+    for lineno, raw in enumerate(text.splitlines(), start=1):
         line = raw.strip()
         if not line:
             # Blank line resets the block — any pending expiry dies here.
