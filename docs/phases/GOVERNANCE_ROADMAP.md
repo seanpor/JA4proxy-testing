@@ -1072,4 +1072,9 @@ visible.
 - [x] 20 — Phase-18 governance-theatre remediation (13 defects; PRs #61, #64, #66, #67) — see `docs/phases/PHASE_20_PHASE_18_REMEDIATION.md`
 - [x] 21-B — digest-pin workflow freshness monitor (PR #68) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
 - [x] 21-D — scheduled-workflow enabled-state gate (PR #69) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
-- [x] 21-E — local-vs-CI parity gate (PR #TBD) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
+- [x] 21-E — local-vs-CI parity gate (PR #70) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
+- [x] 21-F — tighten existence-only gates in scripts/ci/check_*.py (PR #71) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
+- [x] 21-A — reachability-tested CVE justifications (PRs #72-#75 — pilot + 3 probes) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
+- [x] 21-G — probe-coverage invariant for CRITICAL .trivyignore (PR #76) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
+- [x] 21-H — severity-aware expiry-ceiling gate on .trivyignore (PR #77) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
+- [ ] 21-C — end-to-end VM verify pass (**blocked** on VM availability) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
