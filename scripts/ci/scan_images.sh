@@ -77,3 +77,25 @@ fi
 
 echo
 echo "✓ all ${#images[@]} images clean on HIGH+CRITICAL (after .trivyignore allowlist)"
+
+# 21-E: the same SBOM role 02 ships must be scanned by the same severity
+# + allowlist rules — otherwise the SBOM is audit theatre. Runs here so
+# `make scan-images` is in parity with ci.yml's image-scan job, and the
+# local `make lint-all` contract doesn't silently skip a CI gate.
+SBOM="/tmp/compose.cdx.json"
+echo
+echo "── Rendering compose SBOM → ${SBOM} ──"
+python3 "${ROOT}/scripts/ci/render_compose.py" --sbom "${SBOM}"
+
+echo
+echo "── Trivy sbom: HIGH+CRITICAL blocking pass over compose SBOM ──"
+trivy sbom \
+    --severity HIGH,CRITICAL \
+    --ignore-unfixed \
+    --exit-code 1 \
+    --no-progress \
+    "${ignore_args[@]}" \
+    "${SBOM}"
+
+echo
+echo "✓ compose SBOM clean on HIGH+CRITICAL (after .trivyignore allowlist)"
