@@ -293,6 +293,8 @@ green; the live rehearsal is operator work.
 - [x] 21-D — scheduled-workflow enabled-state gate (PR #69)
 - [x] 21-E — local-vs-CI parity gate (PR #70)
 - [x] 21-F — tighten existence-only gates in scripts/ci/check_*.py (PR #71)
-- [x] 21-A — reachability-tested CVE justifications, pilot probe (PR #TBD)
-- [ ] 21-A — extend probes to remaining 3 CRITICAL `.trivyignore` entries
+- [x] 21-A — reachability-tested CVE justifications, pilot probe (PR #72)
+- [x] 21-A — probe for CVE-2026-31789 (Grafana OpenSSL 32-bit) (PR #73)
+- [x] 21-A — probe for CVE-2025-68121 (blackbox MITM-on-probe-path) (PR #74)
+- [x] 21-A — probe for CVE-2026-30836/33186 (caddy not on public path) (PR #TBD)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)

@@ -253,11 +253,96 @@ def probe_cve_2025_68121() -> str | None:
     return None
 
 
+def _caddyfile_directives() -> set[str]:
+    """Tokenise the Caddyfile to a flat set of first-token-on-line
+    directive names, comment-stripped. Caddyfile syntax has `#` as
+    line comment; multi-line strings and braces complicate a full
+    parse, but for the *presence* checks the Caddy-CVE probes need —
+    "does the directive `reverse_proxy` appear as code?" — first-token
+    extraction with comment stripping is sufficient and avoids
+    importing a Caddyfile parser."""
+    caddyfile = ROOT / "deploy" / "templates" / "caddyfile.j2"
+    if not caddyfile.exists():
+        return set()
+    directives: set[str] = set()
+    for raw in caddyfile.read_text().splitlines():
+        # Strip `#` comment (Caddyfile uses `#` to EOL).
+        code = raw.split("#", 1)[0]
+        # First non-whitespace token, sans braces.
+        token = code.strip().lstrip("{").lstrip("@").strip().split()
+        if token:
+            first = token[0].rstrip("{").rstrip(",")
+            if first and not first.startswith("{{"):  # skip Jinja
+                directives.add(first)
+    return directives
+
+
+def probe_cve_caddy_not_on_public_path() -> str | None:
+    """CVE-2026-30836 + CVE-2026-33186 — smallstep/certificates and
+    grpc-go inside `caddy:2-alpine`. Allowlist prose: "Caddy's cert
+    handling and gRPC surface are not on our public path (HAProxy
+    terminates TLS as passthrough; Caddy only serves the static
+    honeypot after JA4proxy). Fixes require upstream caddy image
+    refresh."
+
+    Reachability assertion: walk the rendered Caddyfile directives
+    and confirm none of the dangerous directives that would
+    re-enable the vulnerable code paths appear:
+
+      - `pki` (global) / `acme_server` — would turn Caddy into a CA,
+        reaching the smallstep/certificates code path that
+        CVE-2026-30836 exploits.
+      - `reverse_proxy` / `transport` — would make Caddy a gateway
+        rather than a static file server; combined with `transport
+        http { versions h2c }` it reaches the grpc-go code path that
+        CVE-2026-33186 exploits.
+      - `grpc` — explicit gRPC support.
+
+    The probe covers both CVEs because they share a single prose
+    claim and a single image source. Reports both CVE IDs on
+    failure so the operator sees the full scope of the breakage.
+    """
+    cves = ("CVE-2026-30836", "CVE-2026-33186")
+    if not any(_trivyignore_has(c) for c in cves):
+        return None
+
+    caddyfile = ROOT / "deploy" / "templates" / "caddyfile.j2"
+    if not caddyfile.exists():
+        return (
+            f"{'/'.join(cves)}: {caddyfile.relative_to(ROOT)} missing — "
+            "cannot verify caddy's static-content-only configuration."
+        )
+
+    directives = _caddyfile_directives()
+    forbidden = {
+        "pki": "would turn Caddy into a CA (smallstep/certificates path)",
+        "acme_server": "Caddy as ACME server reaches the same CA code path",
+        "reverse_proxy": "Caddy as gateway reaches grpc-go via transport h2c",
+        "transport": "explicit transport block enables gRPC code path",
+        "grpc": "explicit gRPC reverse proxy",
+    }
+    hits = sorted(set(directives) & set(forbidden))
+    if hits:
+        details = "; ".join(f"{d!r} ({forbidden[d]})" for d in hits)
+        return (
+            f"{'/'.join(cves)}: caddyfile.j2 declares forbidden "
+            f"directive(s) — {details}. Caddy is now on the public "
+            "path for the affected code paths; remove the directive, "
+            "drop the CVE(s), or extend this probe to re-justify."
+        )
+
+    return None
+
+
 PROBES = [
     probe_cve_2026_33816,
     probe_cve_2026_31789,
     probe_cve_2025_68121,
+    probe_cve_caddy_not_on_public_path,
 ]
+
+
+CVE_ID_RE = re.compile(r"CVE-\d{4}-\d+")
 
 
 def main() -> int:
@@ -265,8 +350,12 @@ def main() -> int:
     checked: list[str] = []
     for probe in PROBES:
         result = probe()
-        cve = probe.__doc__.split("—", 1)[0].strip().split()[-1]
-        checked.append(cve)
+        # Extract CVE IDs from the docstring lead-in (everything before
+        # the first em-dash). A probe may guard one CVE or several
+        # (caddy: two CVEs share one prose claim and one config).
+        lead = (probe.__doc__ or "").split("—", 1)[0]
+        cves = CVE_ID_RE.findall(lead) or ["?"]
+        checked.extend(cves)
         if result is not None:
             errors.append(result)
 
