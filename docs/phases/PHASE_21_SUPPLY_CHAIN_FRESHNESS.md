@@ -472,6 +472,60 @@ track them at all.
 **Depends on.** 21-G (introduced the classifier) and 21-H
 (extracted it into `_trivyignore.py`).
 
+## 21-K — Couple SEVERITY_MAX_DAYS to the .trivyignore header
+
+**Scope.** Cross-check the `SEVERITY_MAX_DAYS` constant in
+`check_image_scan.py` against the `.trivyignore` policy header at
+runtime. Drift in either direction (header edited but constant stale,
+or constant edited but header stale) fails `make test`.
+
+**Why.** 21-H made the policy header — "CRITICAL → fix within 30,
+HIGH → fix within 90" — mechanically enforced. But the header text
+and the Python constant are two copies of the same number. Two
+copies can drift:
+- A reviewer relaxes the header to "180 days" without touching the
+  code; ceiling enforcement keeps blocking at 30/90 — an angry
+  reviewer reads the header and assumes the gate is laxer than it
+  actually is.
+- Someone tightens the constant to 14 without touching the header;
+  contributors read the header, set 30-day expiries thinking they
+  pass, and CI surprise-reds.
+
+Either way the contract is two-faced. 21-K refuses both.
+
+**Files.**
+- `scripts/ci/_trivyignore.py` — new `parse_policy_ceilings(text)`
+  function. Pure regex over the comment lines `# CRITICAL → … fix
+  within N` / `# HIGH → … fix within N`. Returns `{SEV: N}` or `{}`
+  if the header is missing/malformed.
+- `scripts/ci/check_image_scan.py`:
+  - imports `parse_policy_ceilings`.
+  - in `check_trivyignore()`, before the per-entry walk, asserts
+    `parse_policy_ceilings(text) == SEVERITY_MAX_DAYS`. Empty parse
+    → "header missing or malformed". Mismatch → side-by-side
+    `{parsed} != {constant}` plus the "edit one to match the other"
+    remediation.
+
+**Acceptance.**
+- Current good tree: header parses to `{CRITICAL: 30, HIGH: 90}`,
+  matches the constant; existing success line unchanged.
+- Synthetic: header edited to `fix within 365`, constant unchanged
+  → `policy header says {CRITICAL: 365, HIGH: 90} but
+  check_image_scan.py SEVERITY_MAX_DAYS is {CRITICAL: 30, HIGH:
+  90}` and exit 1. Verified in-session via parser smoke tests.
+- Header malformed (e.g. `fix within blah`) → parser returns `{}`
+  → "header missing or malformed" with a hint pointing back at the
+  expected line shape.
+
+**Why a parser, not just a constant.** The constant alone gives the
+runtime value with no init-time work; the parser alone would make
+the gate fragile to header rewording. Together they make the header
+the documented source and the constant the enforced value, and CI
+fails the moment they disagree — exactly the angry-reviewer property
+this phase is built around.
+
+**Depends on.** 21-H (introduced `SEVERITY_MAX_DAYS`).
+
 ## 21-C — End-to-end VM verify pass (blocked)
 
 **Scope.** Run `make deploy` + `make verify` + `make go-live` against
@@ -495,5 +549,6 @@ green; the live rehearsal is operator work.
 - [x] 21-G — probe-coverage invariant for CRITICAL .trivyignore (PR #76)
 - [x] 21-H — severity-aware expiry-ceiling gate (PR #77)
 - [x] 21-I — orphan-check gate for scripts/ci/check_*.py (PR #79)
-- [x] 21-J — refuse UNKNOWN-severity .trivyignore entries (PR #TBD)
+- [x] 21-J — refuse UNKNOWN-severity .trivyignore entries (PR #80)
+- [x] 21-K — couple SEVERITY_MAX_DAYS to the .trivyignore header (PR #TBD)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)

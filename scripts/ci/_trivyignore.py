@@ -23,6 +23,14 @@ from __future__ import annotations
 import re
 
 CVE_ANNOT_RE = re.compile(r"(CVE-\d{4}-\d+)\s*\((CRITICAL|HIGH)\)")
+# 21-K: matches the header lines
+#   CRITICAL → decision within 7 days,  fix within 30
+#   HIGH     → decision within 30 days, fix within 90
+# `fix within N` is what 21-H's SEVERITY_MAX_DAYS encodes.
+POLICY_RE = re.compile(
+    r"#\s*(CRITICAL|HIGH)\s*→.*fix within\s+(\d+)",
+    re.IGNORECASE,
+)
 SECTION_RE = re.compile(
     r"#\s*===\s*(CRITICALs?|HIGHs?|CRITICAL\s*\+\s*HIGHs?)",
     re.IGNORECASE,
@@ -61,4 +69,20 @@ def classify(text: str) -> dict[str, str]:
         if cm:
             cve = cm.group(1)
             out[cve] = explicit.get(cve) or section or "UNKNOWN"
+    return out
+
+
+def parse_policy_ceilings(text: str) -> dict[str, int]:
+    """Parse the `.trivyignore` policy header for the per-severity
+    `fix within N` ceiling. Returns `{severity: N}` for every header
+    line matched. Empty dict if the header is missing or malformed.
+
+    Lets `check_image_scan.py` (21-H) assert its hardcoded
+    `SEVERITY_MAX_DAYS` matches the header text. The constant is the
+    runtime value; the parser is the cross-check that catches drift
+    in either direction (header edited but constant stale, or vice
+    versa)."""
+    out: dict[str, int] = {}
+    for sev, n in POLICY_RE.findall(text):
+        out[sev.upper()] = int(n)
     return out
