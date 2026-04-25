@@ -52,6 +52,11 @@ import re
 import sys
 from pathlib import Path
 
+# 21-H: severity classifier lives in a sibling module so check_image_scan.py
+# can apply the same source of truth for its expiry-ceiling gate.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _trivyignore import classify as _classify_trivyignore
+
 try:
     import yaml
 except ImportError:
@@ -73,65 +78,17 @@ def _trivyignore_has(cve: str) -> bool:
 
 
 def _critical_cves_in_trivyignore() -> set[str]:
-    """Return the set of CVE IDs in `.trivyignore` whose severity is
-    CRITICAL.
-
-    Severity is determined by (in order of precedence):
-      1. An explicit `(CRITICAL)` annotation in any preceding comment
-         (the `# === CRITICAL + HIGHs ===` block uses this form to
-         distinguish severities within a mixed-severity section).
-      2. The most recent `# === CRITICALs ===` section header (when no
-         per-CVE annotation is present).
-
-    A CVE under a `# === HIGHs ===` header with no overriding
-    `(CRITICAL)` annotation is HIGH; a CVE in a mixed section with no
-    explicit annotation is treated as UNKNOWN (and not returned)
-    because we shouldn't silently classify by guess.
-
-    21-G uses this to assert: every CRITICAL allowlist entry has a
-    reachability probe. HIGHs are out of scope for the probe registry
-    (the response-time policy gives them 30/90 days, and the volume
-    is much higher)."""
+    """CVE IDs in `.trivyignore` whose severity is CRITICAL. Thin
+    wrapper around the shared `_trivyignore.classify()` parser so
+    both this gate and check_image_scan.py's 21-H expiry-ceiling gate
+    use the same source of truth on borderline severity calls."""
     if not TRIVYIGNORE.exists():
         return set()
-
-    text = TRIVYIGNORE.read_text()
-
-    # Pass 1: harvest explicit `(CRITICAL)` / `(HIGH)` annotations.
-    explicit: dict[str, str] = {}
-    for m in re.finditer(r"(CVE-\d{4}-\d+)\s*\((CRITICAL|HIGH)\)", text):
-        explicit[m.group(1)] = m.group(2)
-
-    # Pass 2: walk lines, track section severity, classify each
-    # uncommented CVE entry.
-    section: str | None = None
-    critical: set[str] = set()
-    section_re = re.compile(
-        r"#\s*===\s*(CRITICALs?|HIGHs?|CRITICAL\s*\+\s*HIGHs?)",
-        re.IGNORECASE,
-    )
-    cve_line_re = re.compile(r"^(CVE-\d{4}-\d+)\s*$")
-
-    for raw in text.splitlines():
-        sm = section_re.match(raw)
-        if sm:
-            label = sm.group(1).upper().replace(" ", "")
-            if "CRITICAL" in label and "HIGH" not in label:
-                section = "CRITICAL"
-            elif "HIGH" in label and "CRITICAL" not in label:
-                section = "HIGH"
-            else:
-                section = None  # mixed → require explicit annotation
-            continue
-
-        cm = cve_line_re.match(raw)
-        if cm:
-            cve = cm.group(1)
-            severity = explicit.get(cve) or section
-            if severity == "CRITICAL":
-                critical.add(cve)
-
-    return critical
+    return {
+        cve
+        for cve, sev in _classify_trivyignore(TRIVYIGNORE.read_text()).items()
+        if sev == "CRITICAL"
+    }
 
 
 def probe_cve_2026_33816() -> str | None:

@@ -321,6 +321,67 @@ deliberate decision (remove the datasource, drop the CVE from
 
 **Depends on.** None — pure offline static check.
 
+## 21-H — Severity-aware expiry-ceiling gate
+
+**Scope.** Codify the `.trivyignore` policy header — "CRITICAL → fix
+within 30 days, HIGH → fix within 90 days" — into a mechanical gate
+inside `check_image_scan.py`. Today the header is aspirational prose;
+nothing stops a contributor from setting `# expires:` 18 months out
+on a CRITICAL entry and silently widening the policy. 21-H makes that
+edit fail `make test`.
+
+**Why.** 20-P0-1 added the expiry convention and the not-yet-expired
+check; 21-G locked in probe coverage for every CRITICAL entry. Both
+treat *every entry* the same, regardless of severity. A 400-day
+expiry on a CRITICAL is no longer a CRITICAL response — it's a HIGH
+response with a CRITICAL label. The header pretends otherwise; 21-H
+stops the pretence by failing CI when the window-to-today exceeds the
+severity-tier ceiling.
+
+**Files.**
+- `scripts/ci/_trivyignore.py` — new shared severity classifier
+  (`classify(text) -> dict[CVE, severity]`). Pure function over the
+  file's text; consumers do their own I/O. Extracted from 21-G's
+  parser so `check_cve_reachability.py` and `check_image_scan.py`
+  cannot drift on a borderline classification.
+- `scripts/ci/check_cve_reachability.py` — refactored to import the
+  shared classifier; ~40 lines of duplicated parser logic deleted.
+- `scripts/ci/check_image_scan.py`:
+  - new `SEVERITY_MAX_DAYS = {"CRITICAL": 30, "HIGH": 90}`
+    constant, sourced directly from the `.trivyignore` policy header.
+  - extended `check_trivyignore()` to compute window-to-today on
+    every non-expired entry and fail when it exceeds the severity
+    ceiling. UNKNOWN-severity entries are skipped (the classifier
+    returns UNKNOWN only for CVEs in mixed-severity sections without
+    an explicit `(SEV)` annotation, which is itself a documentation
+    defect but not the one this gate targets).
+- `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md` — this section.
+
+**Acceptance.**
+- Current good tree: every active entry's expiry is within its
+  severity ceiling; `check_trivyignore()` prints its existing success
+  line and exits 0.
+- Synthetic drift: a CRITICAL entry with `# expires:` 251 days out
+  fails with "(CRITICAL) expires … 251d away, beyond the 30d
+  CRITICAL ceiling. … tighten the expiry, fix the CVE, or amend the
+  policy." Same shape for HIGH at 1347 days vs the 90d ceiling.
+- Boundary behavior: CRITICAL at exactly 30d and HIGH at exactly 90d
+  both pass (the gate is `>`, not `>=`).
+- Smoke-tested in-process before commit; `make lint` + `make test`
+  both green.
+
+**Not in scope.**
+- Auto-tightening expiries on existing entries — that's a policy
+  decision, not a mechanical fix.
+- A separate "policy header parser" that reads the ceiling out of
+  the `.trivyignore` comment header. The constant lives in code with
+  a comment pointing back at the header; if the header ever changes,
+  the constant moves with it. One source of truth, written twice on
+  purpose so a header edit cannot silently retune the gate.
+
+**Depends on.** 21-G (which introduced the per-CVE severity
+classifier this PR extracts and shares).
+
 ## 21-C — End-to-end VM verify pass (blocked)
 
 **Scope.** Run `make deploy` + `make verify` + `make go-live` against
@@ -341,5 +402,6 @@ green; the live rehearsal is operator work.
 - [x] 21-A — probe for CVE-2026-31789 (Grafana OpenSSL 32-bit) (PR #73)
 - [x] 21-A — probe for CVE-2025-68121 (blackbox MITM-on-probe-path) (PR #74)
 - [x] 21-A — probe for CVE-2026-30836/33186 (caddy not on public path) (PR #75)
-- [x] 21-G — probe-coverage invariant for CRITICAL .trivyignore (PR #TBD)
+- [x] 21-G — probe-coverage invariant for CRITICAL .trivyignore (PR #76)
+- [x] 21-H — severity-aware expiry-ceiling gate (PR #TBD)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)
