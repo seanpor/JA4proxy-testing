@@ -36,6 +36,15 @@ Pilot scope
 One probe: CVE-2026-33816 (Grafana Postgres datasource). The probe
 function structure is deliberately extensible — additional CVEs
 land as small follow-up PRs, each adding one function.
+
+Coverage invariant (21-G)
+-------------------------
+Once probes exist for the four CRITICAL `.trivyignore` entries
+(landed across PRs #72-#75), the registry adds a *coverage* gate:
+every CRITICAL entry must be defended by some probe. Adding a new
+CRITICAL CVE to `.trivyignore` without registering a probe fails
+`make test` with the missing CVE ID — turning probe coverage from
+convention into mechanical invariant.
 """
 from __future__ import annotations
 
@@ -61,6 +70,68 @@ def _trivyignore_has(cve: str) -> bool:
         if line == cve:
             return True
     return False
+
+
+def _critical_cves_in_trivyignore() -> set[str]:
+    """Return the set of CVE IDs in `.trivyignore` whose severity is
+    CRITICAL.
+
+    Severity is determined by (in order of precedence):
+      1. An explicit `(CRITICAL)` annotation in any preceding comment
+         (the `# === CRITICAL + HIGHs ===` block uses this form to
+         distinguish severities within a mixed-severity section).
+      2. The most recent `# === CRITICALs ===` section header (when no
+         per-CVE annotation is present).
+
+    A CVE under a `# === HIGHs ===` header with no overriding
+    `(CRITICAL)` annotation is HIGH; a CVE in a mixed section with no
+    explicit annotation is treated as UNKNOWN (and not returned)
+    because we shouldn't silently classify by guess.
+
+    21-G uses this to assert: every CRITICAL allowlist entry has a
+    reachability probe. HIGHs are out of scope for the probe registry
+    (the response-time policy gives them 30/90 days, and the volume
+    is much higher)."""
+    if not TRIVYIGNORE.exists():
+        return set()
+
+    text = TRIVYIGNORE.read_text()
+
+    # Pass 1: harvest explicit `(CRITICAL)` / `(HIGH)` annotations.
+    explicit: dict[str, str] = {}
+    for m in re.finditer(r"(CVE-\d{4}-\d+)\s*\((CRITICAL|HIGH)\)", text):
+        explicit[m.group(1)] = m.group(2)
+
+    # Pass 2: walk lines, track section severity, classify each
+    # uncommented CVE entry.
+    section: str | None = None
+    critical: set[str] = set()
+    section_re = re.compile(
+        r"#\s*===\s*(CRITICALs?|HIGHs?|CRITICAL\s*\+\s*HIGHs?)",
+        re.IGNORECASE,
+    )
+    cve_line_re = re.compile(r"^(CVE-\d{4}-\d+)\s*$")
+
+    for raw in text.splitlines():
+        sm = section_re.match(raw)
+        if sm:
+            label = sm.group(1).upper().replace(" ", "")
+            if "CRITICAL" in label and "HIGH" not in label:
+                section = "CRITICAL"
+            elif "HIGH" in label and "CRITICAL" not in label:
+                section = "HIGH"
+            else:
+                section = None  # mixed → require explicit annotation
+            continue
+
+        cm = cve_line_re.match(raw)
+        if cm:
+            cve = cm.group(1)
+            severity = explicit.get(cve) or section
+            if severity == "CRITICAL":
+                critical.add(cve)
+
+    return critical
 
 
 def probe_cve_2026_33816() -> str | None:
@@ -345,9 +416,37 @@ PROBES = [
 CVE_ID_RE = re.compile(r"CVE-\d{4}-\d+")
 
 
+def _registry_coverage() -> set[str]:
+    """Set of CVE IDs that the probe registry claims to cover. Source
+    of truth is each probe's docstring lead-in (text before the first
+    em-dash) — same place `main()` reads for reporting."""
+    covered: set[str] = set()
+    for probe in PROBES:
+        lead = (probe.__doc__ or "").split("—", 1)[0]
+        covered.update(CVE_ID_RE.findall(lead))
+    return covered
+
+
 def main() -> int:
     errors: list[str] = []
     checked: list[str] = []
+
+    # 21-G coverage invariant: every CRITICAL `.trivyignore` entry must
+    # be defended by some probe. Run *before* the probes so a missing
+    # probe surfaces even when every existing probe is green.
+    critical = _critical_cves_in_trivyignore()
+    covered = _registry_coverage()
+    uncovered = sorted(critical - covered)
+    if uncovered:
+        for cve in uncovered:
+            errors.append(
+                f"{cve}: CRITICAL .trivyignore entry has no reachability "
+                "probe in this registry. Add a probe function (one per "
+                "CVE or one per shared prose claim) that mechanically "
+                "verifies the allowlist's reachability argument, OR drop "
+                "the CVE if it should not have been allowlisted."
+            )
+
     for probe in PROBES:
         result = probe()
         # Extract CVE IDs from the docstring lead-in (everything before
@@ -369,7 +468,8 @@ def main() -> int:
         print("✓ no CVE reachability probes registered")
     else:
         print(
-            f"✓ {len(checked)} CVE reachability claim(s) still hold: "
+            f"✓ {len(checked)} CVE reachability claim(s) still hold "
+            f"(covers all {len(critical)} CRITICAL .trivyignore entries): "
             + ", ".join(checked)
         )
     return 0
