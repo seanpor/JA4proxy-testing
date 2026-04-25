@@ -382,6 +382,55 @@ severity-tier ceiling.
 **Depends on.** 21-G (which introduced the per-CVE severity
 classifier this PR extracts and shares).
 
+## 21-I — Orphan-check gate
+
+**Scope.** Fail `make test` if any `scripts/ci/check_*.py` file
+exists on disk but is not invoked transitively by `make test` or
+`make lint`. Closes the symmetric gap from 21-E.
+
+**Why.** 21-E ensures CI runs nothing the local pre-push contract
+can't reproduce. The reverse direction was open: a contributor adds
+`check_new_thing.py`, forgets to add `test-new-thing` to the
+Makefile, and the check ships dead. The angry reviewer reads the
+filename in the tree and assumes it gates something; CI runs forever
+without it. Today every check_*.py happens to be wired (verified
+during this PR's audit — 53/53 files reachable). 21-I makes the
+property mechanical so it doesn't quietly stop being true.
+
+**Files.**
+- `scripts/ci/check_orphaned_ci_scripts.py` — new check. Lists
+  every `scripts/ci/check_*.py`, asks `make -n test` and `make -n
+  lint` for the authoritative dry-run command surface, diffs.
+  Falls back to a warning + exit 0 if `make` is not on PATH (mirrors
+  21-B's `gh` fallback so a bare-checkout dev loop stays green).
+- `Makefile` — new `test-orphaned-ci-scripts` target; added to the
+  `test` prerequisite chain and to `.PHONY`.
+- `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md` — this section.
+
+**Why dry-run, not regex.** A regex over the Makefile's text would
+match a check that's mentioned but not actually invoked from `test`
+(e.g. defined inside a target nothing requires). `make -n` traces
+real prereq chains, including targets defined in `deploy/Makefile`,
+so the gate's claim ("invoked by `make test`") is what it actually
+checks.
+
+**Acceptance.**
+- Current good tree: prints `✓ orphan-check gate: 53 check_*.py
+  file(s), all invoked from \`make test\`/\`make lint\``. Exit 0.
+- Synthetic orphan: dropping a stub `check_synthetic_orphan.py` into
+  `scripts/ci/` (without wiring it) trips the gate and lists the
+  orphan with the remediation hint. Verified in-session before this
+  PR.
+- The check itself is wired only via the Makefile, so 21-I gates
+  itself.
+
+**Not in scope.** A unit-test-style gate (e.g. "every check has at
+least one negative-case fixture"). That's a much bigger lift and
+slides into the test-quality territory rather than the CI-plumbing
+territory 21-I targets.
+
+**Depends on.** 21-E (sibling concept; this is the reverse arrow).
+
 ## 21-C — End-to-end VM verify pass (blocked)
 
 **Scope.** Run `make deploy` + `make verify` + `make go-live` against
@@ -403,5 +452,6 @@ green; the live rehearsal is operator work.
 - [x] 21-A — probe for CVE-2025-68121 (blackbox MITM-on-probe-path) (PR #74)
 - [x] 21-A — probe for CVE-2026-30836/33186 (caddy not on public path) (PR #75)
 - [x] 21-G — probe-coverage invariant for CRITICAL .trivyignore (PR #76)
-- [x] 21-H — severity-aware expiry-ceiling gate (PR #TBD)
+- [x] 21-H — severity-aware expiry-ceiling gate (PR #77)
+- [x] 21-I — orphan-check gate for scripts/ci/check_*.py (PR #TBD)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)
