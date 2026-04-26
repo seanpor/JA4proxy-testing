@@ -31,8 +31,14 @@ POLICY_RE = re.compile(
     r"#\s*(CRITICAL|HIGH)\s*→.*fix within\s+(\d+)",
     re.IGNORECASE,
 )
+# 21-L: alternation order matters — `CRITICALs?` would otherwise
+# match the leading word of `CRITICAL + HIGHs ===` and the mixed
+# section would silently classify as CRITICAL, defeating the
+# "require an explicit annotation in mixed sections" contract that
+# the classifier's else-branch encodes. Put the longest pattern
+# first so a mixed header wins.
 SECTION_RE = re.compile(
-    r"#\s*===\s*(CRITICALs?|HIGHs?|CRITICAL\s*\+\s*HIGHs?)",
+    r"#\s*===\s*(CRITICAL\s*\+\s*HIGHs?|CRITICALs?|HIGHs?)",
     re.IGNORECASE,
 )
 CVE_LINE_RE = re.compile(r"^(CVE-\d{4}-\d+)\s*$")

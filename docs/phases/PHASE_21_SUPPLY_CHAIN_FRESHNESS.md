@@ -526,6 +526,69 @@ this phase is built around.
 
 **Depends on.** 21-H (introduced `SEVERITY_MAX_DAYS`).
 
+## 21-L — Unit tests for `_trivyignore.py` (and the bug they caught)
+
+**Scope.** A stdlib-`unittest` suite for the parser module shared by
+21-G/H/J/K (`scripts/ci/_trivyignore.py`). Pure functions, synthetic
+inputs, exact assertions on classifier and policy-ceiling output.
+Wired into `make test` as `test-trivyignore-gates`.
+
+**Why.** Every prior 21-* gate was "verified in-session" — i.e. the
+author hand-tested one case before commit. Nothing in CI proved the
+parser would produce the right answer on inputs other than the live
+`.trivyignore`. With four production gates depending on
+`classify()` and `parse_policy_ceilings()`, that's a single
+regression away from silently misclassifying every entry.
+
+**The bug this PR caught.** Writing the test for "mixed
+`=== CRITICAL + HIGHs ===` sections without an explicit annotation
+should classify UNKNOWN" failed. Investigation: Python regex
+alternation is leftmost-first. `SECTION_RE` had
+`(CRITICALs?|HIGHs?|CRITICAL\s*\+\s*HIGHs?)`, and on the input
+`# === CRITICAL + HIGHs ===` the first alternative `CRITICALs?`
+matched, so the section was set to `CRITICAL` instead of None. Today
+this was masked because every entry under the OpenSSL mixed section
+in `.trivyignore` carries an explicit `(CRITICAL)` / `(HIGH)`
+annotation that wins via the explicit-first dispatch in
+`classify()`. A future addition without an annotation would have
+silently misclassified — defeating the contract that 21-J
+("UNKNOWN refused") and 21-G ("CRITICAL needs probe") both depend
+on. Fixed by reordering the alternation to put the longer pattern
+first.
+
+**Files.**
+- `scripts/ci/test_trivyignore_gates.py` — new file, 16 tests
+  across `TestClassifyBySection`, `TestClassifyMixedAndUnknown`,
+  `TestParsePolicyCeilings`, and `TestCurrentTreeIsConsistent`
+  (the last pins the live `.trivyignore` header to `{30, 90}`).
+- `scripts/ci/_trivyignore.py` — `SECTION_RE` alternation
+  reordered (`CRITICAL\s*\+\s*HIGHs?|CRITICALs?|HIGHs?`) with a
+  comment explaining why order matters.
+- `Makefile` — new `test-trivyignore-gates` target; added to
+  `.PHONY` and the `test:` prerequisite list.
+- `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md` — this section.
+
+**Acceptance.**
+- Live tree's classification unchanged: 5 CRITICAL, 19 HIGH, 0
+  UNKNOWN before and after the regex fix (the explicit annotations
+  always took precedence). Existing `make test` still green.
+- Test suite: 16 cases pass; the synthetic mixed-section-without-
+  annotation case fails on the old regex and passes on the new one.
+
+**Why stdlib unittest, not pytest.** Sibling test
+(`deploy/scripts/test_anonymise.py`) uses stdlib unittest and is
+already in the dev loop. Adding a pytest dependency for two test
+files isn't worth the diff cost; matching the existing pattern is.
+
+**Not in scope.** Tests for the heavier integration paths
+(`check_image_scan.check_trivyignore()`, `check_cve_reachability`'s
+probe registry). Those involve filesystem and template walks; the
+right shape for them is fixture-based integration tests, which is a
+larger lift than 21-L.
+
+**Depends on.** 21-G/H/J/K (the four gates whose contracts these
+unit tests pin).
+
 ## 21-C — End-to-end VM verify pass (blocked)
 
 **Scope.** Run `make deploy` + `make verify` + `make go-live` against
@@ -550,5 +613,6 @@ green; the live rehearsal is operator work.
 - [x] 21-H — severity-aware expiry-ceiling gate (PR #77)
 - [x] 21-I — orphan-check gate for scripts/ci/check_*.py (PR #79)
 - [x] 21-J — refuse UNKNOWN-severity .trivyignore entries (PR #80)
-- [x] 21-K — couple SEVERITY_MAX_DAYS to the .trivyignore header (PR #TBD)
+- [x] 21-K — couple SEVERITY_MAX_DAYS to the .trivyignore header (PR #81)
+- [x] 21-L — unit tests for `_trivyignore.py` + alternation bug fix (PR #TBD)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)
