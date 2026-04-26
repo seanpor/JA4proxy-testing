@@ -55,6 +55,17 @@
 - name: Set hostname
   ansible.builtin.hostname:
     name: "{{ ja4proxy_vm_hostname }}"
+  # `hostnamectl set-hostname` cannot mutate a container's hostname
+  # (it's sealed by the runtime), so the Molecule scenario excludes
+  # this task via `--skip-tags molecule-notest`. Production VMs run
+  # the task normally — the tag is purely a test-harness escape hatch.
+  tags: [molecule-notest]
+
+- name: Create JA4proxy system group
+  ansible.builtin.group:
+    name: "{{ ja4proxy_system_group }}"
+    system: true
+    state: present
 
 - name: Create JA4proxy system user
   ansible.builtin.user:
