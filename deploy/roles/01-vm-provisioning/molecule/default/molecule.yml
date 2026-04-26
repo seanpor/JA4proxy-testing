@@ -20,6 +20,12 @@ platforms:
 
 provisioner:
   name: ansible
+  # 14-E follow-up: Molecule's default role-search-path does not
+  # include the role's grandparent (the `deploy/roles/` dir), so
+  # `include_role: name: 01-vm-provisioning` fails to resolve. Point
+  # ANSIBLE_ROLES_PATH at the role collection root explicitly.
+  env:
+    ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/.."
   inventory:
     group_vars:
       all:
@@ -38,6 +44,9 @@ provisioner:
         ja4proxy_fd_limit_soft: 65536
         ja4proxy_fd_limit_hard: 65536
         ja4proxy_conntrack_max: 262144
+        # Dummy key — the role's `authorized_key` task requires a value
+        # but the Molecule container is never SSHed into.
+        ja4proxy_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA molecule@example.invalid"
 
 verifier:
   name: ansible

@@ -61,7 +61,10 @@
     state: present
 
 - name: Load nf_conntrack module (may already be auto-loaded by UFW)
-  tags: [provisioning, phase1]
+  # Kernel-module ops are meaningless inside a container (the host
+  # kernel owns module loading), so the Molecule scenario excludes
+  # them via `--skip-tags molecule-notest`. Production VMs run them.
+  tags: [provisioning, phase1, molecule-notest]
   ansible.builtin.modprobe:
     name: nf_conntrack
     state: present
@@ -74,7 +77,7 @@
     - "'already' not in (_nf_conntrack_modprobe.msg | default(''))"
 
 - name: Verify nf_conntrack is loaded
-  tags: [provisioning, phase1]
+  tags: [provisioning, phase1, molecule-notest]
   ansible.builtin.command: grep -qw nf_conntrack /proc/modules
   changed_when: false
   register: _nf_conntrack_check
