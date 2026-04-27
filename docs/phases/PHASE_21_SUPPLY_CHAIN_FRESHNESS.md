@@ -614,5 +614,5 @@ green; the live rehearsal is operator work.
 - [x] 21-I — orphan-check gate for scripts/ci/check_*.py (PR #79)
 - [x] 21-J — refuse UNKNOWN-severity .trivyignore entries (PR #80)
 - [x] 21-K — couple SEVERITY_MAX_DAYS to the .trivyignore header (PR #81)
-- [x] 21-L — unit tests for `_trivyignore.py` + alternation bug fix (PR #TBD)
+- [x] 21-L — unit tests for `_trivyignore.py` + alternation bug fix (PR #82)
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)
