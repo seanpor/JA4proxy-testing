@@ -16,12 +16,12 @@
 # entries are skipped ("not pinned yet"). Set
 # `ja4proxy_digest_pin_enforced=false` to bypass for local / air-gapped
 # testing.
-haproxy: "haproxy:2.8-alpine@sha256:b6c7693f0fdab1d6d8695270212b82826c1d424c87a550d05525f1ac82f91937"
+haproxy: "haproxy:2.8-alpine@sha256:e4a6fdbc298ec3f81ef288e849a4ea7b77d3b2a280f1ec1445a14cb175a9a900"
 redis: "redis:8-alpine@sha256:c5e375abb885e6b2021c0377879e4890bf76f9065b8922ffc113f2b226b9fc17"
 caddy: "caddy:2-alpine@sha256:834468128c7696cec0ceea6172f7d692daf645ae51983ca76e39da54a97c570d"
-prometheus: "prom/prometheus:latest@sha256:5550dc63da361dc30f6fe02ac0e4dfc736ededfef3c8d12a634db04a67824d78"
+prometheus: "prom/prometheus:latest@sha256:e4254400b85610324913f0dc4acf92603d9984e7519414c5a12811aa6146acc3"
 grafana: "grafana/grafana:latest@sha256:0f86bada30d65ef9d0183b90c1e2682ac92d53d95da8bed322b984ea78a4a73a"
 loki: "grafana/loki:latest@sha256:73e905b51a7f917f7a1075e4be68759df30226e03dcb3cd2213b989cc0dc8eb4"
 promtail: "grafana/promtail:latest@sha256:6cfa64ec432b24a912d640e2edb940eeae2666f61861a66c121d763dd7241381"
 blackbox_exporter: "prom/blackbox-exporter:latest@sha256:e753ff9f3fc458d02cca5eddab5a77e1c175eee484a8925ac7d524f04366c2fc"
-alertmanager: "prom/alertmanager:latest@sha256:58e117eabccebbff04e6643a3432d6315a2cc3a8c24ab5849bc628886bf08857"
+alertmanager: "prom/alertmanager:latest@sha256:51a825c2a40acc3e338fdd00d622e01ec090f72be2b3ea46be0839cd47a4d286"
