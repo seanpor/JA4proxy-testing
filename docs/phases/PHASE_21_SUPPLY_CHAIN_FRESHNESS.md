@@ -589,6 +589,29 @@ larger lift than 21-L.
 **Depends on.** 21-G/H/J/K (the four gates whose contracts these
 unit tests pin).
 
+## 21-M — 2026-06-11 Vulnerability Review & Expiry Extension
+
+**Scope.** Update `.trivyignore` to include 15 new HIGH-severity CVEs detected during the 2026-06-11 scan and extend the expiry of 19 existing entries to 2026-07-11.
+
+**Why.**
+As part of the weekly "Supply-chain freshness" lifecycle, a fresh Trivy DB scan surfaced 15 new vulnerabilities in the pinned images. Each has been reviewed against the research honeypot's configuration:
+- 8 are in `grafana/grafana` (fixed in upcoming rebuilds; same exposure arguments as 21-A/F).
+- 4 are in `prom/prometheus` (internal scrape targets only).
+- 3 are in `caddy` (not on public path).
+
+Expiries for existing entries were also extended to 2026-07-11 to align with the next review cycle and allow time for upstream image updates.
+
+**Files.**
+- `.trivyignore`
+
+**Acceptance.**
+- `make scan-images` (via `make scan`) is green.
+- All entries remain within the severity-ceiling gates enforced by 21-H/K.
+
+**Depends on.** 21-H (ceiling gate) and 21-K (policy coupling).
+
+**Not in scope.** Live exploit verification of these 15 new CVEs. Static justifications hold for now.
+
 ## 21-C — End-to-end VM verify pass (blocked)
 
 **Scope.** Run `make deploy` + `make verify` + `make go-live` against
@@ -615,4 +638,5 @@ green; the live rehearsal is operator work.
 - [x] 21-J — refuse UNKNOWN-severity .trivyignore entries (PR #80)
 - [x] 21-K — couple SEVERITY_MAX_DAYS to the .trivyignore header (PR #81)
 - [x] 21-L — unit tests for `_trivyignore.py` + alternation bug fix (PR #82)
+- [x] 21-M — 2026-06-11 vulnerability review & expiry extension
 - [ ] 21-C — end-to-end VM verify pass (blocked on VM)

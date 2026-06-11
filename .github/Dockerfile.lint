@@ -1,0 +1,29 @@
+FROM python:3.12-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    make \
+    curl \
+    shellcheck \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Trivy
+RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+WORKDIR /work
+
+# Copy requirements and install Python dependencies
+COPY requirements-dev.txt .
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+# Copy Ansible requirements and install collections globally
+COPY deploy/requirements.yml ./deploy/
+RUN mkdir -p /usr/share/ansible/collections && \
+    ansible-galaxy collection install -p /usr/share/ansible/collections -r deploy/requirements.yml
+
+# Bypass git "dubious ownership" error for volume mounts (system-wide)
+RUN git config --system --add safe.directory '*'
+
+# Entrypoint is bash to allow make to drive it
+ENTRYPOINT ["/bin/bash"]

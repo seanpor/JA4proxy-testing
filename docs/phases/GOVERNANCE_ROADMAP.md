@@ -1081,5 +1081,7 @@ visible.
 - [x] 21-J — refuse UNKNOWN-severity .trivyignore entries (PR #80) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
 - [x] 21-K — couple `SEVERITY_MAX_DAYS` to .trivyignore policy header (PR #81) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
 - [x] 21-L — unit tests for `_trivyignore.py` + alternation-order bug fix (PR #82) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
+- [x] 21-M — 2026-06-11 vulnerability review & expiry extension — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
+- [x] 22-A — containerized dev loop (Docker-based portability) — see `docs/phases/PHASE_22_DOCKER_PORTABILITY.md`
 - [x] 14-E follow-up — Molecule scenario actually runs end-to-end + role-01 production bug (missing `group` task) fix (PR #83) — see commit `006d442`
 - [ ] 21-C — end-to-end VM verify pass (**blocked** on VM availability) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
