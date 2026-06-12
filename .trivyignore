@@ -23,48 +23,48 @@
 # handling and gRPC surface are not on our public path (HAProxy
 # terminates TLS as passthrough; Caddy only serves the static honeypot
 # after JA4proxy). Fixes require upstream caddy image refresh.
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-33186
 
 # prom/blackbox-exporter:latest — Go 1.25.5 crypto/tls cert-validation
 # flaw (fixed in 1.24.13 / 1.25.7). Blackbox probes known targets over
 # HTTPS from the monitoring network; exploit requires MITM position on
 # the probe path. Awaiting upstream image refresh.
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2025-68121
 
 # === HIGHs: Go stdlib 2026 series =====================================
 
 # Span caddy, grafana, loki, promtail, blackbox. Fixes land only when
 # each upstream rebases its image onto Go 1.25.9 / 1.26.2. 
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-25679
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-32280
 
 # === HIGHs: Go stdlib 2025 series (blackbox on 1.25.5) ===============
 # Same exposure argument as CVE-2025-68121 above.
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2025-61726
 
 # === HIGHs: Go stdlib 2026 series on blackbox (1.25.5) ===============
 # crypto/x509 cert-chain DoS and TLS key-update handling, fixed in
 # 1.25.9 / 1.26.2. Same probes-only exposure argument as above.
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-32281
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-32283
 
 # === HIGHs: embedded Go deps ==========================================
 
 # opentelemetry-go otel/sdk: BSD-only kenv absolute-path issue. Not BSD.
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-39883
 
 # docker/moby authz bypass (prometheus, grafana, promtail service
 # discovery): requires docker socket access, which these containers do
 # not have.
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-34040
 
 # === HIGHs: New from 2026-06-11 Scan — Reviewed against latest images ===
@@ -73,43 +73,43 @@ CVE-2026-34040
 # in packages but haven't been incorporated into the container images yet.
 
 # OpenSSL PKCS7 Heap UAF (grafana, caddy, redis, promtail)
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-45447
 
 # Apache Thrift in Loki
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-41602
 
 # Prometheus Azure secret exposure (grafana, promtail, loki)
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-42151
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-42154
 
 # Go stdlib DoS / Validation (Across multiple images)
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-33811
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-33814
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-39820
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-39823
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-39825
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-39836
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-42499
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-42504
 
 # Otel Go SDK (promtail)
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-29181
 
 # Tempo DoS & S3 Disclosure (grafana)
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-21728
-# expires: 2026-07-11
+# expires: 2026-06-18
 CVE-2026-28377

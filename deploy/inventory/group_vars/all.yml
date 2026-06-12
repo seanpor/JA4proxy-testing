@@ -89,9 +89,9 @@ ja4proxy_apparmor_profile_name: "opt.ja4proxy.bin.ja4proxy"
 
 # ── Docker Images (tags — digests pinned at deploy time) ────
 
-ja4proxy_docker_image_haproxy: "haproxy:2.8-alpine"
-ja4proxy_docker_image_redis: "redis:8-alpine"
-ja4proxy_docker_image_caddy: "caddy:2-alpine"
+ja4proxy_docker_image_haproxy: "haproxy:3.4-alpine"
+ja4proxy_docker_image_redis: "redis:8.8-alpine"
+ja4proxy_docker_image_caddy: "caddy:2.11-alpine"
 ja4proxy_docker_image_prometheus: "prom/prometheus:latest"
 ja4proxy_docker_image_grafana: "grafana/grafana:latest"
 ja4proxy_docker_image_loki: "grafana/loki:latest"

@@ -16,9 +16,9 @@
 # entries are skipped ("not pinned yet"). Set
 # `ja4proxy_digest_pin_enforced=false` to bypass for local / air-gapped
 # testing.
-haproxy: "haproxy:2.8-alpine@sha256:1ef1ef5e4100a6f9eb39efdd42f0e2f5539ff54e1b8af9a34ab7fa20cb407c32"
-redis: "redis:8-alpine@sha256:09160599abd229764c0fb44cb6be640294e1d360a54b19985ab4843dcf2d90f1"
-caddy: "caddy:2-alpine@sha256:77c07d5ebfa5be9fd6c820d2094ae662c9e7eeb9bf98346b7f639900263ee2a2"
+haproxy: "haproxy:3.4-alpine@sha256:d0ca281fca326f9283198afc25c53525cfc6b44190b441882b279241ca57d5d0"
+redis: "redis:8.8-alpine@sha256:09160599abd229764c0fb44cb6be640294e1d360a54b19985ab4843dcf2d90f1"
+caddy: "caddy:2.11-alpine@sha256:77c07d5ebfa5be9fd6c820d2094ae662c9e7eeb9bf98346b7f639900263ee2a2"
 prometheus: "prom/prometheus:latest@sha256:69f5241418838263316593f7274a304b095c40bcf22e57272865da91bd60a8ac"
 grafana: "grafana/grafana:latest@sha256:5dad0df181cb644a14e13617b913b261a54f7d4fd4510721dba420929f35bea2"
 loki: "grafana/loki:latest@sha256:191d4fdfb7264f16989f0a57f320872620a5a7c2ceeec6229212c4190ec49b86"
