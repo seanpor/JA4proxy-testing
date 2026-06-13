@@ -28,6 +28,20 @@ ANSIBLE_LINT    := $(shell if [ -x $(VENV_BIN)/ansible-lint ];   then echo $(VEN
 ANSIBLE_PLAYBOOK:= $(shell if [ -x $(VENV_BIN)/ansible-playbook ];then echo $(VENV_BIN)/ansible-playbook;else command -v ansible-playbook|| echo ansible-playbook; fi)
 SHELLCHECK      := $(shell command -v shellcheck || echo shellcheck)
 
+# Docker-based portability (Phase 22): wrap the dev loop in a container
+# to avoid local toolchain drift and broken venvs.
+DOCKER_LINT     := ./scripts/ci/docker-lint.sh
+ifdef USE_DOCKER
+  # Inside the container, all tools are installed on the global PATH
+  PY              := python3
+  YAMLLINT        := yamllint
+  ANSIBLE_LINT    := ansible-lint
+  ANSIBLE_PLAYBOOK:= ansible-playbook
+  SHELLCHECK      := shellcheck
+  TRIVY           := trivy
+  PYMARKDOWN      := pymarkdown
+endif
+
 # Silence ansible-core's paramiko/TripleDES deprecation noise in CI logs.
 export PYTHONWARNINGS := ignore::DeprecationWarning
 
@@ -41,12 +55,12 @@ export PYTHONWARNINGS := ignore::DeprecationWarning
 help:
 	@echo "JA4proxy-testing — targets"
 	@echo
-	@echo "  Pre-merge / pre-push:"
+	@echo "  Pre-merge / pre-push (Docker used automatically if available):"
 	@echo "    make lint           — fast static checks (yamllint, ansible-lint, shellcheck, ruff, json, markdown)"
 	@echo "    make test           — lint + structural cross-checks"
-	@echo "    make lint-all       — lint + test + Trivy image scan (matches CI end-to-end; needs network + trivy)"
-	@echo "    make lint-install   — create .venv-dev/ and install ansible-lint + yamllint"
-	@echo "    make scan-images    — Trivy scan of compose images (needs trivy on PATH; 18-B)"
+	@echo "    make scan           — Trivy scan of compose images (alias for scan-images)"
+	@echo "    make lint-all       — lint + test + scan-images (matches CI end-to-end)"
+	@echo "    make lint-install   — create .venv-dev/ and install local tools (if not using Docker)"
 	@echo
 	@echo "  Deployment (delegates to deploy/Makefile):"
 	@echo "    make secrets        — generate deploy/.vault/secrets.yml"
@@ -82,9 +96,17 @@ $(VENV)/.installed: requirements-dev.txt
 
 .PHONY: lint lint-yaml lint-ansible lint-syntax lint-shell lint-jinja lint-secrets lint-python lint-json lint-markdown
 
-lint: lint-yaml lint-syntax lint-ansible lint-shell lint-jinja lint-secrets lint-python lint-json lint-markdown
-	@echo
-	@echo "✅ lint: all checks passed"
+lint:
+	@if [ -z "$(USE_DOCKER)" ] && command -v docker >/dev/null 2>&1; then \
+	  if ! $(DOCKER_LINT) "make lint USE_DOCKER=1"; then \
+	    echo ""; echo "🚨 LINT FINDINGS DETECTED 🚨"; echo "One or more linters reported issues. Please review the output above."; exit 1; \
+	  fi; \
+	else \
+	  if ! $(MAKE) lint-yaml lint-syntax lint-ansible lint-shell lint-jinja lint-secrets lint-python lint-json lint-markdown; then \
+	    echo ""; echo "🚨 LINT FINDINGS DETECTED 🚨"; echo "One or more linters reported issues. Please review the output above."; exit 1; \
+	  fi; \
+	  echo ""; echo "✅ LINT SUCCESS ──────────────"; echo "All static checks passed cleanly."; \
+	fi
 
 lint-yaml:
 	@echo "── yamllint ──"
@@ -97,7 +119,7 @@ lint-yaml:
 lint-syntax:
 	@echo "── ansible-playbook --syntax-check ──"
 	@$(ANSIBLE_PLAYBOOK) --syntax-check deploy/playbooks/site.yml 2>&1 \
-	  | grep -v -E 'DeprecationWarning|TripleDES|algorithms\.|^$$' \
+	  | grep -v -E 'DeprecationWarning|TripleDES|algorithms\.|^$$|No inventory was parsed|provided hosts list is empty|Could not match supplied host pattern|implicit localhost' \
 	  || true
 
 lint-ansible:
@@ -106,7 +128,7 @@ lint-ansible:
 	  echo "ansible-lint not installed. Run: make lint-install"; \
 	  exit 1; \
 	fi
-	@$(ANSIBLE_LINT) -p deploy/playbooks/site.yml
+	@$(ANSIBLE_LINT) --format=pep8 deploy/playbooks/site.yml
 
 lint-shell:
 	@echo "── shellcheck ──"
@@ -135,7 +157,16 @@ lint-json:
 lint-markdown:
 	@echo "── markdown (pymarkdown) ──"
 	@find . -name '*.md' -not -path './.git/*' -not -path './.venv*' -not -path './.qwen/*' \
-	  -print0 | xargs -0 pymarkdown --config .pymarkdown.json5 scan
+	  -print0 | xargs -0 $(if $(PYMARKDOWN),$(PYMARKDOWN),pymarkdown) --config .pymarkdown.json5 scan
+
+# ─────────────────────────────────────────────────────────────
+# Docker-based portability (Phase 22)
+# ─────────────────────────────────────────────────────────────
+#
+# make lint/test/scan-images automatically wrap themselves in a
+# Linux-based container (defined in `.github/Dockerfile.lint`). This
+# is the recommended way to run checks locally as it eliminates
+# "works on my machine" issues and local toolchain drift.
 
 # ─────────────────────────────────────────────────────────────
 # Test — lint + structural cross-checks, still offline
@@ -143,9 +174,17 @@ lint-markdown:
 
 .PHONY: test test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-cosign-wired test-dependabot test-workflow-pins test-requirements test-adr-format test-compliance-ssdf test-digest-freshness test-workflow-enabled test-local-ci-parity test-cve-reachability test-orphaned-ci-scripts test-trivyignore-gates
 
-test: lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-cosign-wired test-dependabot test-workflow-pins test-requirements test-adr-format test-compliance-ssdf test-digest-freshness test-workflow-enabled test-local-ci-parity test-cve-reachability test-orphaned-ci-scripts test-trivyignore-gates
-	@echo
-	@echo "✅ test: all checks passed"
+test:
+	@if [ -z "$(USE_DOCKER)" ] && command -v docker >/dev/null 2>&1; then \
+	  if ! $(DOCKER_LINT) "make test USE_DOCKER=1"; then \
+	    echo ""; echo "🚨 TEST FINDINGS DETECTED 🚨"; echo "One or more structural tests failed. Please review the output above."; exit 1; \
+	  fi; \
+	else \
+	  if ! $(MAKE) lint test-roles test-groupvars test-compose test-digest-regex test-secrets-path test-makefile test-collections test-go-build-flags test-pinned-artifacts test-geoip-pin test-molecule-scenarios test-journald-template test-loki-retention test-prometheus-retention test-honeypot-disclosure test-security-txt test-preflight-tasks test-acme-staging test-systemd-units test-preserve-evidence test-binary-provenance test-privacy-page test-readme-operations test-heartbeat-timer test-blackbox-exporter test-threat-model test-governance-docs test-alertmanager test-runbook-scenarios test-alert-rules test-secrets-rotation test-export-timer test-anonymise test-handlers test-duplicates test-relative-paths test-markdown-links test-sbom test-image-scan-wired test-govulncheck-wired test-cosign-wired test-dependabot test-workflow-pins test-requirements test-adr-format test-compliance-ssdf test-digest-freshness test-workflow-enabled test-local-ci-parity test-cve-reachability test-orphaned-ci-scripts test-trivyignore-gates; then \
+	    echo ""; echo "🚨 TEST FINDINGS DETECTED 🚨"; echo "One or more structural tests failed. Please review the output above."; exit 1; \
+	  fi; \
+	  echo ""; echo "✅ TEST SUCCESS ──────────────"; echo "All structural cross-checks passed cleanly."; \
+	fi
 
 test-roles:
 	@echo "── roles referenced by site.yml exist ──"
@@ -356,9 +395,20 @@ test-trivyignore-gates:
 	@echo "── _trivyignore.py classifier + policy parser unit tests (21-L) ──"
 	@$(PY) scripts/ci/test_trivyignore_gates.py
 
-.PHONY: scan-images
+.PHONY: scan scan-images
+scan: scan-images
+
 scan-images:
-	@scripts/ci/scan_images.sh
+	@if [ -z "$(USE_DOCKER)" ] && command -v docker >/dev/null 2>&1; then \
+	  if ! $(DOCKER_LINT) "make scan-images USE_DOCKER=1"; then \
+	    echo ""; echo "🚨 SCAN FINDINGS DETECTED 🚨"; echo "Trivy found vulnerabilities. Please review the output above."; exit 1; \
+	  fi; \
+	else \
+	  if ! TRIVY=$(TRIVY) scripts/ci/scan_images.sh; then \
+	    echo ""; echo "🚨 SCAN FINDINGS DETECTED 🚨"; echo "Trivy found vulnerabilities. Please review the output above."; exit 1; \
+	  fi; \
+	  echo ""; echo "✅ SCAN SUCCESS ──────────────"; echo "All images are clean according to Trivy."; \
+	fi
 
 # Convenience umbrella: matches what CI runs end-to-end in one command.
 # Kept separate from `lint`/`test` so the fast offline loop stays fast.

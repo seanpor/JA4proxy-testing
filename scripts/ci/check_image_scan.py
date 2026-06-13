@@ -71,7 +71,7 @@ def check_wrapper() -> None:
     required = [
         ("set -euo pipefail", "strict shell mode"),
         ("render_compose.py --list-images", "image source = render_compose"),
-        ("trivy image", "invokes trivy image"),
+        ('"${TRIVY}" image', "invokes trivy image"),
         ("--severity HIGH,CRITICAL", "HIGH+CRITICAL blocking pass"),
         ("--ignore-unfixed", "only fail on fixable vulns"),
         ("--exit-code 1", "returns non-zero on findings"),

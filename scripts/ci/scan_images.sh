@@ -22,9 +22,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 IGNOREFILE="${ROOT}/.trivyignore"
+TRIVY="${TRIVY:-trivy}"
 
-if ! command -v trivy >/dev/null 2>&1; then
-  echo "trivy not installed. Install:" >&2
+if ! command -v "${TRIVY}" >/dev/null 2>&1; then
+  echo "${TRIVY} not installed. Install:" >&2
   echo "  curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin" >&2
   exit 2
 fi
@@ -56,7 +57,7 @@ echo "── Trivy: HIGH+CRITICAL blocking pass, ${#images[@]} images, fixed-onl
 fail=0
 for img in "${images[@]}"; do
   printf "\n── %s ──\n" "${img}"
-  if ! trivy image \
+  if ! "${TRIVY}" image \
       --severity HIGH,CRITICAL \
       --ignore-unfixed \
       --exit-code 1 \
@@ -89,7 +90,7 @@ python3 "${ROOT}/scripts/ci/render_compose.py" --sbom "${SBOM}"
 
 echo
 echo "── Trivy sbom: HIGH+CRITICAL blocking pass over compose SBOM ──"
-trivy sbom \
+"${TRIVY}" sbom \
     --severity HIGH,CRITICAL \
     --ignore-unfixed \
     --exit-code 1 \
