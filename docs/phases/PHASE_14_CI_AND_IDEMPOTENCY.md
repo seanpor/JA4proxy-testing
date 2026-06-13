@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Today the only way to find out whether a change to a role works is to run it against a real VM. Typos, regex bugs (see `CRITICAL_REVIEW.md` §A2), path mismatches (§A1), and non-idempotent tasks land in production unchecked. This phase introduces the minimum CI scaffolding that would have caught each of those before a deploy.
+Today the only way to find out whether a change to a role works is to run it against a real VM. Typos, regex bugs (see `CRITICAL_REVIEW_complete.md` §A2), path mismatches (§A1), and non-idempotent tasks land in production unchecked. This phase introduces the minimum CI scaffolding that would have caught each of those before a deploy.
 
 ## Deliverables
 
@@ -55,7 +55,7 @@ Add a CI check that `ansible-galaxy collection list --format json` matches the l
 
 ### 14.3 Secrets path regression test
 
-Directly addresses `CRITICAL_REVIEW.md` §A1. A one-line shell test in CI:
+Directly addresses `CRITICAL_REVIEW_complete.md` §A1. A one-line shell test in CI:
 
 ```bash
 test "$(deploy/scripts/generate-secrets.sh --dry-run-path)" = "$(pwd)/deploy/.vault/secrets.yml"
@@ -102,7 +102,7 @@ In addition to image-digest pinning (PHASE_09), add:
 
 ### 14.8 Input validation hardening
 
-Addresses `CRITICAL_REVIEW.md` §A7. In `site.yml` `pre_tasks`:
+Addresses `CRITICAL_REVIEW_complete.md` §A7. In `site.yml` `pre_tasks`:
 
 - Resolve SSH private-key path from `$JA4PROXY_SSH_PRIVATE_KEY`, then `~/.ssh/id_ed25519`, then `~/.ssh/id_rsa`, and `stat:` each.
 - Fail with a helpful message if none exist or none are usable, rather than failing opaquely inside the connection plugin.
@@ -129,5 +129,5 @@ Run the idempotency test against both.
 
 ## Related
 
-- `docs/phases/CRITICAL_REVIEW.md` §A1, §A2, §A6, §A7, §A8, §C5
+- `docs/phases/CRITICAL_REVIEW_complete.md` §A1, §A2, §A6, §A7, §A8, §C5
 - `docs/phases/PHASE_09_IMAGE_DIGESTS.md` (assertion task that belongs in CI too)

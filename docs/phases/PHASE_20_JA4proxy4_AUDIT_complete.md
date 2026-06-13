@@ -28,7 +28,7 @@ equivalent artifact/control and classify:
 - **Not applicable** — no equivalent infrastructure exists, so the
   defect pattern cannot occur.
 
-Categories (verbatim from PHASE_20_PHASE_18_REMEDIATION.md):
+Categories (verbatim from PHASE_20_PHASE_18_REMEDIATION_complete.md):
 
 1. False merge-gate claims
 2. Artifacts shipped but never consumed

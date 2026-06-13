@@ -1,7 +1,7 @@
 # Critical Review — JA4proxy-testing
 
 **Reviewer:** expert pass, 2026-04-15
-**Scope reviewed:** `README.md`, `QWEN.md`, `deploy/` (all 10 roles, templates, scripts, playbook), `docs/phases/PHASE_00`–`PHASE_08`, `ANSIBLE_BUILD_PLAN.md`, `DEPLOYMENT_ANALYSIS.md`, `RUNBOOK.md`.
+**Scope reviewed:** `README.md`, `QWEN.md`, `deploy/` (all 10 roles, templates, scripts, playbook), `docs/phases/PHASE_00`–`PHASE_08`, `ANSIBLE_BUILD_PLAN_complete.md`, `DEPLOYMENT_ANALYSIS_complete.md`, `RUNBOOK.md`.
 
 > **Status, 2026-04-22 — remediation complete (A/C series).** Every
 > A-series code bug and every C-series missing-phase gap identified
@@ -13,7 +13,7 @@
 > 2026-04-15 — do not "fix" the findings here by editing them; track
 > any *new* defects in a fresh PR or issue. For currently-open
 > governance-theatre follow-ups, see
-> `docs/phases/PHASE_20_PHASE_18_REMEDIATION.md`.
+> `docs/phases/PHASE_20_PHASE_18_REMEDIATION_complete.md`.
 
 This document is deliberately blunt. It identifies defects in the code, gaps between what the docs claim and what the Ansible actually does, and whole areas of work that are missing for an internet-facing research honeypot. Each finding names a file:line or role where possible, and each maps to a remediation in a new or updated phase document.
 
@@ -146,7 +146,7 @@ Agent survey flagged an `ignore_errors: true` in `deploy/roles/01-vm-provisionin
 | "25+ health checks" | README §92, §279 | `deploy/scripts/verify-local.sh` should be counted; the exact number needs auditing, and the figure quoted in the README should be replaced by whatever the script actually does. |
 | "Counterfactual logging" is collected data | README §344, PHASE_00 glossary | The config toggle `monitor_mode.counterfactuals: true` is written into `proxy.yml` (role 03), but no Phase 7 validation step actually queries a metric or a log line proving counterfactuals are emitted. If the binary changed and dropped that feature, we would not find out until analysis time. |
 | "15+ security hardening flags" on JA4proxy systemd unit | README §208, PHASE_03 | Not verified: no assertion counts the hardening directives in the deployed unit file, nor compares them to a required baseline. |
-| Upstream `JA4proxy4` Ansible role is "reused" | PHASE_03 top comment, DEPLOYMENT_ANALYSIS.md | `deploy/roles/03-ja4proxy-deploy/tasks/main.yml:19–33` is an inline debug message admitting the upstream is not wired in, and the role deploys its own inline config. The reuse story is aspirational. |
+| Upstream `JA4proxy4` Ansible role is "reused" | PHASE_03 top comment, DEPLOYMENT_ANALYSIS_complete.md | `deploy/roles/03-ja4proxy-deploy/tasks/main.yml:19–33` is an inline debug message admitting the upstream is not wired in, and the role deploys its own inline config. The reuse story is aspirational. |
 | "Fail2ban for SSH brute force protection" | README Phase 1 | The role does start/enable fail2ban and deploy a jail.local template, but the role never asserts that the jail is actually active post-deploy (`fail2ban-client status sshd`). |
 | "Grafana dashboards (7)" | README §222 | The `files/` directory should contain 7 dashboard JSONs; this needs auditing, and any gap (missing dashboard, placeholder with no panels) should be tracked. |
 | "Backup script" (README §228) | README Phase 6 | The docs promise a script; PHASE_06 discussion needs to say whether collected research data is in scope (it is not — only configs) and that the research-data export is a separate concern (see new PHASE_12). |
@@ -201,7 +201,7 @@ Rolled up because each is short on its own:
 - **Phase docs stop at 08** even though the playbook has roles 09-image-digests and 10-go-live and the Makefile exposes `make digests` and `make go-live`. Fill the gap (see new PHASE_09 and PHASE_10 below).
 - **PHASE_00 phase index** still lists "Status: ⏳ Next" for Phase 1. That was accurate at plan time but is now stale — the roles exist and are deployed. Update the index.
 - **`QWEN.md`** describes JA4proxy as listening directly on 80/443, which contradicts the actual architecture (HAProxy passthrough on 443, JA4proxy on 8080). Either update it, delete it, or mark it "historical".
-- **`docs/DETAILED_DEPLOYMENT_PLAN.md`** and `ANSIBLE_BUILD_PLAN.md` are design-phase artefacts. If they still represent intent, leave a "written before implementation" note at the top; if not, move to `docs/archive/`.
+- **`docs/DETAILED_DEPLOYMENT_PLAN.md`** and `ANSIBLE_BUILD_PLAN_complete.md` are design-phase artefacts. If they still represent intent, leave a "written before implementation" note at the top; if not, move to `docs/archive/`.
 - **RUNBOOK.md** is only 102 lines and only covers rollback. It does not cover: SSH lockout recovery, UFW misconfiguration recovery, Caddy ACME stuck on staging, Redis ban-list corruption, Grafana admin-password reset, log-volume blowout. Each of those is a realistic 2am call.
 
 ---

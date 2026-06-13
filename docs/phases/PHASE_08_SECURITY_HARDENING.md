@@ -10,7 +10,7 @@ This document provides deep-dive security hardening beyond the baseline Phase 1-
 
 ## ⚠ Known issues (2026-04-15)
 
-See `CRITICAL_REVIEW.md` §A for detail. Summary of defects affecting this phase:
+See `CRITICAL_REVIEW_complete.md` §A for detail. Summary of defects affecting this phase:
 
 1. **AppArmor profile is applied *after* JA4proxy is already running and the service is never restarted.** `deploy/roles/08-hardening/tasks/main.yml:51–57` uses `lineinfile` to add `AppArmorProfile=opt.ja4proxy.bin.ja4proxy` to the unit file and notifies only a `daemon-reload`. systemd consults `AppArmorProfile=` at `ExecStart` time, so the running JA4proxy process is unconfined until the next restart.
    **Fix:** move `AppArmorProfile=opt.ja4proxy.bin.ja4proxy` into `templates/ja4proxy.service.j2` (rendered by Phase 3), deploy the AppArmor profile earlier (Phase 2 or 3), and replace the Phase 8 `lineinfile` task with a verification assert (`systemctl show ja4proxy -p AppArmorProfile` must equal the expected value).

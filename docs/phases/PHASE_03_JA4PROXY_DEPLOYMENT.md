@@ -8,7 +8,7 @@ Deploy the JA4proxy Go binary as a production-grade systemd service in **monitor
 
 ## ⚠ Known issues (2026-04-15)
 
-See `CRITICAL_REVIEW.md` for full context. Summary of defects affecting this phase:
+See `CRITICAL_REVIEW_complete.md` for full context. Summary of defects affecting this phase:
 
 1. **Upstream role reuse is aspirational.** `deploy/roles/03-ja4proxy-deploy/tasks/main.yml:19–33` emits a debug message acknowledging that JA4proxy4's Ansible role is not actually wired in. The role falls back to an inline `proxy.yml` template. This works, but:
    - The inline config may drift from the binary's schema over time with no compile-time check.

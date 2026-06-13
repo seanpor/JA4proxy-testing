@@ -1,6 +1,6 @@
 # Governance roadmap — PHASE_11–15 + threat model
 
-Turns `CRITICAL_REVIEW.md` §C1–C6 and `PHASE_11`–`PHASE_15` into a flat
+Turns `CRITICAL_REVIEW_complete.md` §C1–C6 and `PHASE_11`–`PHASE_15` into a flat
 list of small, independently-mergeable chunks. Each chunk is sized for
 **one PR, one junior engineer, a few hours end-to-end**.
 
@@ -148,7 +148,7 @@ means yesterday's research result isn't reproducible from today's data.
   GeoIP file is copied) — `ansible.builtin.stat` with
   `checksum_algorithm: sha256`, then `assert` against the pinned value
   when non-empty.
-- `docs/phases/PHASE_02_ARTIFACT_PREPARATION.md` — document that
+- `docs/phases/PHASE_02_ARTIFACT_PREPARATION_complete.md` — document that
   updating the GeoIP db requires updating the pin.
 
 **Acceptance.**
@@ -1069,7 +1069,7 @@ visible.
 - [x] 18-K — `docs/COMPLIANCE_SSDF.md` NIST SSDF v1.1 mapping + traceability check (PR #55)
 - [x] 18-L — runbook drill cadence + `.github/ISSUE_TEMPLATE/runbook-drill.md` (PR #56)
 - [ ] 18-J — CIS/Lynis benchmark scoring (**deferred** — runtime-telemetry feature, not a Phase-18 governance gap. Scope stays as written in `PHASE_18_SWEBOK_GAP_CLOSURE.md` §18-J; land alongside the first post-go-live observability push, not now.)
-- [x] 20 — Phase-18 governance-theatre remediation (13 defects; PRs #61, #64, #66, #67) — see `docs/phases/PHASE_20_PHASE_18_REMEDIATION.md`
+- [x] 20 — Phase-18 governance-theatre remediation (13 defects; PRs #61, #64, #66, #67) — see `docs/phases/PHASE_20_PHASE_18_REMEDIATION_complete.md`
 - [x] 21-B — digest-pin workflow freshness monitor (PR #68) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
 - [x] 21-D — scheduled-workflow enabled-state gate (PR #69) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
 - [x] 21-E — local-vs-CI parity gate (PR #70) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
@@ -1082,6 +1082,6 @@ visible.
 - [x] 21-K — couple `SEVERITY_MAX_DAYS` to .trivyignore policy header (PR #81) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
 - [x] 21-L — unit tests for `_trivyignore.py` + alternation-order bug fix (PR #82) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
 - [x] 21-M — 2026-06-11 vulnerability review & expiry extension — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`
-- [x] 22-A — containerized dev loop (Docker-based portability) — see `docs/phases/PHASE_22_DOCKER_PORTABILITY.md`
+- [x] 22-A — containerized dev loop (Docker-based portability) — see `docs/phases/PHASE_22_DOCKER_PORTABILITY_complete.md`
 - [x] 14-E follow-up — Molecule scenario actually runs end-to-end + role-01 production bug (missing `group` task) fix (PR #83) — see commit `006d442`
 - [ ] 21-C — end-to-end VM verify pass (**blocked** on VM availability) — see `docs/phases/PHASE_21_SUPPLY_CHAIN_FRESHNESS.md`

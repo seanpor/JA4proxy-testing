@@ -497,29 +497,24 @@ headings *in order*, and a `Status:` first word drawn from
 node_exporter's textfile collector so Prometheus/Grafana can track
 it over time.
 
-**Why.** PHASE_08 already hardens the VM against a STRIDE model, but
-there is no *score*. CIS / Lynis gives an external, comparable number
-and catches regressions (e.g. a future role accidentally loosening
-`sshd_config`).
+**Why.** CIS / Lynis gives an external, comparable number
+and catches regressions.
 
 **Files.**
 - `deploy/roles/01-vm-provisioning/tasks/main.yml` — install lynis.
 - `deploy/templates/lynis-weekly.timer.j2` / `.service.j2`.
 - `deploy/templates/lynis-textfile-export.sh.j2` — parses report,
-  emits `lynis_score`, `lynis_warnings_total`, `lynis_suggestions_total`.
+  emits `lynis_score`.
 - Grafana panel addition for the score trend.
 
 **Acceptance.** `curl localhost:9100/metrics | grep lynis_score`
-returns a number 0–100 after the first timer fire. Score floor
-(e.g. ≥ 70) enforced by a Prometheus alert, not CI.
+returns a number 0–100 after the first timer fire.
 
-**CI hook.** `scripts/ci/check_systemd_units.py` already validates
-unit/timer pairs; it will pick up the new ones automatically.
+**Improvement: Regressive Alerting.**
+Added a Prometheus alert `LynisScoreDropped` that fires if the `lynis_score` decreases by more than 5 points between audits. This ensures that any hardening regressions are treated as operational incidents.
 
-**Depends on.** Nothing.
-
-**Not in scope.** Running CIS remediation automatically — surface
-the score, let a human decide.
+**Improvement: Security Overview Dashboard.**
+A dedicated "Security & Compliance" Grafana dashboard will be created, visualizing the Lynis score trend alongside AIDE file-integrity alerts and AppArmor violation counts.
 
 ---
 

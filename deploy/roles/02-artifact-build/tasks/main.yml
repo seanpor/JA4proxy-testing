@@ -1,7 +1,7 @@
 ---
 # Role 02: Artifact Build & Config Deployment
 # ─────────────────────────────────────────────────────────────
-# Corresponds to PHASE_02_ARTIFACT_PREPARATION.md
+# Corresponds to PHASE_02_ARTIFACT_PREPARATION_complete.md
 #
 # Tasks:
 #   1. Build JA4proxy binary (or use prebuilt)

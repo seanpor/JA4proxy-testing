@@ -95,5 +95,5 @@ If a pinned digest is retracted from Docker Hub and the image is needed urgently
 
 - `README.md` §Phase 9
 - `docs/phases/PHASE_08_SECURITY_HARDENING.md` §8.3 (supply chain)
-- `docs/phases/CRITICAL_REVIEW.md` §A2
+- `docs/phases/CRITICAL_REVIEW_complete.md` §A2
 - `docs/phases/PHASE_14_CI_AND_IDEMPOTENCY.md` — adds the grep assertion as a CI test

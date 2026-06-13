@@ -130,7 +130,7 @@ All 17 entries expire same day → one big-bang red day. Stagger expiries across
 
 ### P2-13. CRITICAL_REVIEW banner points at an incomplete tracker
 
-`docs/phases/CRITICAL_REVIEW.md:6-14` tells the reader that the landing log is authoritative. The landing log (`GOVERNANCE_ROADMAP.md`) is itself missing 18-J (P2-12). Either add 18-J there or weaken the banner.
+`docs/phases/CRITICAL_REVIEW_complete.md:6-14` tells the reader that the landing log is authoritative. The landing log (`GOVERNANCE_ROADMAP.md`) is itself missing 18-J (P2-12). Either add 18-J there or weaken the banner.
 
 ---
 

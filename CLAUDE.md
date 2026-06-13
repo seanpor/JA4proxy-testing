@@ -76,7 +76,7 @@ Defaults for ~137 variables live in `deploy/inventory/group_vars/all.yml`. Templ
 
 ## The "dial" concept
 
-JA4proxy's enforcement level is a single integer 0–100 (`ja4proxy_dial`), exposed as `dial:` in `/opt/ja4proxy/config/proxy.yml` and reloadable with `SIGHUP`. **Default is 0 (monitor-only, block nothing).** The dial escalation plan is in `README.md` and `docs/phases/PHASE_07_VALIDATION_TESTING.md`. Do not raise the default in code without an explicit request — the monitor-first posture is a deliberate design constraint.
+JA4proxy's enforcement level is a single integer 0–100 (`ja4proxy_dial`), exposed as `dial:` in `/opt/ja4proxy/config/proxy.yml` and reloadable with `SIGHUP`. **Default is 0 (monitor-only, block nothing).** The dial escalation plan is in `README.md` and `docs/phases/PHASE_07_VALIDATION_TESTING_complete.md`. Do not raise the default in code without an explicit request — the monitor-first posture is a deliberate design constraint.
 
 ## Relationship to JA4proxy4
 

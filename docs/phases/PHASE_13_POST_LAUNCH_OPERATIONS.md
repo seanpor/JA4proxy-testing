@@ -118,6 +118,6 @@ Not strictly operations, but adjacent: request a PTR record for the VM's public 
 
 ## Related
 
-- `docs/phases/CRITICAL_REVIEW.md` §A4, §A5, §A6, §C4
+- `docs/phases/CRITICAL_REVIEW_complete.md` §A4, §A5, §A6, §C4
 - `docs/phases/PHASE_10_GO_LIVE.md` (imports preconditions from 13.3)
 - `docs/phases/RUNBOOK.md` (expand with runbook entries referenced above)

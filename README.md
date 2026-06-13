@@ -356,16 +356,16 @@ deploy/
 
 docs/phases/
 ├── PHASE_00_OVERVIEW.md              # Architecture, component inventory
-├── PHASE_01_VM_PROVISIONING.md       # VM setup, hardening
-├── PHASE_02_ARTIFACT_PREPARATION.md  # Build, config prep, transfer
+├── PHASE_01_VM_PROVISIONING_complete.md       # VM setup, hardening
+├── PHASE_02_ARTIFACT_PREPARATION_complete.md  # Build, config prep, transfer
 ├── PHASE_03_JA4PROXY_DEPLOYMENT.md   # systemd service, health checks
-├── PHASE_04_SUPPORTING_SERVICES.md   # Docker Compose stack
+├── PHASE_04_SUPPORTING_SERVICES_complete.md   # Docker Compose stack
 ├── PHASE_05_DATA_COLLECTION.md       # Research plan, metrics, retention
 ├── PHASE_06_OPERATIONAL_SECURITY.md  # Access, alerting, incident response
-├── PHASE_07_VALIDATION_TESTING.md    # Testing, dial escalation
+├── PHASE_07_VALIDATION_TESTING_complete.md    # Testing, dial escalation
 ├── PHASE_08_SECURITY_HARDENING.md    # STRIDE, kernel, container security
-├── ANSIBLE_BUILD_PLAN.md             # 29-task decomposition for implementation
-├── DEPLOYMENT_ANALYSIS.md            # Duplication analysis vs JA4proxy4
+├── ANSIBLE_BUILD_PLAN_complete.md             # 29-task decomposition for implementation
+├── DEPLOYMENT_ANALYSIS_complete.md            # Duplication analysis vs JA4proxy4
 └── RUNBOOK.md                        # Rollback procedures, troubleshooting
 ```
 

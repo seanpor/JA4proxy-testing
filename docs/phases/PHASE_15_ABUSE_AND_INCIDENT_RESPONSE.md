@@ -106,6 +106,6 @@ Keep it in `docs/governance/STAKEHOLDERS.yml`; reference it from the runbook.
 
 ## Related
 
-- `docs/phases/CRITICAL_REVIEW.md` §C2
+- `docs/phases/CRITICAL_REVIEW_complete.md` §C2
 - `docs/phases/PHASE_11_LEGAL_ETHICS_AND_HONEYPOT_DISCLOSURE.md` (abuse contact wiring)
 - `docs/phases/RUNBOOK.md` (to be expanded with the eight scenarios)

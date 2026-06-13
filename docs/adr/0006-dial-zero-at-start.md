@@ -22,7 +22,7 @@ frequencies before we can say what "anomalous" means.
 Every fresh deployment starts with `ja4proxy_dial: 0`
 (`deploy/inventory/group_vars/all.yml`). Raising the dial is an
 operator decision, documented per-step in `README.md` and
-`docs/phases/PHASE_07_VALIDATION_TESTING.md`, and is applied by
+`docs/phases/PHASE_07_VALIDATION_TESTING_complete.md`, and is applied by
 editing the variable and re-running role 03 (or live-editing
 `proxy.yml` and sending `SIGHUP`). Code changes to the repo **must
 not** raise the default without an explicit request.

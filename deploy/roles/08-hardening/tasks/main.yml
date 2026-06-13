@@ -33,7 +33,7 @@
 # AppArmor profile is deployed and loaded by role 03 BEFORE the service
 # starts, so confinement is active from the first ExecStart. This phase
 # only verifies that the running ja4proxy process is actually confined
-# by the expected profile. See docs/phases/CRITICAL_REVIEW.md §A3.
+# by the expected profile. See docs/phases/CRITICAL_REVIEW_complete.md §A3.
 - name: Verify AppArmor profile is loaded in kernel
   tags: [hardening, phase8, apparmor]
   ansible.builtin.command:

@@ -252,7 +252,7 @@
 
 # AppArmor profile must be loaded *before* the systemd unit is first
 # started, because systemd consults AppArmorProfile= at ExecStart time.
-# See docs/phases/CRITICAL_REVIEW.md §A3.
+# See docs/phases/CRITICAL_REVIEW_complete.md §A3.
 - name: Deploy AppArmor profile for JA4proxy
   tags: [deploy, phase3, apparmor]
   ansible.builtin.template:

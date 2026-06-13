@@ -337,4 +337,4 @@
           5. Weekly review: check Grafana dashboards for traffic patterns
 
           ⚠️  Remember: dial=0 means MONITOR-ONLY. No traffic is blocked.
-             Increase dial gradually (see docs/phases/PHASE_07_VALIDATION_TESTING.md).
+             Increase dial gradually (see docs/phases/PHASE_07_VALIDATION_TESTING_complete.md).
