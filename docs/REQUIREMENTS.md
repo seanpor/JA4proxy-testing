@@ -32,7 +32,7 @@ invariant it guards.
 | F-07  | Every secret in `deploy/.vault/secrets.yml` can be rotated end-to-end via a dedicated playbook + Make target without redeploying the stack. | `deploy/playbooks/rotate.yml`, `deploy/roles/12-secrets-rotation`, `scripts/ci/check_secrets_rotation.py`                                   |
 | F-08  | Public exposure follows a three-stage workflow (locked → verified → live); Phase 10 is inert unless an explicit confirm flag is set.   | `deploy/roles/10-go-live`, `deploy/scripts/verify-local.sh`, `docs/phases/PHASE_10_GO_LIVE.md`                                              |
 | F-09  | Operators can preserve forensic evidence (running container state, recent logs) before tearing down a suspect VM.                      | `deploy/scripts/preserve-evidence.sh`, `scripts/ci/check_preserve_evidence.py`, `docs/phases/PHASE_15_ABUSE_AND_INCIDENT_RESPONSE.md`       |
-| F-10  | A documented incident-response runbook covers at minimum: VM compromise, cert near expiry, Loki disk full, abuse complaint, secrets leak. | `docs/phases/RUNBOOK.md`, `scripts/ci/check_runbook_scenarios.py`                                                                            |
+| F-10  | A documented incident-response runbook covers at minimum: VM compromise, cert near expiry, Loki disk full, abuse complaint, secrets leak. | `docs/RUNBOOK.md`, `scripts/ci/check_runbook_scenarios.py`                                                                            |
 
 ## Non-functional requirements
 

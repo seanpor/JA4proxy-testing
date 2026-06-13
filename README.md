@@ -266,13 +266,13 @@ Response windows are deliberately modest so expectations stay honest:
   Escalations via the contact in `/.well-known/security.txt`.
 - **Down-alerts from the heartbeat or budget alert**: investigated within
   **24 h**. First response is usually `make status VM_IP=…` followed by
-  the matching `docs/phases/RUNBOOK.md` scenario.
+  the matching `docs/RUNBOOK.md` scenario.
 - **Planned away periods** (holiday, no laptop): stop the stack before
   leaving — either `make destroy VM_IP=…` or a manual `docker compose
   down` + `systemctl stop ja4proxy`. A dark honeypot is safer than an
   unmonitored one; bringing it back is one `make deploy` away.
 
-See `docs/phases/RUNBOOK.md` for the step-by-step scenarios referenced
+See `docs/RUNBOOK.md` for the step-by-step scenarios referenced
 above.
 
 ### Daily Checks (1 minute)
@@ -286,7 +286,7 @@ Set `JA4PROXY_HEARTBEAT_URL` to a [healthchecks.io](https://healthchecks.io)
 (or compatible) check URL and the deploy will install a systemd timer
 that pings it every 5 minutes. If the VM falls off the net — compromised,
 unpaid, rebooted into a wedged state — you get a push alert within
-one ping interval. Budget alerts (see `docs/phases/RUNBOOK.md` →
+one ping interval. Budget alerts (see `docs/RUNBOOK.md` →
 "Budget alert setup") catch the *cost* failure mode; the heartbeat
 catches the *availability* one.
 
@@ -354,6 +354,10 @@ deploy/
 ├── templates/                        # 21 Jinja2 templates for all configs
 └── files/                            # Grafana dashboards, static files
 
+├── RUNBOOK.md                        # Rollback procedures, troubleshooting 
+├── VM_SMOKE_TEST.md                  # First-deploy verification 
+└── DEPLOYMENT_PLAN.md                # Staged rollout strategy 
+
 docs/phases/
 ├── PHASE_00_OVERVIEW.md              # Architecture, component inventory
 ├── PHASE_01_VM_PROVISIONING_complete.md       # VM setup, hardening
@@ -366,7 +370,6 @@ docs/phases/
 ├── PHASE_08_SECURITY_HARDENING.md    # STRIDE, kernel, container security
 ├── ANSIBLE_BUILD_PLAN_complete.md             # 29-task decomposition for implementation
 ├── DEPLOYMENT_ANALYSIS_complete.md            # Duplication analysis vs JA4proxy4
-└── RUNBOOK.md                        # Rollback procedures, troubleshooting
 ```
 
 ---
@@ -443,7 +446,7 @@ At each stage, analyze counterfactual logs to answer "what would have happened i
 
 ### Rollback Procedures
 
-See [docs/phases/RUNBOOK.md](docs/phases/RUNBOOK.md) for detailed rollback procedures covering:
+See [docs/RUNBOOK.md](docs/RUNBOOK.md) for detailed rollback procedures covering:
 - Bad config change
 - Docker Compose stack broken
 - Full rollback to previous state

@@ -76,6 +76,6 @@ go-dark:
 ## Related
 
 - `README.md` §Staged Deployment Model
-- `docs/phases/RUNBOOK.md` (emergency takedown)
+- `docs/RUNBOOK.md` (emergency takedown)
 - `docs/phases/PHASE_13_POST_LAUNCH_OPERATIONS.md` (cert renewal monitoring, DNS preflight)
 - `docs/phases/PHASE_11_LEGAL_ETHICS_AND_HONEYPOT_DISCLOSURE.md` (must be complete *before* go-live)

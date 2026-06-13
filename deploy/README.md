@@ -87,4 +87,4 @@ make ci-deploy
 
 Full troubleshooting guide: [../README.md#troubleshooting](../README.md#troubleshooting)
 
-Rollback procedures: [../docs/phases/RUNBOOK.md](../docs/phases/RUNBOOK.md)
+Rollback procedures: [../docs/RUNBOOK.md](../docs/RUNBOOK.md)

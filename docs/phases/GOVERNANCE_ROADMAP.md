@@ -177,7 +177,7 @@ deploy and cause drift on every subsequent run. Catching this on the
 smoke test (not production) is the safe place.
 
 **Files.**
-- `docs/phases/VM_SMOKE_TEST.md` — add a new section "Idempotency"
+- `docs/VM_SMOKE_TEST.md` — add a new section "Idempotency"
   between "Deploy" and "Verify", with the re-run command and the grep
   for `changed=[1-9]`.
 - `deploy/scripts/check-idempotency.sh` — new helper that re-runs the
@@ -729,13 +729,13 @@ reload strategy; defer).
 **Scope.** Combines three small items: (1) document the healthchecks
 heartbeat URL setup (complements 13-F); (2) `provision-alibaba-cloud.sh`
 prints estimated monthly cost and requires `--confirm` to proceed;
-(3) `docs/phases/RUNBOOK.md` adds steps for configuring the Alibaba
+(3) `docs/RUNBOOK.md` adds steps for configuring the Alibaba
 budget alert and requesting a PTR record.
 
 **Files.**
 - `deploy/scripts/provision-alibaba-cloud.sh` — cost estimate block +
   `--confirm` flag.
-- `docs/phases/RUNBOOK.md` — new sections "Budget alert setup" and
+- `docs/RUNBOOK.md` — new sections "Budget alert setup" and
   "PTR record request".
 - `README.md` — mention the heartbeat env var in the Operations
   section.
@@ -885,7 +885,7 @@ timestamped tarball with a sha256 hash printed at the end.
 - `deploy/scripts/preserve-evidence.sh` — the script.
 - `deploy/roles/06-operational-security/tasks/main.yml` — copy the
   script, `mode: "0750"`, owner root.
-- `docs/phases/RUNBOOK.md` — reference from scenario 6 (compromise).
+- `docs/RUNBOOK.md` — reference from scenario 6 (compromise).
 
 **Acceptance.**
 - Running `preserve-evidence.sh` on the VM produces a tarball with all
@@ -902,14 +902,14 @@ snapshot).
 
 ## 15-B — Runbook expanded with IR scenarios
 
-**Scope.** Add to `docs/phases/RUNBOOK.md` (or split into
+**Scope.** Add to `docs/RUNBOOK.md` (or split into
 `INCIDENT_RESPONSE.md` if it grows > 400 lines) the eight scenarios
 from `PHASE_15 §15.4`: SSH lockout, Caddy ACME rate-limit, Redis
 corruption, disk full, Grafana password reset, VM compromise, LE
 request, DNS-misconfig-opened-UFW.
 
 **Files.**
-- `docs/phases/RUNBOOK.md` or `docs/phases/INCIDENT_RESPONSE.md`.
+- `docs/RUNBOOK.md` or `docs/phases/INCIDENT_RESPONSE.md`.
 
 **Acceptance.**
 - Each scenario has: preconditions, numbered procedure, rollback.

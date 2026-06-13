@@ -201,7 +201,7 @@ Rolled up because each is short on its own:
 - **Phase docs stop at 08** even though the playbook has roles 09-image-digests and 10-go-live and the Makefile exposes `make digests` and `make go-live`. Fill the gap (see new PHASE_09 and PHASE_10 below).
 - **PHASE_00 phase index** still lists "Status: ⏳ Next" for Phase 1. That was accurate at plan time but is now stale — the roles exist and are deployed. Update the index.
 - **`QWEN.md`** describes JA4proxy as listening directly on 80/443, which contradicts the actual architecture (HAProxy passthrough on 443, JA4proxy on 8080). Either update it, delete it, or mark it "historical".
-- **`docs/DETAILED_DEPLOYMENT_PLAN.md`** and `ANSIBLE_BUILD_PLAN_complete.md` are design-phase artefacts. If they still represent intent, leave a "written before implementation" note at the top; if not, move to `docs/archive/`.
+- **`docs/DEPLOYMENT_PLAN.md`** and `ANSIBLE_BUILD_PLAN_complete.md` are design-phase artefacts. If they still represent intent, leave a "written before implementation" note at the top; if not, move to `docs/archive/`.
 - **RUNBOOK.md** is only 102 lines and only covers rollback. It does not cover: SSH lockout recovery, UFW misconfiguration recovery, Caddy ACME stuck on staging, Redis ban-list corruption, Grafana admin-password reset, log-volume blowout. Each of those is a realistic 2am call.
 
 ---

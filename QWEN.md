@@ -31,7 +31,7 @@ Internet (Encrypted) -> [JA4proxy: L4 Interceptor] -> [HAProxy: TLS Termination]
 | File | Description |
 |------|-------------|
 | `README.md` | High-level project description |
-| `docs/DETAILED_DEPLOYMENT_PLAN.md` | Comprehensive phase-by-phase deployment plan (retrievable from git history; docs/ is git-ignored) |
+| `docs/DEPLOYMENT_PLAN.md` | Comprehensive phase-by-phase deployment plan (retrievable from git history; docs/ is git-ignored) |
 | `.gitignore` | Ignores the `docs/` directory |
 | `LICENSE` | Project license |
 

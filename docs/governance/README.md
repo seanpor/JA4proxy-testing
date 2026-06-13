@@ -46,7 +46,7 @@ Every 365 days, or sooner on any of:
   exfiltration attack tree and in `RETENTION.md`.
 - `docs/phases/PHASE_11_PROD_CUTOVER.md` is where the operator-facing
   go-live checklist references these documents.
-- `docs/phases/RUNBOOK.md` references `LE_REQUESTS.md` from the
+- `docs/RUNBOOK.md` references `LE_REQUESTS.md` from the
   "Law-enforcement request" scenario.
 
 ## Filling these in

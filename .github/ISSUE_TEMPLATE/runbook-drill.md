@@ -8,7 +8,7 @@ assignees: []
 
 <!--
 Semi-annual drill of the 8 Incident Response scenarios documented in
-docs/phases/RUNBOOK.md § Incident Response Scenarios. See the "Drill
+docs/RUNBOOK.md § Incident Response Scenarios. See the "Drill
 cadence" section of the same file for the why and the logging
 expectations.
 

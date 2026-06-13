@@ -91,9 +91,9 @@ Status values:
 | RV.1.1 | Identify and confirm vulnerabilities on an ongoing basis | Yes | `govulncheck` at build time (`scripts/ci/check_govulncheck_wired.py`, Phase 18-C); Trivy image scan in CI (`scripts/ci/check_image_scan.py`, Phase 18-B); Dependabot for deps (`.github/dependabot.yml`, Phase 18-F) |
 | RV.1.2 | Review and analyse vulnerability reports | Partial | Manual review of CI output + Dependabot PRs. `.trivyignore` entries carry expiry dates (`scripts/ci/check_image_scan.py`) so deferred decisions auto-reopen |
 | RV.1.3 | Have a vulnerability disclosure programme | Yes | `docs/phases/PHASE_11_LEGAL_ETHICS_AND_HONEYPOT_DISCLOSURE.md` plus `security.txt` served by the honeypot (`scripts/ci/check_security_txt.py`); contact email is in the rendered file |
-| RV.2.1 | Analyse each vulnerability | Yes | Mapped to runbook scenarios in `docs/phases/RUNBOOK.md` (`scripts/ci/check_runbook_scenarios.py`) |
+| RV.2.1 | Analyse each vulnerability | Yes | Mapped to runbook scenarios in `docs/RUNBOOK.md` (`scripts/ci/check_runbook_scenarios.py`) |
 | RV.2.2 | Plan and implement remediation | Yes | Remediation lands as a PR that goes through the same CI gates as any other change (`.github/workflows/ci.yml`); the `./AGENTS.md` pre-merge contract applies |
-| RV.3.1 | Analyse vulnerabilities for root causes | Partial | Post-mortem templates for runbook scenarios 1–8 in `docs/phases/RUNBOOK.md`; no formal RCA doc yet |
+| RV.3.1 | Analyse vulnerabilities for root causes | Partial | Post-mortem templates for runbook scenarios 1–8 in `docs/RUNBOOK.md`; no formal RCA doc yet |
 | RV.3.2 | Analyse root-cause frequency | N/A | Insufficient deployment history to be meaningful on a research box. Revisit when ≥ 1 year of production incidents exist |
 | RV.3.3 | Use information to improve SDLC | Yes | Phase chunks are the mechanism — 18-B was tightened to HIGH-blocking (18-B-2) after CVE-2023-2454x whack-a-mole on `redis:7-alpine`. See `docs/phases/PHASE_18_SWEBOK_GAP_CLOSURE.md` 18-B landing notes |
 | RV.3.4 | Have a process for reviewing EOL components | Partial | Dependabot (`.github/dependabot.yml`) surfaces outdated deps; digest-refresh workflow (`.github/workflows/digest-update.yml`) surfaces stale image pins. No separate EOL calendar |

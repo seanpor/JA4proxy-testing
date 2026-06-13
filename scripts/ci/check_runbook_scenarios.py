@@ -8,7 +8,7 @@ procedure, and a rollback note. A scenario can be deleted by
 accident; this check makes that failure loud at CI.
 
 Assertions:
-  1. docs/phases/RUNBOOK.md has an `## Incident Response Scenarios`
+  1. docs/RUNBOOK.md has an `## Incident Response Scenarios`
      section heading.
   2. Under it, each of the eight scenarios has a `### <N>. <name>`
      subheading. Names matched case-insensitively on a keyword.
@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-RUNBOOK = ROOT / "docs" / "phases" / "RUNBOOK.md"
+RUNBOOK = ROOT / "docs" / "RUNBOOK.md"
 
 SCENARIOS = (
     ("SSH lockout", ["ssh", "lockout"]),

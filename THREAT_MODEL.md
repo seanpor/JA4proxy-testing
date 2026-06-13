@@ -213,5 +213,5 @@ mode-0700 directory and is incident-triggered, not continuous.
 
 - [`docs/phases/PHASE_08_SECURITY_HARDENING.md`](docs/phases/PHASE_08_SECURITY_HARDENING.md) — STRIDE matrix, kernel + container hardening, per-mitigation detail.
 - [`docs/phases/GOVERNANCE_ROADMAP.md`](docs/phases/GOVERNANCE_ROADMAP.md) — per-chunk history of governance changes referenced here (14-A/B, 11-B/D, 12-D, 13-F/G/H/I/K, 15-A, TM-A).
-- [`docs/phases/RUNBOOK.md`](docs/phases/RUNBOOK.md) — incident-response steps, budget alert setup, PTR record request.
+- [`docs/RUNBOOK.md`](docs/RUNBOOK.md) — incident-response steps, budget alert setup, PTR record request.
 - [`README.md`](README.md) — operational posture and on-call commitments.

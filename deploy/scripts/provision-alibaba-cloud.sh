@@ -117,7 +117,7 @@ printf "  ───────────────────────�
 printf "  Approx total:      ~€%d / month\n" "$EST_TOTAL"
 echo ""
 echo "Set a budget alert in the Alibaba console BEFORE go-live."
-echo "See: docs/phases/RUNBOOK.md → 'Budget alert setup'"
+echo "See: docs/RUNBOOK.md → 'Budget alert setup'"
 echo ""
 
 if [[ "$CONFIRM" != "true" ]]; then

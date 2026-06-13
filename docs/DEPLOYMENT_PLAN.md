@@ -125,4 +125,4 @@ JA4proxy utilizes a `dial` setting to control enforcement strictness. It default
 - **Prometheus/Grafana**: Accessible via SSH tunnel to port 3000. Provides real-time visibility into JA4 score distributions, geographic anomalies, and system health.
 - **Loki/Promtail**: Centralized logging for forensic queries regarding specific TLS fingerprints or IP behaviors.
 
-For incident response and specific troubleshooting scenarios, refer to the `docs/phases/RUNBOOK.md`.
+For incident response and specific troubleshooting scenarios, refer to the `docs/RUNBOOK.md`.

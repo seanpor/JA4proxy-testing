@@ -583,7 +583,7 @@ needed.
 ## 18-L — Runbook drill cadence — **landed 2026-04-20**
 
 **Scope.** Add a `runbook-drill` checklist item to
-`docs/phases/RUNBOOK.md` with a 6-monthly cadence, plus a recurring
+`docs/RUNBOOK.md` with a 6-monthly cadence, plus a recurring
 GitHub issue template that pre-fills the drill scenarios
 (compromised VM, cert near expiry, Loki disk full, abuse complaint,
 secrets leak).
@@ -593,7 +593,7 @@ end-to-end. SWEBOK §Operations and NIST IR.4 both expect
 *exercised* playbooks, not just written ones.
 
 **Files.**
-- `docs/phases/RUNBOOK.md` — new "Drill cadence" section.
+- `docs/RUNBOOK.md` — new "Drill cadence" section.
 - `.github/ISSUE_TEMPLATE/runbook-drill.md` — the checklist.
 - `scripts/ci/check_runbook_scenarios.py` — already exists; extend to
   assert the drill checklist links to every scenario by name.
