@@ -1,6 +1,6 @@
 # Data Protection Impact Assessment
 
-Last reviewed: 2026-04-15
+Last reviewed: 2026-06-13
 
 DPIA for the JA4proxy research honeypot. Structure follows the ICO's
 DPIA template; the operator fills the prose. CI enforces presence and

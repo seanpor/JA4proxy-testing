@@ -1,6 +1,6 @@
 # Phase 16 — Lint coverage to 100%
 
-Last reviewed: 2026-04-16
+Last reviewed: 2026-06-13
 
 Adds static linting for every source-file type in the repo that was
 previously uncovered. After this phase, `make lint` catches syntax and

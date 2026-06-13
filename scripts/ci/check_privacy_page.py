@@ -24,7 +24,7 @@ try:
     import jinja2
     import yaml
 except ImportError:
-    sys.exit("pyyaml / jinja2 not installed. Run: make lint-install")
+    sys.exit("pyyaml / jinja2 not installed. Run: use docker instead")
 
 ROOT = Path(__file__).resolve().parents[2]
 TPL = ROOT / "deploy" / "templates" / "privacy.html.j2"

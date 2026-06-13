@@ -13,7 +13,7 @@ try:
     from jinja2 import Environment
     from jinja2.exceptions import TemplateSyntaxError
 except ImportError:
-    sys.exit("jinja2 not installed. Run: make lint-install")
+    sys.exit("jinja2 not installed. Run: use docker instead")
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE_DIRS = [ROOT / "deploy" / "templates", ROOT / "deploy" / "roles"]

@@ -1,6 +1,6 @@
 # Record of Processing Activities
 
-Last reviewed: 2026-04-15
+Last reviewed: 2026-06-13
 
 One-page ROPA under GDPR Article 30. Tabular so it fits on a single
 screen; operator updates when any column changes.

@@ -1,6 +1,6 @@
 # Abuse reply template
 
-Last reviewed: 2026-04-16
+Last reviewed: 2026-06-13
 
 Canned reply for inbound abuse reports about traffic originating from
 the honeypot's IP. Adapt the tone to the reporter; this is a

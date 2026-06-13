@@ -1,6 +1,6 @@
 # JA4proxy Research Honeypot — Threat Model
 
-Last reviewed: 2026-04-15
+Last reviewed: 2026-06-13
 Owner: repo maintainer (single operator posture, see README → Operations → On-call posture)
 
 This document is the repo-level threat model for the JA4proxy research
@@ -89,7 +89,7 @@ VM compromise
     │     → mitigation: DNS + MX preflight, explicit
     │       ja4proxy_go_live_confirm=true (11-D, 13-G).
     └── Secrets committed to git
-          → mitigation: check_secrets.py (repo secret scan),
+          → mitigation: check_secrets_path.py (repo secret scan),
             deploy/.vault/ gitignored.
 ```
 

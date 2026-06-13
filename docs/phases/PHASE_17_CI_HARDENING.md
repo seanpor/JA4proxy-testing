@@ -1,6 +1,6 @@
 # Phase 17 — CI hardening and bug fixes
 
-Last reviewed: 2026-04-16
+Last reviewed: 2026-06-13
 
 Fixes real bugs found during the Phase 16 review audit and adds
 high-value CI checks that catch deploy-time failures offline.

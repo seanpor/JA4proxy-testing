@@ -1,6 +1,6 @@
 # Outbound reporting — decision tree for LE referrals
 
-Last reviewed: 2026-04-16
+Last reviewed: 2026-06-13
 
 Decision tree for when the operator observes something in the
 honeypot data that may warrant a report to law enforcement or a

@@ -1,6 +1,6 @@
 # Data anonymisation
 
-Last reviewed: 2026-04-16
+Last reviewed: 2026-06-13
 
 Documents the anonymisation method applied before any honeypot data
 is shared outside the VM.

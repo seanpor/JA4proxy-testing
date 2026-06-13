@@ -18,7 +18,7 @@ from pathlib import Path
 try:
     import yaml
 except ImportError:
-    sys.exit("pyyaml not installed. Run: make lint-install")
+    sys.exit("pyyaml not installed. Run: use docker instead")
 
 ROOT = Path(__file__).resolve().parents[2]
 BUILD_TASK = ROOT / "deploy" / "roles" / "02-artifact-build" / "tasks" / "build.yml"

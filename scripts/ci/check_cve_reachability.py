@@ -60,7 +60,7 @@ from _trivyignore import classify as _classify_trivyignore
 try:
     import yaml
 except ImportError:
-    sys.exit("pyyaml not installed. Run: make lint-install")
+    sys.exit("pyyaml not installed. Run: use docker instead")
 
 ROOT = Path(__file__).resolve().parents[2]
 TRIVYIGNORE = ROOT / ".trivyignore"

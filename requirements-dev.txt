@@ -1,5 +1,5 @@
 # Development/CI tooling for `make lint` and `make test`.
-# Install into a local venv via `make lint-install` (creates .venv-dev/).
+# These are used by .github/Dockerfile.lint to build the dev container.
 #
 # Pin to known-working versions; bump deliberately after local green run.
 

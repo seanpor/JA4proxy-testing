@@ -1,6 +1,6 @@
 # Data retention
 
-Last reviewed: 2026-04-15
+Last reviewed: 2026-06-13
 
 Retention values, the data category they bound, and the concrete
 enforcement mechanism. If you change a number here, change the

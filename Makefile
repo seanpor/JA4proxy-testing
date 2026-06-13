@@ -19,14 +19,11 @@
 
 SHELL := /bin/bash
 
-# Tool locations — prefer the venv installed by `make lint-install`,
-# fall back to whatever's on $PATH for a new clone.
-VENV            := .venv-dev
-VENV_BIN        := $(VENV)/bin
+# Tool locations — system PATH defaults (used if USE_DOCKER is not set or docker is unavailable).
 PY              := python3
-YAMLLINT        := $(shell if [ -x $(VENV_BIN)/yamllint ];       then echo $(VENV_BIN)/yamllint;       else command -v yamllint       || echo yamllint;       fi)
-ANSIBLE_LINT    := $(shell if [ -x $(VENV_BIN)/ansible-lint ];   then echo $(VENV_BIN)/ansible-lint;   else command -v ansible-lint   || echo ansible-lint;   fi)
-ANSIBLE_PLAYBOOK:= $(shell if [ -x $(VENV_BIN)/ansible-playbook ];then echo $(VENV_BIN)/ansible-playbook;else command -v ansible-playbook|| echo ansible-playbook; fi)
+YAMLLINT        := $(shell command -v yamllint || echo yamllint)
+ANSIBLE_LINT    := $(shell command -v ansible-lint || echo ansible-lint)
+ANSIBLE_PLAYBOOK:= $(shell command -v ansible-playbook || echo ansible-playbook)
 SHELLCHECK      := $(shell command -v shellcheck || echo shellcheck)
 
 # Docker-based portability (Phase 22): wrap the dev loop in a container
@@ -61,7 +58,6 @@ help:
 	@echo "    make test           — structural cross-checks"
 	@echo "    make scan           — security scans (secrets + Trivy images)"
 	@echo "    make lint-all       — lint + test + scan (matches CI end-to-end)"
-	@echo "    make lint-install   — create .venv-dev/ and install local tools (if not using Docker)"
 	@echo
 	@echo "  Deployment (delegates to deploy/Makefile):"
 	@echo "    make secrets        — generate deploy/.vault/secrets.yml"
@@ -74,22 +70,6 @@ help:
 	@echo "    make cloud ALIYUN_ARGS=\"…\" — provision Alibaba VM"
 	@echo
 	@echo "  Granular deploys: docker, digests, validate, harden"
-
-# ─────────────────────────────────────────────────────────────
-# Dev-environment bootstrap
-# ─────────────────────────────────────────────────────────────
-
-.PHONY: lint-install
-lint-install: $(VENV)/.installed
-
-$(VENV)/.installed: requirements-dev.txt
-	@echo "── Creating $(VENV)/ and installing dev tools ──"
-	$(PY) -m venv $(VENV)
-	$(VENV_BIN)/pip install --upgrade pip
-	$(VENV_BIN)/pip install -r requirements-dev.txt
-	@touch $@
-	@echo
-	@echo "Dev tools installed. Use: source $(VENV_BIN)/activate   (optional)"
 
 # ─────────────────────────────────────────────────────────────
 # Lint — fast static checks, ~seconds
@@ -125,8 +105,8 @@ lint-syntax:
 
 lint-ansible:
 	@echo "── ansible-lint ──"
-	@if ! command -v $(ANSIBLE_LINT) >/dev/null 2>&1 && [ ! -x $(VENV_BIN)/ansible-lint ]; then \
-	  echo "ansible-lint not installed. Run: make lint-install"; \
+	@if ! command -v $(ANSIBLE_LINT) >/dev/null 2>&1; then \
+	  echo "ansible-lint not installed. Run this via docker or install it globally."; \
 	  exit 1; \
 	fi
 	@$(ANSIBLE_LINT) --format=pep8 deploy/playbooks/site.yml
@@ -463,4 +443,4 @@ deploy check cloud digests docker validate harden secrets vault-edit vault-rekey
 
 .PHONY: clean
 clean:
-	rm -rf $(VENV) .pytest_cache .ruff_cache __pycache__ */__pycache__ */*/__pycache__
+	rm -rf .venv-dev .pytest_cache .ruff_cache __pycache__ */__pycache__ */*/__pycache__

@@ -1,6 +1,6 @@
 # NIST SSDF v1.1 control mapping
 
-Last reviewed: 2026-04-19
+Last reviewed: 2026-06-13
 
 This document maps every task in the NIST Secure Software Development
 Framework (SP 800-218, SSDF v1.1) to the role, CI check, or phase doc
@@ -40,7 +40,7 @@ Status values:
 | PO.2.2 | Provide role-based training | N/A | Sole maintainer; no team to train. Learning happens on the research itself |
 | PO.2.3 | Obtain upper-management commitment | N/A | No hierarchical organization |
 | PO.3.1 | Specify tools used in the SDLC | Yes | `AGENTS.md` plus `requirements-dev.txt` pin the toolchain (ansible, yamllint, ansible-lint, ruff, shellcheck, pymarkdown). See `./AGENTS.md` |
-| PO.3.2 | Deploy and maintain tools | Yes | `./Makefile` target `make lint-install` reproduces the dev venv from `./requirements-dev.txt` |
+| PO.3.2 | Deploy and maintain tools | Yes | `.github/Dockerfile.lint` reproduces the dev environment inside a container from `./requirements-dev.txt` |
 | PO.3.3 | Generate artefact data to demonstrate use | Yes | `.github/workflows/ci.yml` runs `make lint` + `make test` on every PR; green runs are the artefact |
 | PO.4.1 | Define criteria for security checks | Yes | `AGENTS.md` pre-merge contract; `docs/REQUIREMENTS.md` traces each NF-\* to a check |
 | PO.4.2 | Implement processes to collect / review check results | Yes | CI gates on `make lint` and `make test`; Dependabot opens PRs for dep updates (`.github/dependabot.yml`) |

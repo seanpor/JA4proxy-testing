@@ -29,13 +29,7 @@ to `main`, the following must all be green:
 - admins are not enforced (so you can still push directly in a true
   emergency — but the default path is a PR)
 
-Bootstrap once per clone:
-
-```
-make lint-install   # creates .venv-dev/ with pinned ansible-lint, yamllint, jinja2
-```
-
-After that, both targets are runnable from a cold shell.
+Both `make lint` and `make test` are runnable directly via Docker from a cold shell.
 
 Two Go-side tools are also expected on `$PATH` for full build-time
 coverage — both are skip-with-warning if absent, so you can still

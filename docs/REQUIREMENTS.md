@@ -1,6 +1,6 @@
 # Requirements & traceability
 
-Last reviewed: 2026-04-19
+Last reviewed: 2026-06-13
 
 Numbered functional (F-\*) and non-functional (NF-\*) requirements for
 the JA4proxy research honeypot. Every row cites the role, template,

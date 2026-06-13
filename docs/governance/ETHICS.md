@@ -1,6 +1,6 @@
 # Research ethics statement
 
-Last reviewed: 2026-04-15
+Last reviewed: 2026-06-13
 
 Research-ethics statement for the JA4proxy honeypot. Single-operator
 projects generally do not have an institutional review board; this

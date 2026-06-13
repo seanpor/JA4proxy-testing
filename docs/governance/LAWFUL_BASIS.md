@@ -1,6 +1,6 @@
 # Lawful basis — Article 6(1)(f) balancing test
 
-Last reviewed: 2026-04-15
+Last reviewed: 2026-06-13
 
 This file documents the lawful basis under GDPR Article 6(1)(f)
 (legitimate interests) for processing the personal data the honeypot

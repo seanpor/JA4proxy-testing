@@ -40,7 +40,7 @@ from _trivyignore import parse_policy_ceilings as _parse_policy_ceilings
 try:
     import yaml
 except ImportError:
-    sys.exit("pyyaml not installed. Run: make lint-install")
+    sys.exit("pyyaml not installed. Run: use docker instead")
 
 # 21-H severity-response ceilings, codifying the .trivyignore header:
 #   CRITICAL → fix within 30 days

@@ -1,6 +1,6 @@
 # Phase 18 — SWEBOK & industry best-practice gap closure
 
-Last reviewed: 2026-04-16
+Last reviewed: 2026-06-13
 
 A SWEBOK v4 walkthrough (plus NIST SSDF, SLSA, OpenSSF Scorecard, and
 CIS) identified a small number of real gaps left after Phases 14–17.
@@ -183,8 +183,7 @@ you at least *know* you shipped a clean binary.
   `govulncheck` step gated on binary of the same name being on
   `$PATH`; skip with a warning if absent (ops may be on an air-gapped
   build host).
-- `AGENTS.md` — one line: install govulncheck as part of
-  `lint-install`.
+- `AGENTS.md` — one line: recommend installing `govulncheck` for full coverage.
 
 **Acceptance.** A module with a known reachable advisory fails the
 build with the advisory id and call-site. Skipping when govulncheck

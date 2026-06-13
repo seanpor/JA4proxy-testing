@@ -26,7 +26,7 @@ try:
     import yaml
     from jinja2 import Environment
 except ImportError:
-    sys.exit("pyyaml / jinja2 not installed. Run: make lint-install")
+    sys.exit("pyyaml / jinja2 not installed. Run: use docker instead")
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "deploy" / "templates" / "docker-compose.yml.j2"

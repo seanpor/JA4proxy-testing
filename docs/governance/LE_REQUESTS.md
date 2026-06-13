@@ -1,6 +1,6 @@
 # Law-enforcement request handling
 
-Last reviewed: 2026-04-15
+Last reviewed: 2026-06-13
 
 Procedure for handling requests from law enforcement for data the
 honeypot has collected. The operator is the single point of contact;
