@@ -3,7 +3,7 @@
 
 Fails CI if `.github/workflows/ci.yml` runs a check that is not
 reachable via the local pre-push contract (`make lint`, `make test`,
-`make scan-images`).
+`make scan`).
 
 Context:
   The repo claims (README, `AGENTS.md`, the top of `Makefile`) that
@@ -17,7 +17,7 @@ Context:
   Phase 20's P1-8 remediation added a compose-SBOM Trivy scan in the
   `image-scan` job (`ci.yml:91-101`). It was correct to land that
   step — it's what gives the shipped SBOM a consumer — but *only* in
-  CI. Locally there is no equivalent in `make scan-images` or
+  CI. Locally there is no equivalent in `make scan` or
   `make lint-all`, so it's the first instance of the drift this
   checker targets.
 
@@ -138,13 +138,13 @@ def main() -> int:
     if script_hits == 0 and trivy_hits == 0:
         print(
             "✓ ci.yml has no direct scripts/ci/*.py or trivy invocations — "
-            "all verification flows through `make lint`/`test`/`scan-images`"
+            "all verification flows through `make lint`/`test`/`scan`"
         )
     else:
         print(
             f"✓ ci.yml parity: {script_hits} scripts/ci/*.py + {trivy_hits} "
             f"trivy invocation(s) all reachable from `make lint`/`test`/"
-            f"`scan-images`"
+            f"`scan`"
         )
     return 0
 

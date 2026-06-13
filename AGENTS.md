@@ -12,7 +12,7 @@ to `main`, the following must all be green:
 1. **`make lint`** — yamllint, ansible-lint (moderate profile),
    `ansible-playbook --syntax-check`, shellcheck, jinja2 parse, plaintext
    secret scan. Runs in seconds; no VM required.
-2. **`make test`** — everything in `make lint` plus structural cross-checks
+2. **`make test`** — structural cross-checks
    (role refs resolve, group_vars coverage, compose template renders,
    digest-pin regex self-test, A1 secrets-path regression, Makefile phony
    audit). Still no VM required.

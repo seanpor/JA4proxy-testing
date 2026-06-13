@@ -29,7 +29,7 @@ ANSIBLE     := ansible-playbook $(INVENTORY) $(PLAYBOOK)
 # Usage: make cloud ALIYUN_ARGS="--region eu-central-1 --ssh-key-name mykey --admin-ip 1.2.3.4"
 ALIYUN_ARGS ?=
 
-.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections status destroy idempotency rotate export-pull
+.PHONY: deploy check cloud digests docker validate harden secrets vault-edit vault-rekey collections status destroy idempotency rotate export-pull verify go-live ci-deploy ci-check
 
 deploy:
 	@echo "╔══════════════════════════════════════════════════════╗"

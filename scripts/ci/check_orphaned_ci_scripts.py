@@ -2,7 +2,7 @@
 """Phase 21-I: orphan-check gate.
 
 Fails CI if any `scripts/ci/check_*.py` file exists on disk but is
-never invoked by `make test` or `make lint` (transitively, including
+never invoked by `make test`, `make lint`, or `make scan` (transitively, including
 prerequisite chains).
 
 Why:
@@ -71,7 +71,7 @@ def main() -> int:
     if not on_disk:
         sys.exit("scripts/ci/ has no check_*.py files — repo layout broken")
 
-    dryrun = _make_dryrun_text(["test", "lint"])
+    dryrun = _make_dryrun_text(["test", "lint", "scan"])
     if dryrun is None:
         print(
             "✓ orphan-check gate: `make` not on PATH — skipping (dev "
@@ -81,18 +81,24 @@ def main() -> int:
 
     orphans = sorted(name for name in on_disk if name not in dryrun)
     if orphans:
-        print(f"{len(orphans)} orphan check_*.py file(s) on disk but not invoked by `make test`/`make lint`:")
+        print(
+            f"{len(orphans)} orphan check_*.py file(s) on disk but not invoked "
+            "by `make test`/`make lint`/`make scan`:"
+        )
         for o in orphans:
             print(f"  ✗ scripts/ci/{o}")
         print(
             "Either wire each into a Makefile target reachable from "
-            "`make test` (or `make lint`) — see the existing "
+            "`make test` (or `make lint` / `make scan`) — see the existing "
             "`test-<name>:` targets for the pattern — or delete the "
             "file. A check that nothing runs is governance theatre."
         )
         return 1
 
-    print(f"✓ orphan-check gate: {len(on_disk)} check_*.py file(s), all invoked from `make test`/`make lint`")
+    print(
+        f"✓ orphan-check gate: {len(on_disk)} check_*.py file(s), all invoked "
+        "from `make test`/`make lint`/`make scan`"
+    )
     return 0
 
 
