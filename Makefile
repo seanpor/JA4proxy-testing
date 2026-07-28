@@ -94,7 +94,7 @@ lint-yaml:
 	@$(YAMLLINT) -s \
 	  deploy/ \
 	  .github/ \
-	  .yamllint .ansible-lint requirements-dev.txt 2>/dev/null || true
+	  .yamllint .ansible-lint 2>/dev/null || true
 	@$(YAMLLINT) -s deploy/ .github/ 2>&1
 
 lint-syntax:

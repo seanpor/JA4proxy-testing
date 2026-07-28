@@ -146,7 +146,7 @@ def check_workflow() -> None:
         ("actions/checkout", "checkout step"),
         ("actions/setup-python", "setup-python step"),
         ("actions/cache", "Trivy DB cache step"),
-        ("trivy/main/contrib/install.sh", "Trivy install step"),
+        ("contrib/install.sh", "Trivy install step"),
         ("make scan-images", "invokes make scan-images"),
     ]
     missing = [msg for needle, msg in required if needle not in step_blob]

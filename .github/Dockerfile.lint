@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -9,13 +9,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Trivy
-RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/v0.58.2/contrib/install.sh -o install.sh && \
+    echo "2304dcc0c1883e802d376eae1b514c923b7427a7d88091dfcaf83967e6f55a7c  install.sh" | sha256sum --check && \
+    sh install.sh -b /usr/local/bin && \
+    rm install.sh
 
 WORKDIR /work
 
 # Copy requirements and install Python dependencies
 COPY requirements-dev.txt .
-RUN pip install --no-cache-dir -r requirements-dev.txt
+RUN pip install --no-cache-dir --require-hashes -r requirements-dev.txt
 
 # Copy Ansible requirements and install collections globally
 COPY deploy/requirements.yml ./deploy/

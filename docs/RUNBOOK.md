@@ -282,7 +282,7 @@ traffic from the VM that isn't ACME or healthchecks.io is observed.
 5. Provision a fresh VM at a new IP:
    `make cloud ALIYUN_ARGS='...' && make deploy && make verify`.
 6. File any required disclosures — see
-   [`../governance/LE_REQUESTS.md`](../governance/LE_REQUESTS.md)
+   [`governance/LE_REQUESTS.md`](governance/LE_REQUESTS.md)
    if law enforcement is involved.
 
 **Rollback.** Not applicable — compromise is a forward-only
@@ -299,7 +299,7 @@ party.
 
 1. Acknowledge receipt; **do not respond with data at intake**.
 2. Follow the procedure in
-   [`../governance/LE_REQUESTS.md`](../governance/LE_REQUESTS.md) —
+   [`governance/LE_REQUESTS.md`](governance/LE_REQUESTS.md) —
    validate jurisdiction, proportionality, legal instrument.
 3. If producing data, run `/usr/local/sbin/preserve-evidence.sh`
    first so the export is itself captured as evidence.
